@@ -1,7 +1,7 @@
-from ..magpy import models
-from ..magpy import lattice
-from ..magpy import LSWT
-from ..magpy import interactions
+from magpy import models
+from magpy import lattice
+from magpy import LSWT
+from magpy import interactions
 import numpy as np
 
 

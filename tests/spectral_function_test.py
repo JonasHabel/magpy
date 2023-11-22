@@ -1,7 +1,7 @@
 import numpy as np
-from ..magpy.greens_functions import *
-from ..magpy.spectral_function import *
-from ..magpy.util import PAULI_MATRICES
+from magpy.greens_functions import *
+from magpy.spectral_function import *
+from magpy.util import PAULI_MATRICES
 
 
 def test_single_band_non_interacting_spectral_function_single_frequency():

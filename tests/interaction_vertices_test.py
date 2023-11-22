@@ -1,10 +1,10 @@
-from ..magpy.lattice import *
-from ..magpy import models
-from ..magpy.interactions import *
-from ..magpy.interaction_vertices import *
-from ..magpy import LSWT
+from magpy.lattice import *
+from magpy import models
+from magpy.interactions import *
+from magpy.interaction_vertices import *
+from magpy import LSWT
 import numpy as np
-from ..magpy.util import permute
+from magpy.util import permute
 
 
 def test_two_site_quantum_dot_with_DMI():

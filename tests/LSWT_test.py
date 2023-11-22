@@ -1,7 +1,7 @@
 import numpy as np
-from ..magpy.lattice import DotLattice
-from ..magpy.models import Model
-from ..magpy import LSWT
+from magpy.lattice import DotLattice
+from magpy.models import Model
+from magpy import LSWT
 
 
 def test_orthonormalization_wrt_bogo_metric_with_Hamiltonian():

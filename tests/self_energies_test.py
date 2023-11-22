@@ -1,9 +1,9 @@
-from ..magpy.lattice import *
-from ..magpy import models
-from ..magpy.interactions import *
-from ..magpy.interaction_vertices import *
-from ..magpy import LSWT
-from ..magpy.self_energies import *
+from magpy.lattice import *
+from magpy import models
+from magpy.interactions import *
+from magpy.interaction_vertices import *
+from magpy import LSWT
+from magpy.self_energies import *
 import numpy as np
 
 

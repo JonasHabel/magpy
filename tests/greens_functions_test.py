@@ -1,6 +1,6 @@
 import numpy as np
-from ..magpy.greens_functions import *
-from ..magpy.util import PAULI_MATRICES
+from magpy.greens_functions import *
+from magpy.util import PAULI_MATRICES
 
 
 def test_two_band_interacting_greens_functions_single_frequency():

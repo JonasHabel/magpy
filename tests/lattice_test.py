@@ -1,4 +1,4 @@
-from ..magpy import lattice
+from magpy import lattice
 
 
 def test_success():
