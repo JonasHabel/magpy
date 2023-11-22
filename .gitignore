@@ -1,3 +1,4 @@
 build/
 magpy.egg-info
 install
+**/__pycache__
