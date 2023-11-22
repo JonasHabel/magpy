@@ -633,7 +633,16 @@ class KagomeLattice(BravaisLattice):
 1D chain
 """
 class ChainLattice(BravaisLattice):
-    def __init__(self, num_sites_unit_cell=1):
+    def __init__(self, num_sites_unit_cell=1, edges=None):
+        if edges == None:
+            edges = [
+                BravaisLattice.Edge(np.array([0]), np.array([n, n+1])) \
+                for n in range(num_sites_unit_cell-1)
+            ] + [
+                BravaisLattice.Edge(np.array([1]),
+                                    np.array([num_sites_unit_cell-1, 0]))
+            ]
+
         super().__init__(
             bravais_vecs=np.array([
                 [1.0]
@@ -641,13 +650,7 @@ class ChainLattice(BravaisLattice):
             sublattices=np.array([
                 np.linspace(0, 1, num_sites_unit_cell, endpoint=False)
             ]).T,
-            edges=[
-                BravaisLattice.Edge(np.array([0]), np.array([n, n+1])) \
-                for n in range(num_sites_unit_cell-1)
-            ] + [
-                BravaisLattice.Edge(np.array([1]),
-                                    np.array([num_sites_unit_cell-1, 0]))
-            ],
+            edges=edges,
             reciprocal_high_symmetry_points={
                 "Gamma": np.array([0]),
                 "Gamma'": np.array([1]),
