@@ -163,7 +163,7 @@ def simulate_LLG(model: Model, sizes, time_span, num_times, init_spin_config,
         if bc_dS_dt is not None:
             S_reshaped = spin_config.reshape(
                 (*sizes, num_sites_unit_cell, 3))
-            dS_dt_reshaped = spin_config.reshape(
+            dS_dt_reshaped = dS_dt.reshape(
                 (*sizes, num_sites_unit_cell, 3))
             for coord, dS_dt_bc_func in zip(
                     bc_dS_dt["coords"], bc_dS_dt["func"]):
