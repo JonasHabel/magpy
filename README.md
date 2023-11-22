@@ -3,7 +3,7 @@ magpy
 
 magpy is a Python package for easy numerical spin-wave computations in spin lattices.
 
-The following code produces the linear spin-wave band structure along the Gamma-X-M-Gamma path in reciprocal space for a square-lattice ferromagnet with ferromagnetic nearest-neighbor and weak anti-ferromagnetic next-nearest-neighbor Heisenberg interactions.
+The following code produces the linear spin-wave band structure along the Gamma-X-M-Gamma path in reciprocal space for a square-lattice spin-3/2 ferromagnet with ferromagnetic nearest-neighbor and weak anti-ferromagnetic next-nearest-neighbor Heisenberg interactions.
 
     import numpy as np
     from magpy.models import Model
@@ -16,7 +16,7 @@ The following code produces the linear spin-wave band structure along the Gamma-
     model = Model(lattice, interactions=[
         NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=-1.0),
         NthNearestNeighborHeisenbergInteraction(lattice, n=2, J=0.1),
-    ], classical_ground_state=3/2*np.array([[0, 0, 1]]))
+    ], classical_ground_state=3/2 * np.array([[0, 0, 1]]))
 
     momentum_path = \
         lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
