@@ -108,11 +108,11 @@ class BravaisLattice:
     def to_canonical_basis(self, bravais_coords):
         return bravais_coords @ self.bravais_vecs
 
-    def get_canonical_coords(self, site: Site):
+    def get_canonical_coords_for_site(self, site: Site):
         return self.to_canonical_basis(site.bravais_coords) \
              + self.sublattices[site.subl_idx]
     
-    def get_canonical_coords(self, edge: Edge):
+    def get_canonical_coords_for_edge(self, edge: Edge):
         return self.to_canonical_basis(edge.bravais_coords) \
              + self.sublattices[edge.subl_idxs[0]] \
              + self.sublattices[edge.subl_idxs[1]]
@@ -237,7 +237,7 @@ class BravaisLattice:
         return neighbors_upto_nmax
 
     """
-    returns: list of Edge
+    returns: set of Edge
     """
     def compute_nth_nearest_neighbors_for_entire_unit_cell(self, n):
         nth_nns = set()
@@ -349,10 +349,10 @@ class ReciprocalLattice:
     returns: (list of) numpy array (depending on whether len(list) > 1)
         (list of) reciprocal vectors in the canonical (kx, ky, kz, ...) basis
     """
-    def transform_to_canonical_basis(self, coords):
+    def to_canonical_basis(self, coords):
         if type(coords) == dict:
             return dict(
-                (k, self.transform_to_canonical_basis([v])) \
+                (k, self.to_canonical_basis([v])) \
                 for k, v in coords.items()
             )
 
@@ -368,7 +368,7 @@ class ReciprocalLattice:
         dict of high-symmetry points in the canonical (kx, ky, kz, ...) basis
     """
     def get_high_symmetry_points_in_canonical_basis(self):
-        return self.transform_to_canonical_basis(self.high_symmetry_points)
+        return self.to_canonical_basis(self.high_symmetry_points)
     
     def _get_dist_fractions(self, point_coords):
         distances = np.array([
@@ -387,7 +387,7 @@ class ReciprocalLattice:
     def __get_point_labels_and_coords(self, point_labels, custom_hisym_points):
         hisym_points = self.get_high_symmetry_points_in_canonical_basis() \
             if custom_hisym_points is None \
-            else self.transform_to_canonical_basis(custom_hisym_points)
+            else self.to_canonical_basis(custom_hisym_points)
         return itemgetter(*point_labels)(hisym_points)
 
 
