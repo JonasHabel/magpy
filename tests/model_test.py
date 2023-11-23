@@ -224,7 +224,7 @@ def test_stacked_KH_interlayer_interaction():
         lattice.BravaisLattice.Edge(np.array([-1, -1, 0]), np.array([3, 4])),
         lattice.BravaisLattice.Edge(np.array([0, 0, 1]), np.array([5, 0])),
     ]
-    stacked_KH_model_3D = models.extend(KH_model_2D, 3, interlayer_edges, [
+    stacked_KH_model_3D = models.stack(KH_model_2D, 3, interlayer_edges, [
         interactions.HeisenbergInteraction(edge, J=J_perp) for edge in interlayer_edges
     ], distance_between_layers=1/2, sublattice_shifts=np.array([
         np.array([0, 0, 0]), np.array([0, 0, 0]),   # layer 1
@@ -243,7 +243,7 @@ def test_stacked_KH_interlayer_interaction():
     pass
 
 
-def test_FM_Heisenberg_extension():
+def test_FM_Heisenberg_stacking():
     latt = lattice.ChainLattice(2)
     latt.sublattices = np.array([[0], [1]])
     inter = [
@@ -251,7 +251,7 @@ def test_FM_Heisenberg_extension():
             latt, n=1, J=-1.0)
     ]
     mod = models.Model(latt, inter, np.array([[0, 0, 1]] * 2))
-    extended_mod = models.extend(
+    extended_mod = models.stack(
         mod, 3, [], [], distance_between_layers=2.0, periodic=False
     )
 
@@ -267,7 +267,7 @@ def test_FM_Heisenberg_extension():
     
 
 
-def test_FM_Heisenberg_periodic_extension():
+def test_FM_Heisenberg_periodic_stacking():
     latt = lattice.ChainLattice(1)
     inter = [
         interactions.NthNearestNeighborHeisenbergInteraction(
@@ -276,7 +276,7 @@ def test_FM_Heisenberg_periodic_extension():
     mod_1D = models.Model(latt, inter, np.array([[0, 0, 1]]))
 
     add_edges = [lattice.BravaisLattice.Edge(np.array([0, 1]), np.zeros(2))]
-    mod_2D = models.extend(mod_1D, 1, add_edges, [
+    mod_2D = models.stack(mod_1D, 1, add_edges, [
         interactions.HeisenbergInteraction(add_edges[0], J=-1.0)
     ], periodic=True)
 

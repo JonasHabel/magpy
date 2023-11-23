@@ -109,15 +109,15 @@ additional_bravais_vec: None or numpy array
     The layers in the new periodic direction will be offset along
     additional_bravais_vec.
 """
-def extend(model: Model, num_layers: int,
-           interlayer_edges: List[BravaisLattice.Edge],
-           interlayer_interactions: List[Interaction],
-           additional_high_symmetry_points=dict(),
-           new_classical_ground_state=None,
-           distance_between_layers=1.0,
-           sublattice_shifts=None,
-           periodic=True,
-           additional_bravais_vec=None):
+def stack(model: Model, num_layers: int,
+          interlayer_edges: List[BravaisLattice.Edge],
+          interlayer_interactions: List[Interaction],
+          additional_high_symmetry_points=dict(),
+          new_classical_ground_state=None,
+          distance_between_layers=1.0,
+          sublattice_shifts=None,
+          periodic=True,
+          additional_bravais_vec=None):
     
     old_dim = model.lattice.dim
     old_embedding_dim = model.lattice.embedding_dim
@@ -251,7 +251,7 @@ model1 and model2 must have the same underlying Bravais lattice.
 inter_model_interactions specifies additional "off-diagonal" interactions
 between sites of model1 and sites of model2.
 """
-def stack(model1: Model, model2: Model,
+def direct_product(model1: Model, model2: Model,
           inter_model_interactions=[],
           new_classical_ground_state=None):
     old_lattice1, old_lattice2 = model1.lattice, model2.lattice
@@ -474,7 +474,8 @@ minus the number of removed dimensions (i.e., the length of dims).
 The dimension of each new bravais vector must equal the embedding dimension.
 """
 def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
-                              new_hisym_points=None, new_classical_gs=None):
+                              new_high_symmetry_points=None,
+                              new_classical_ground_state=None):
 
     if new_bravais_vecs.shape[0] != model.lattice.dim - len(dims):
         raise Exception(f"number supplied new bravais vectors " + 
@@ -497,8 +498,8 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
         if np.all(np.take(edge.bravais_coords, dims, axis=0) == 0)
     ]
 
-    if new_hisym_points == None:
-        new_hisym_points = dict(
+    if new_high_symmetry_points is None:
+        new_high_symmetry_points = dict(
             (k, np.delete(v, dims)) \
             for k, v in model.lattice.reciprocal_lattice. \
                         high_symmetry_points.items()
@@ -506,7 +507,7 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
 
     new_lattice = BravaisLattice(
         new_bravais_vecs, model.lattice.sublattices.copy(),
-        new_edges, new_hisym_points
+        new_edges, new_high_symmetry_points
     )
 
     new_interactions = [
@@ -527,13 +528,13 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
         ))
     ]
 
-    if new_classical_gs is None:
-        new_classical_gs = model.classical_gs.copy()
+    if new_classical_ground_state is None:
+        new_classical_ground_state = model.classical_gs.copy()
 
     new_model = Model(
         new_lattice,
         new_interactions,
-        new_classical_gs
+        new_classical_ground_state
     )
 
 
@@ -542,17 +543,17 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
 
 
 def add_open_bc(model: Model, open_bc_config: str, slab_sizes,
-                new_classical_gs=None):
+                new_classical_ground_state=None):
     config = model.lattice.open_bc_configs[open_bc_config]
     return add_custom_open_bc(model, slab_sizes,
                               config["surface"], config["normal"],
-                              new_classical_gs)
+                              new_classical_ground_state)
 
 """
 add open boundary conditions along slab_sizes
 """
 def add_custom_open_bc(model: Model, slab_sizes, slab_surface_coords,
-                       slab_normal_coords, new_classical_gs=None):
+                       slab_normal_coords, new_classical_ground_state=None):
     dim = model.lattice.dim
     new_dim = slab_surface_coords.shape[0]
     if dim >= 3 or dim <= 0:
@@ -608,7 +609,7 @@ def add_custom_open_bc(model: Model, slab_sizes, slab_surface_coords,
         model_enlarged_unit_cell,
         np.arange(dim - len(slab_sizes), dim),
         new_bravais_vecs,
-        new_classical_gs=new_classical_gs
+        new_classical_ground_state=new_classical_ground_state
     )
 
     return strip_model
