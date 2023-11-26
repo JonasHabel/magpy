@@ -171,8 +171,12 @@ def stack(model: Model, num_layers: int,
     if periodic:
         pad_subl = \
             lambda subl: subl if old_dim < old_embedding_dim else np.r_[subl, 0]
+        normlzd_add_bravais_vec = \
+            new_bravais_vecs[-1] / np.linalg.norm(new_bravais_vecs)
+        compute_subl_offset = \
+            lambda layer: normlzd_add_bravais_vec*layer*distance_between_layers
         new_sublattices = np.array([
-            pad_subl(subl) + new_bravais_vecs[-1]*layer*distance_between_layers \
+            pad_subl(subl) + compute_subl_offset(layer) \
             for layer in range(num_layers) \
             for subl in model.lattice.sublattices
         ])
