@@ -90,6 +90,13 @@ class DMInteraction(TwoSpinInteraction):
         super().__init__(edge, TWO_SPIN_INT_TENSORS["DM"](D))
 
 
+class AnisotropyInteraction(TwoSpinInteraction):
+    def __init__(self, sublattice_index: int, dir, A):
+        super().__init__(
+            BravaisLattice.Edge(np.array([0, 0]), np.array([sublattice_index]*2)),
+            TWO_SPIN_INT_TENSORS["Ising"](dir, A))
+
+
 class CompositeInteraction():
     def __init__(self, interactions):
         self.interactions = interactions
