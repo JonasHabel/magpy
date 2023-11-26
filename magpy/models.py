@@ -16,8 +16,7 @@ class Model:
     def __init__(self, lattice: BravaisLattice, interactions,
                  classical_ground_state):
         classical_gs_required_shape = (lattice.num_sites_unit_cell, 3)
-        if classical_ground_state is not None and \
-           classical_ground_state.shape != classical_gs_required_shape:
+        if classical_ground_state.shape != classical_gs_required_shape:
             raise Exception("classical ground state array has wrong shape " \
                 + f"{classical_ground_state.shape}. Should be " \
                 + f"{classical_gs_required_shape}")
