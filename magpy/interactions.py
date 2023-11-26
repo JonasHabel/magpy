@@ -133,6 +133,11 @@ class NthNearestNeighborDMInteraction(NthNearestNeighborInteraction):
         super().__init__(lattice, n, TWO_SPIN_INT_TENSORS["DM"](D))
 
 
+class NthNearestNeighborIsingInteraction(NthNearestNeighborInteraction):
+    def __init__(self, lattice: BravaisLattice, n: int, J):
+        super().__init__(lattice, n, TWO_SPIN_INT_TENSORS["Ising"](J))
+
+
 class KitaevInteraction(CompositeInteraction):
     def __init__(self, lattice: BravaisLattice, K, order=("x", "z", "y")):
         nns = lattice.compute_nth_nearest_neighbors_for_entire_unit_cell(n=1)
