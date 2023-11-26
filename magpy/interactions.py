@@ -141,8 +141,10 @@ class NthNearestNeighborDMInteraction(NthNearestNeighborInteraction):
 
 
 class NthNearestNeighborIsingInteraction(NthNearestNeighborInteraction):
-    def __init__(self, lattice: BravaisLattice, n: int, J):
-        super().__init__(lattice, n, TWO_SPIN_INT_TENSORS["Ising"](J))
+    def __init__(self, lattice: BravaisLattice, n: int, dir, J):
+        if type(dir) == str:
+            dir = map_dir_to_index(dir)
+        super().__init__(lattice, n, TWO_SPIN_INT_TENSORS["Ising"](dir, J))
 
 
 class KitaevInteraction(CompositeInteraction):
