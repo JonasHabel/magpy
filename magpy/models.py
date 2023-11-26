@@ -340,7 +340,7 @@ matrix.
 bravais_trans is a quadratic array of integers.
 Its rows are the new bravais vectors expressed in coordinates of the old ones.
 """
-def transform(model: Model, bravais_trans):
+def transform(model: Model, bravais_trans, new_classical_ground_state=None):
     dim = bravais_trans.shape
     if len(dim) != 2 or dim[0] != model.lattice.dim or dim[0] != dim[1]:
         raise Exception(f"lattice dimension {model.lattice.dim} " +
@@ -381,7 +381,6 @@ def transform(model: Model, bravais_trans):
 
     old_num_sites_unit_cell = old_lattice.num_sites_unit_cell
     scale_factor = int(np.round(np.abs(np.linalg.det(trans_active))))
-    # new_num_sites_unit_cell = old_num_sites_unit_cell * scale_factor
     new_sublattices = np.array([
         model.lattice.bravais_vecs.T @ coord + subl \
         for coord in new_unit_cell_sites_coords \
@@ -469,7 +468,15 @@ def transform(model: Model, bravais_trans):
             zip(*all_translated_sites)
         ))
 
-    new_classical_gs = np.tile(model.classical_gs, (scale_factor, 1))
+    new_num_sites_unit_cell = old_num_sites_unit_cell * scale_factor
+    if new_classical_ground_state is None:
+        new_classical_gs = np.tile(model.classical_gs, (scale_factor, 1))
+    elif new_classical_ground_state.shape != (new_num_sites_unit_cell, 3):
+        raise Exception("new classical ground state array has wrong shape " \
+                + f"{new_classical_ground_state.shape}. Should be " \
+                + f"{(new_num_sites_unit_cell, 3)}")
+    else:
+        new_classical_gs = new_classical_ground_state
 
     model_with_enlarged_unit_cell = Model(
         new_lattice,
