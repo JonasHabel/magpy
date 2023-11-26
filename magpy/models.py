@@ -256,9 +256,10 @@ inter_model_interactions specifies additional "off-diagonal" interactions
 between sites of model1 and sites of model2.
 """
 def direct_product(model1: Model, model2: Model,
-          inter_model_interactions=[],
-          sublattice_shifts=None,
-          new_classical_ground_state=None):
+        inter_model_edges=[],
+        inter_model_interactions=[],
+        sublattice_shifts=None,
+        new_classical_ground_state=None):
     old_lattice1, old_lattice2 = model1.lattice, model2.lattice
     if old_lattice1.dim != old_lattice2.dim:
         raise Exception("dimensions do not match: " + \
@@ -290,15 +291,18 @@ def direct_product(model1: Model, model2: Model,
     if sublattice_shifts is not None:
         new_sublattices += sublattice_shifts
 
-    new_lattice = BravaisLattice(
-        old_lattice1.bravais_vecs.copy(),
-        new_sublattices,
-        old_lattice1.edges + list(map(
+    new_edges = old_lattice1.edges \
+        + list(map(
             lambda edge: BravaisLattice.Edge(
                 edge.bravais_coords.copy(),
                 edge.subl_idxs + old_lattice1.num_sites_unit_cell
-            ),
-            old_lattice2.edges)),
+            ), old_lattice2.edges)) \
+        + inter_model_edges
+
+    new_lattice = BravaisLattice(
+        old_lattice1.bravais_vecs.copy(),
+        new_sublattices,
+        new_edges,
         new_hisym_points
     )
 
