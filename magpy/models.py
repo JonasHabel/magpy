@@ -257,6 +257,7 @@ between sites of model1 and sites of model2.
 """
 def direct_product(model1: Model, model2: Model,
           inter_model_interactions=[],
+          sublattice_shifts=None,
           new_classical_ground_state=None):
     old_lattice1, old_lattice2 = model1.lattice, model2.lattice
     if old_lattice1.dim != old_lattice2.dim:
@@ -283,10 +284,15 @@ def direct_product(model1: Model, model2: Model,
         **old_lattice1.reciprocal_lattice.high_symmetry_points)
     new_hisym_points.update(
         old_lattice2.reciprocal_lattice.high_symmetry_points)
+    
+    new_sublattices = np.concatenate(
+        (old_lattice1.sublattices, old_lattice2.sublattices))
+    if sublattice_shifts is not None:
+        new_sublattices += sublattice_shifts
 
     new_lattice = BravaisLattice(
         old_lattice1.bravais_vecs.copy(),
-        np.concatenate((old_lattice1.sublattices, old_lattice2.sublattices)),
+        new_sublattices,
         old_lattice1.edges + list(map(
             lambda edge: BravaisLattice.Edge(
                 edge.bravais_coords.copy(),
