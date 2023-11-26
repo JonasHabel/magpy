@@ -92,6 +92,8 @@ class DMInteraction(TwoSpinInteraction):
 
 class AnisotropyInteraction(TwoSpinInteraction):
     def __init__(self, sublattice_index: int, dir, A):
+        if type(dir) == str:
+            dir = map_dir_to_index(dir)
         super().__init__(
             BravaisLattice.Edge(np.array([0, 0]), np.array([sublattice_index]*2)),
             TWO_SPIN_INT_TENSORS["Ising"](dir, A))
