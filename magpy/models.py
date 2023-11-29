@@ -143,16 +143,20 @@ def stack(model: Model, num_layers: int,
                 additional_bravais_vec,
             ]
         else:
-            # extend lattice and embedding space dimension by one and
-            # choose (0, ..., 0, 1) as the additional bravais vector along
-            # the new dimension
+            # extend lattice and embedding space dimension by one
             new_embedding_dim = old_embedding_dim + 1
+
+            if additional_bravais_vec is None:
+                # choose (0, ..., 0, 1) as the additional bravais vector along
+                # the new dimension
+                additional_bravais_vec = np.zeros(new_embedding_dim)
+                additional_bravais_vec[-1] = num_layers*distance_between_layers
 
             new_bravais_vecs = np.r_[
                 np.c_[model.lattice.bravais_vecs, np.zeros(old_dim)],
                 np.zeros((1, new_dim)),
             ]
-            new_bravais_vecs[-1, -1] = num_layers * distance_between_layers
+            new_bravais_vecs[-1] = additional_bravais_vec
     
         if new_bravais_vecs.shape != (new_dim, new_embedding_dim):
             raise Exception(
@@ -235,7 +239,7 @@ def stack(model: Model, num_layers: int,
         new_interactions += new_inters
     new_interactions += interlayer_interactions
 
-    if new_classical_ground_state == None:
+    if new_classical_ground_state is None:
         new_classical_ground_state = np.tile(
             model.classical_gs, (num_layers, 1)
         )
