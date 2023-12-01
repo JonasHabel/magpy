@@ -484,6 +484,41 @@ class SimpleCubicLattice(BravaisLattice):
 
 
 
+class BodyCenteredCubicLattice(BravaisLattice):
+    def __init__(self):
+        super().__init__(
+            bravais_vecs=np.array([
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]),
+            sublattices=np.array([[0, 0, 0], [0.5, 0.5, 0.5]]),
+            edges=[
+                # edges along cubic axes
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([0, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([0, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([0, 0])),
+                # edges along space diagonals connecting to the body center
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 1])),
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([1, 1, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([1, 0, 1]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 1]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([1, 1, 1]), np.array([1, 0])),
+            ],
+            reciprocal_high_symmetry_points={
+                "Gamma": np.array([0, 0, 0]),
+                "H": np.array([1, 0, 0]),
+                "N": np.array([1/2, 1/2, 0]),
+                "P": np.array([1/2, 1/2, 1/2]),
+            },
+            open_bc_configs={} # TODO
+        )
+
+
+
 class HoneycombLatticeA(BravaisLattice):
     def __init__(self):
         super().__init__(
