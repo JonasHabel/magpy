@@ -320,8 +320,9 @@ class ReciprocalLattice:
         if len(Nks) != len(self.reciprocal_vecs):
             raise Exception(f"invalid number of axes {len(Nks)}. Should be " \
                           + f"{len(self.reciprocal_vecs)}")
-        dim = len(Nks)
         
+        embedding_dim = self.reciprocal_vecs.shape[1]
+
         # momenta in the basis of the reciprocal lattice vectors
         momenta = np.meshgrid(*[
             np.linspace(0, 1, Nk, endpoint=False) for Nk in Nks
@@ -332,10 +333,10 @@ class ReciprocalLattice:
         momenta = np.tensordot(reciprocal_vecs, momenta, axes=[[0], [0]])
         # move momenta by offset
         if offset is None:
-            offset = np.zeros(dim)
+            offset = np.zeros(embedding_dim)
         elif type(offset) == str and offset == "center":
             offset = -0.5*np.sum(reciprocal_vecs, axis=0)
-        for coord_idx in range(dim):
+        for coord_idx in range(embedding_dim):
             momenta[coord_idx] += offset[coord_idx]
 
         return momenta
