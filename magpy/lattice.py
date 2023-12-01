@@ -459,6 +459,31 @@ class ReciprocalLattice:
 
 
 
+class SimpleCubicLattice(BravaisLattice):
+    def __init__(self):
+        super().__init__(
+            bravais_vecs=np.array([
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]),
+            sublattices=np.array([[0, 0, 0]]),
+            edges=[
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([0, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([0, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([0, 0])),
+            ],
+            reciprocal_high_symmetry_points={
+                "Gamma": np.array([0, 0, 0]),
+                "X": np.array([1/2, 0, 0]),
+                "M": np.array([1/2, 1/2, 0]),
+                "R": np.array([1/2, 1/2, 1/2]),
+            },
+            open_bc_configs={} # TODO
+        )
+
+
+
 class HoneycombLatticeA(BravaisLattice):
     def __init__(self):
         super().__init__(
