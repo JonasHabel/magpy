@@ -628,6 +628,67 @@ class FaceCenteredCubicPrimitiveLattice(BravaisLattice):
         )
 
 
+class DiamondLattice(BravaisLattice):
+    def __init__(self):
+        super().__init__(
+            bravais_vecs=np.array([
+                [0.5, 0, 0.5],
+                [0.5, 0.5, 0],
+                [0, 0.5, 0.5],
+            ]),
+            sublattices=np.array([[0, 0, 0], [0.25, 0.25, 0.25]]),
+            edges=[
+                # intra-unit-cell edge
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 1])),
+                # inter-unit-cell edges
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([1, 0])),
+            ],
+            reciprocal_high_symmetry_points=\
+                FaceCenteredCubicPrimitiveLattice(). \
+                reciprocal_lattice.high_symmetry_points,
+            open_bc_configs={} # TODO
+        )
+
+
+class PyrochloreLattice(BravaisLattice):
+    def __init__(self):
+        super().__init__(
+            bravais_vecs=np.array([
+                [0.5, 0, 0.5],
+                [0.5, 0.5, 0],
+                [0, 0.5, 0.5],
+            ]),
+            sublattices=np.array([
+                [0, 1, 0],
+                [0, 0, 1],
+                [1, 0, 0],
+                [1, 1, 1],
+            ]) / 4.0,
+            edges=[
+                # intra-unit-cell tetrahedron edges
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 1])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 2])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 3])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([1, 2])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([1, 3])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([2, 3])),
+                # inter-unit-cell edges
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([3, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([3, 1])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([3, 2])),
+                BravaisLattice.Edge(np.array([0, 1, -1]), np.array([2, 1])),
+                BravaisLattice.Edge(np.array([1, 0, -1]), np.array([2, 0])),
+                BravaisLattice.Edge(np.array([1, -1, 0]), np.array([1, 0])),
+            ],
+            reciprocal_high_symmetry_points=\
+                FaceCenteredCubicPrimitiveLattice(). \
+                reciprocal_lattice.high_symmetry_points,
+            open_bc_configs={} # TODO
+        )
+
+
 
 class HoneycombLatticeA(BravaisLattice):
     def __init__(self):
