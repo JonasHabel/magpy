@@ -519,6 +519,55 @@ class BodyCenteredCubicLattice(BravaisLattice):
 
 
 
+class FaceCenteredCubicLattice(BravaisLattice):
+    def __init__(self):
+        super().__init__(
+            bravais_vecs=np.array([
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]),
+            sublattices=np.array([
+                [0, 0, 0],
+                [0.5, 0.5, 0],
+                [0.5, 0, 0.5],
+                [0, 0.5, 0.5],
+            ]),
+            edges=[
+                # edges along cubic axes
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([0, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([0, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([0, 0])),
+                # edges along face diagonals connecting to the face centers
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 1])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 2])),
+                BravaisLattice.Edge(np.array([0, 0, 0]), np.array([0, 3])),
+
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([1, 0])),
+                BravaisLattice.Edge(np.array([1, 1, 0]), np.array([1, 0])),
+
+                BravaisLattice.Edge(np.array([1, 0, 0]), np.array([2, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([2, 0])),
+                BravaisLattice.Edge(np.array([1, 0, 1]), np.array([2, 0])),
+
+                BravaisLattice.Edge(np.array([0, 1, 0]), np.array([3, 0])),
+                BravaisLattice.Edge(np.array([0, 0, 1]), np.array([3, 0])),
+                BravaisLattice.Edge(np.array([0, 1, 1]), np.array([3, 0])),
+            ],
+            reciprocal_high_symmetry_points={
+                "Gamma": np.array([0, 0, 0]),
+                "X": np.array([1, 0, 0]),
+                "L": np.array([1/2, 1/2, 1/2]),
+                "W": np.array([1, 1/2, 0]),
+                "U": np.array([1, 1/4, 1/4]),
+                "K": np.array([3/2, 3/2, 0]),
+            },
+            open_bc_configs={} # TODO
+        )
+
+
+
 class HoneycombLatticeA(BravaisLattice):
     def __init__(self):
         super().__init__(
