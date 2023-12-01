@@ -586,10 +586,10 @@ class FaceCenteredCubicLattice(BravaisLattice):
             ],
             reciprocal_high_symmetry_points={
                 "Gamma": np.array([0, 0, 0]),
-                "X": np.array([1, 0, 0]),
+                "X": np.array([0, 1, 0]),
                 "L": np.array([1/2, 1/2, 1/2]),
-                "W": np.array([1, 1/2, 0]),
-                "U": np.array([1, 1/4, 1/4]),
+                "W": np.array([1/2, 1, 0]),
+                "U": np.array([1/4, 1, 1/4]),
                 "K": np.array([3/2, 3/2, 0]),
             },
             open_bc_configs={} # TODO
