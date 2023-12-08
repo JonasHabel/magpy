@@ -616,7 +616,7 @@ def add_custom_open_bc(model: Model, slab_sizes, slab_surface_coords,
     model_enlarged_unit_cell = transform(model, bravais_transf)
 
     if new_dim == 0:
-        new_bravais_vecs = np.zeros((0, 1))
+        new_bravais_vecs = np.zeros((0, model.lattice.embedding_dim))
     elif new_dim == 1:
         new_bravais_vecs = np.array([
             slab_surface_coords[0] @ model.lattice.bravais_vecs,
