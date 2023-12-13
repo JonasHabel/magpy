@@ -159,7 +159,7 @@ class KitaevInteraction(CompositeInteraction):
         ])
 
     def bond_order_key(lattice: BravaisLattice, nn):
-        nn_canonical_basis = lattice.get_canonical_coords(nn)
+        nn_canonical_basis = lattice.get_canonical_coords_for_edge(nn)
         return np.angle(nn_canonical_basis[0] + 1j*nn_canonical_basis[1])
 
 
