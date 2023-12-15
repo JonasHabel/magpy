@@ -11,10 +11,14 @@ returns: list of numpy array
     tensor of coeff.s of the {order}-th order interaction vertices
     in momentum/band space (= LSWT eigenspace)
     e.g. order=3, returns the coefficients of
-        α_{-ks[0]}^† α_{-ks[1]}^† α_{-k[2]}^†
-        α_{-ks[0]}^† α_{-ks[1]}^† α_{k[2]}
-        α_{-ks[0]}^† α_{ks[1]} α_{k[2]}
         α_{ks[0]} α_{ks[1]} α_{k[2]}
+        α_{-ks[0]} α_{ks[1]} α_{k[2]}^†
+        α_{-ks[0]} α_{ks[1]}^† α_{k[2]}
+        α_{-ks[0]}^† α_{ks[1]} α_{k[2]}
+        α_{-ks[0]} α_{-ks[1]}^† α_{k[2]}^†
+        α_{-ks[0]}^† α_{-ks[1]} α_{k[2]}^†
+        α_{-ks[0]}^† α_{-ks[1]}^† α_{k[2]}
+        α_{-ks[0]}^† α_{-ks[1]}^† α_{-k[2]}^†
     where 
     
     Note: the eigenvectors {eigvs} must be evaluated at the same momenta as
