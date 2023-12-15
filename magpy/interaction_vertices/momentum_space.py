@@ -1,6 +1,6 @@
 import numpy as np
 from ..models import Model
-from .real_space import compute_interaction_Hamiltonian_real_space
+from . import real_space
 from ..util_jit import prod, permute
 from .util import GET_CUBIC_PERMUTATIONS
 from numba import njit
@@ -19,7 +19,7 @@ returns: list of numpy array
     Note: momentum conservation is not enforced on this level.
     Note: the coefficients are not symmetrized.
 """
-def compute_interaction_Hamiltonian_momentum_space(model: Model, order, ks,
+def compute_interaction_Hamiltonian(model: Model, order, ks,
         interaction_Hamiltonian_real_space=None):
     if order not in [3] or any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for cubic vertices of one- or two-spin interactions.")
@@ -33,7 +33,7 @@ def compute_interaction_Hamiltonian_momentum_space(model: Model, order, ks,
 
     magnon_Hs_real_space = interaction_Hamiltonian_real_space \
         if interaction_Hamiltonian_real_space is not None \
-        else compute_interaction_Hamiltonian_real_space(model, order)
+        else real_space.compute_interaction_Hamiltonian(model, order)
     
     interaction_tensors_real_space, sublattice_indices, bravais_vecs = \
         __extract_real_space_Hamiltonian_quantities_for_jit(
@@ -41,17 +41,17 @@ def compute_interaction_Hamiltonian_momentum_space(model: Model, order, ks,
     
     # need this case distinction for numba
     if model.lattice.dim == 0:
-        return compute_interaction_Hamiltonian_momentum_space_0d_jit(order,
+        return compute_interaction_Hamiltonian_0d_jit(order,
             interaction_tensors_real_space, sublattice_indices, bravais_vecs,
             model.lattice.num_sites_unit_cell)
     else:
-        return compute_interaction_Hamiltonian_momentum_space_jit(order, ks,
+        return compute_interaction_Hamiltonian_jit(order, ks,
             interaction_tensors_real_space, sublattice_indices, bravais_vecs,
             model.lattice.num_sites_unit_cell)
 
 
 @njit
-def compute_interaction_Hamiltonian_momentum_space_0d_jit(order,
+def compute_interaction_Hamiltonian_0d_jit(order,
         interaction_tensors_real_space, sublattice_indices, bravais_vecs,
         num_sites_unit_cell):
     H_dim = 2*num_sites_unit_cell
@@ -74,7 +74,7 @@ def compute_interaction_Hamiltonian_momentum_space_0d_jit(order,
 
 
 @njit
-def compute_interaction_Hamiltonian_momentum_space_jit(order, ks,
+def compute_interaction_Hamiltonian_jit(order, ks,
         interaction_tensors_real_space, sublattice_indices, bravais_vecs,
         num_sites_unit_cell):
     H_dim = 2*num_sites_unit_cell
@@ -117,7 +117,7 @@ returns: numpy array
     tensors of coeff.s of cubic interaction vertices for every permutation of
     [-k-q, q, k], where q runs over the whole Brioullin zone
 """
-def compute_cubic_interaction_Hamiltonian_for_loop_momentum(model: Model,
+def compute_cubic_interaction_Hamiltonian_loop(model: Model,
         k, momenta_BZ, interaction_Hamiltonian_real_space=None):
     if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
@@ -132,20 +132,20 @@ def compute_cubic_interaction_Hamiltonian_for_loop_momentum(model: Model,
 
     magnon_Hs_real_space = interaction_Hamiltonian_real_space \
         if interaction_Hamiltonian_real_space is not None \
-        else compute_interaction_Hamiltonian_real_space(model, order=3)
+        else real_space.compute_interaction_Hamiltonian(model, order=3)
     
     interaction_tensors_real_space, sublattice_indices, bravais_vecs = \
         __extract_real_space_Hamiltonian_quantities_for_jit(
             model, magnon_Hs_real_space)
     
-    return compute_cubic_interaction_Hamiltonian_for_loop_momentum_jit(
+    return compute_cubic_interaction_Hamiltonian_loop_jit(
         k, momenta_BZ,
         interaction_tensors_real_space, sublattice_indices, bravais_vecs,
         model.lattice.num_sites_unit_cell)
     
 
 @njit
-def compute_cubic_interaction_Hamiltonian_for_loop_momentum_jit(
+def compute_cubic_interaction_Hamiltonian_loop_jit(
         k, momenta_BZ,
         interaction_tensors_real_space, sublattice_indices, bravais_vecs,
         num_sites_unit_cell):
@@ -166,7 +166,7 @@ def compute_cubic_interaction_Hamiltonian_for_loop_momentum_jit(
             ks[0], ks[1], ks[2] = -k-q, q, k
             ks = permute(ks, permutation)
             magnon_H_loop_mom[nperm, nq] = \
-                compute_interaction_Hamiltonian_momentum_space_jit(3,
+                compute_interaction_Hamiltonian_jit(3,
                     ks, interaction_tensors_real_space, sublattice_indices,
                     bravais_vecs, num_sites_unit_cell)
             # magnon_H_k_q_kminusq_perm = \

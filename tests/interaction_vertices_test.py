@@ -1,9 +1,8 @@
 from magpy.lattice import *
 from magpy import models
 from magpy.interactions import *
-from magpy.interaction_vertices.real_space import *
-from magpy.interaction_vertices.momentum_space import *
-from magpy.interaction_vertices.eigenspace import *
+from magpy.interaction_vertices import real_space, momentum_space, eigenspace
+from magpy.interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from magpy import LSWT
 import numpy as np
 from magpy.util import permute
@@ -16,7 +15,7 @@ def test_two_site_quantum_dot_with_DMI():
     ], classical_ground_state=np.array([[0, 0, 1], [0, 0, 1]]))
 
     # REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
 
     # expect -1/sqrt(2) [a_2^† a_1 a_2 - a_1^† a_1 a_2 + h.c.] 
     #       - 1/sqrt(8) [a_1^† a_1 a_1 - a_2^† a_2 a_2 + h.c.]
@@ -55,7 +54,7 @@ def test_two_site_quantum_dot_with_DMI():
     assert np.allclose(expected_int_tensor_121, verts_real_space[5].interaction_tensor)
 
     # MOMENTUM SPACE
-    vert_mom_space = compute_interaction_Hamiltonian_momentum_space(
+    vert_mom_space = momentum_space.compute_interaction_Hamiltonian(
         mod, 3, np.array([[]]), verts_real_space)
     
     expected_vert_mom_space = 1/(2*np.sqrt(8)) * np.array([
@@ -71,7 +70,7 @@ def test_two_site_quantum_dot_with_DMI():
     _, eigvs = LSWT.get_eigensystem_momentum_space(mod, np.array([0]))
     eigvs = np.array([eigvs, eigvs, eigvs])
     
-    vert_eigenspace = compute_interaction_Hamiltonian_LSWT_eigenspace(
+    vert_eigenspace = eigenspace.compute_interaction_Hamiltonian(
         mod, 3, eigvs, vert_mom_space)
     
     assert np.allclose(vert_eigenspace, expected_vert_mom_space)
@@ -87,7 +86,7 @@ def test_field_orthogonal_to_quantization_direction():
     mod = models.Model(latt, inter, np.array([[0, 0, 1]]))
 
     # REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
     
     # expect -1/(2*sqrt(8)) ((Bx + iBy) a_i^† a_i^† a_i + h.c.)
     # up to gauge choice
@@ -111,7 +110,7 @@ def test_field_orthogonal_to_quantization_direction():
     ks = np.array([[np.random.rand(), np.random.rand()],
                    [np.random.rand(), np.random.rand()]])
     ks = np.array([*ks, -ks[0]-ks[1]])
-    vert_mom_space = compute_interaction_Hamiltonian_momentum_space(
+    vert_mom_space = momentum_space.compute_interaction_Hamiltonian(
         mod, 3, ks, verts_real_space)
     # in this testcase, the real space and momentum space vertex coefficients
     # should be the same
@@ -122,7 +121,7 @@ def test_field_orthogonal_to_quantization_direction():
     for n, k in enumerate(ks):
         _, eigvs[n] = LSWT.get_eigensystem_momentum_space(mod, k)
     eigvs = np.array(eigvs)
-    vert_eigenspace = compute_interaction_Hamiltonian_LSWT_eigenspace(
+    vert_eigenspace = eigenspace.compute_interaction_Hamiltonian(
         mod, 3, eigvs, vert_mom_space
     )
     assert np.allclose(vert_eigenspace, np.einsum(
@@ -135,7 +134,7 @@ def test_field_orthogonal_to_quantization_direction():
     momenta_BZ = mod.lattice.reciprocal_lattice.sample_inverse_unit_cell(
         N_BZ).reshape((*N_BZ, 2))
     verts_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, k, momenta_BZ)
     
     assert np.allclose(verts_for_loop_momentum,
@@ -147,7 +146,7 @@ def test_field_orthogonal_to_quantization_direction():
     _, eigvs_minus_k_minus_BZ = LSWT.get_eigensystem_for_loop_momentum(
         mod, -k, N_BZ)
     verts_eigenspace_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ, 
             verts_for_loop_momentum)
     
@@ -175,7 +174,7 @@ def test_FM_Heisenberg():
     mod = models.Model(latt, inter, np.array([[0, 0, 1]]*2))
 
     # REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
     # FM interaction does not yield any cubic terms
     assert all(map(
         lambda vert: np.all(vert.interaction_tensor == 0),
@@ -185,7 +184,7 @@ def test_FM_Heisenberg():
     ks = np.array([[np.random.rand(), np.random.rand()],
                    [np.random.rand(), np.random.rand()]])
     ks = np.array([*ks, -ks[0]-ks[1]])
-    vert_mom_space = compute_interaction_Hamiltonian_momentum_space(
+    vert_mom_space = momentum_space.compute_interaction_Hamiltonian(
         mod, 3, ks, verts_real_space)
     assert np.all(vert_mom_space == 0)
 
@@ -194,7 +193,7 @@ def test_FM_Heisenberg():
     for n, k in enumerate(ks):
         _, eigvs[n] = LSWT.get_eigensystem_momentum_space(mod, k)
     eigvs = np.array(eigvs)
-    vert_eigenspace = compute_interaction_Hamiltonian_LSWT_eigenspace(
+    vert_eigenspace = eigenspace.compute_interaction_Hamiltonian(
         mod, 3, eigvs, vert_mom_space
     )
     assert np.all(vert_eigenspace == 0)
@@ -220,7 +219,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
 
 
     # REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
 
 
 
@@ -312,7 +311,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
                    [np.random.rand(), np.random.rand()]])
     # ks = np.array([[1, 0], [1, 0]])
     ks = np.array([*ks, -ks[0]-ks[1]])
-    vert_mom_space = compute_interaction_Hamiltonian_momentum_space(
+    vert_mom_space = momentum_space.compute_interaction_Hamiltonian(
         mod, 3, ks, verts_real_space)
     expected_caa_vert = D[2] * 1j/np.sqrt(2) * sum([
         np.exp(1j*np.dot(ks[0] + ks[1], nnn)) - np.exp(1j*np.dot(ks[1], nnn)) \
@@ -344,7 +343,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     for n, k in enumerate(ks):
         _, eigvs[n] = LSWT.get_eigensystem_momentum_space(mod, k)
     eigvs = np.array(eigvs)
-    vert_eigenspace = compute_interaction_Hamiltonian_LSWT_eigenspace(
+    vert_eigenspace = eigenspace.compute_interaction_Hamiltonian(
         mod, 3, eigvs, vert_mom_space
     )
     assert np.allclose(vert_eigenspace, np.einsum(
@@ -359,7 +358,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     momenta_BZ = mod.lattice.reciprocal_lattice.sample_inverse_unit_cell(
         N_BZ).reshape((*N_BZ, 2))
     verts_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, k, momenta_BZ)
     
     
@@ -369,7 +368,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     _, eigvs_minus_k_minus_BZ = LSWT.get_eigensystem_for_loop_momentum(
         mod, -k, N_BZ)
     verts_eigenspace_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ, verts_for_loop_momentum)
     
     for n, p in enumerate(GET_CUBIC_PERMUTATIONS()):

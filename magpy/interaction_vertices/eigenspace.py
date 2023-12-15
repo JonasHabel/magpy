@@ -26,17 +26,17 @@ returns: list of numpy array
     Note: momentum conservation is not enforced on this level.
     Note: the coefficients are not symmetrized.
 """
-def compute_interaction_Hamiltonian_LSWT_eigenspace(model: Model, order, eigvs,
+def compute_interaction_Hamiltonian(model: Model, order, eigvs,
         interaction_Hamiltonian_mom_space):
     if order not in [3] or any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for cubic vertices of one- or two-spin interactions.")
     
-    return compute_interaction_Hamiltonian_LSWT_eigenspace_jit(order, eigvs,
+    return compute_interaction_Hamiltonian_jit(order, eigvs,
         interaction_Hamiltonian_mom_space)
 
 
 @njit
-def compute_interaction_Hamiltonian_LSWT_eigenspace_jit(
+def compute_interaction_Hamiltonian_jit(
         order, eigvs, magnon_H_mom_space):
     magnon_H_eigenspace = np.zeros(magnon_H_mom_space.shape,
                                    dtype=np.complex128)
@@ -60,7 +60,7 @@ def compute_interaction_Hamiltonian_LSWT_eigenspace_jit(
 
 
 
-def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+def compute_cubic_interaction_Hamiltonian_loop(
         model: Model, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ,
         cubic_interaction_Hamiltonian_for_loop_momentum):
     num_perms = cubic_interaction_Hamiltonian_for_loop_momentum.shape[0]
@@ -77,7 +77,7 @@ def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
         .reshape((num_perms, num_ks, *H_dim))
     
     cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum = \
-    compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum_jit(
+    compute_cubic_interaction_Hamiltonian_loop_jit(
             eigvs_at_k, eigvs_BZ_flat, eigvs_minus_k_minus_BZ_flat,
             cubic_interaction_Hamiltonian_for_loop_momentum_flat)
     
@@ -86,7 +86,7 @@ def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
 
 
 @njit
-def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum_jit(
+def compute_cubic_interaction_Hamiltonian_loop_jit(
         eigvs_at_k, eigvs_BZ_flat, eigvs_minus_k_minus_BZ_flat,
         magnon_H_for_loop_momentum_flat):
     magnon_H_eigenspace_for_loop_momentum_flat = np.zeros(
@@ -109,7 +109,7 @@ def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum_jit(
             eigvs[2] = eigvs_at_k
             eigvs = permute(eigvs, permutation)
             magnon_H_eigenspace_for_loop_momentum_flat[nperm, nq] = \
-                compute_interaction_Hamiltonian_LSWT_eigenspace_jit(
+                compute_interaction_Hamiltonian_jit(
                     3, eigvs, magnon_H_mom_space_k_q_minuskminusq)
     
     return magnon_H_eigenspace_for_loop_momentum_flat

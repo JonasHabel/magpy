@@ -1,10 +1,8 @@
 from magpy.lattice import *
 from magpy import models
 from magpy.interactions import *
-from magpy.interaction_vertices.real_space import *
-from magpy.interaction_vertices.momentum_space import *
-from magpy.interaction_vertices.eigenspace import *
-from magpy.interaction_vertices.util import *
+from magpy.interaction_vertices import real_space, momentum_space, eigenspace
+from magpy.interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from magpy import LSWT
 from magpy.self_energies import *
 import numpy as np
@@ -19,15 +17,15 @@ def test_two_site_quantum_dot_with_DMI():
     ], classical_ground_state=np.array([[0, 0, 1], [0, 0, 1]]))
 
     # VERTICES REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
 
     # VERTICES MOMENTUM SPACE
-    vert_mom_space = compute_interaction_Hamiltonian_momentum_space(
+    vert_mom_space = momentum_space.compute_interaction_Hamiltonian(
         mod, 3, np.array([[]]), verts_real_space)
 
     _, eigvs = LSWT.get_eigensystem_momentum_space(mod, np.array([0]))
     eigvs = np.array([eigvs, eigvs, eigvs])
-    vert_eigenspace = compute_interaction_Hamiltonian_LSWT_eigenspace(
+    vert_eigenspace = eigenspace.compute_interaction_Hamiltonian(
         mod, 3, eigvs, vert_mom_space)
     verts_eigenspace = np.array([vert_eigenspace]*len(GET_CUBIC_PERMUTATIONS()))
 
@@ -56,7 +54,7 @@ def test_field_orthogonal_to_quantization_direction():
     mod = models.Model(latt, inter, np.array([[0, 0, 1]]))
 
     # VERTICES REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
 
     # VERTICES MOMENTUM SPACE
     k = np.array([np.random.rand(), np.random.rand()])
@@ -64,7 +62,7 @@ def test_field_orthogonal_to_quantization_direction():
     momenta_BZ = mod.lattice.reciprocal_lattice.sample_inverse_unit_cell(
         N_BZ).reshape((*N_BZ, 2))
     verts_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, k, momenta_BZ)
     
     # VERTICES EIGENSPACE
@@ -74,7 +72,7 @@ def test_field_orthogonal_to_quantization_direction():
     _, eigvs_minus_k_minus_BZ = \
         LSWT.get_eigensystem_for_loop_momentum(mod, -k, N_BZ)
     verts_eigenspace_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ, 
             verts_for_loop_momentum)
     
@@ -218,7 +216,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     k = kpath.ks[k_idx]
     momenta_BZ = kpath.ks
     cubic_verts_for_loop_momentum_k = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, k, momenta_BZ, cubic_verts_real_space)
     caa = np.array([
         [[0, 0], [0, 0]],
@@ -247,7 +245,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
         for p_idx in range(num_ks)
     ])
     cubic_verts_eigenspace_for_loop_momentum_k = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs[k_idx], eigvs, eigvs_minus_k_minus_BZ,
             cubic_verts_for_loop_momentum_k
         )
@@ -429,10 +427,10 @@ def test_1D_BdG_chain_with_cubic_interaction():
         for p_idx in range(num_ks)
     ])
     cubic_verts_for_loop_momentum_swapped_k = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, k, -momenta_BZ, cubic_verts_real_space)
     cubic_verts_eigenspace_for_loop_momentum_swapped_k = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs[k_idx], eigvs_minus_BZ, eigvs_minus_k_plus_BZ,
             cubic_verts_for_loop_momentum_swapped_k
         )
@@ -455,10 +453,10 @@ def test_1D_BdG_chain_with_cubic_interaction():
         for p_idx in range(num_ks)
     ])
     cubic_verts_for_loop_momentum_minusk = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, -k, -momenta_BZ, cubic_verts_real_space)
     cubic_verts_eigenspace_for_loop_momentum_minusk = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs[(-k_idx) % num_ks], eigvs_minus_BZ, eigvs_k_plus_BZ,
             cubic_verts_for_loop_momentum_minusk
         )
@@ -638,7 +636,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     mod = models.Model(latt, inter, np.array([[1, 0, 0]]*2))
 
     # VERTICES REAL SPACE
-    verts_real_space = compute_interaction_Hamiltonian_real_space(mod, order=3)
+    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
 
     # VERTICES MOMENTUM SPACE
     k = np.array([0.5, 0.5])
@@ -646,7 +644,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     momenta_BZ = mod.lattice.reciprocal_lattice.sample_inverse_unit_cell(
         N_BZ).reshape((*N_BZ, 2))
     verts_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_for_loop_momentum(
+        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
             mod, k, momenta_BZ)
     
     # VERTICES EIGENSPACE
@@ -655,7 +653,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     _, eigvs_minus_k_minus_BZ = LSWT.get_eigensystem_for_loop_momentum(
         mod, -k, N_BZ)
     verts_eigenspace_for_loop_momentum = \
-        compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
+        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
             mod, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ, verts_for_loop_momentum)
     
     freqs = np.linspace(0, 5, 11)

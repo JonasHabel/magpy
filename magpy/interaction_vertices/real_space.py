@@ -15,7 +15,7 @@ returns: list of numpy array
     (there are no terms like a^† a^† a^† or a a a before plugging in the
     Bogoliubov trafo)
 """
-def compute_interaction_Hamiltonian_real_space(model: Model, order):
+def compute_interaction_Hamiltonian(model: Model, order):
     if order not in [3] or any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for cubic vertices of one- or two-spin interactions.")
     
