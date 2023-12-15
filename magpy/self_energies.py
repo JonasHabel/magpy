@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 from .models import *
 from .greens_functions import get_free_propagator_zero_T, get_free_two_magnon_propagator_finite_T
-from .interaction_vertices import GET_CUBIC_PERMUTATIONS
+from .interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from .util import permute
 
 

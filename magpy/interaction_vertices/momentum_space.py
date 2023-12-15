@@ -1,75 +1,9 @@
-
-
 import numpy as np
-from operator import itemgetter
-from .models import Model
-from .lattice import ReciprocalLattice
-from .interactions import Interaction
-from .util import LARGE_S_EXPANSION_COEFF
-from .util_jit import prod, permute
+from ..models import Model
+from .real_space import compute_interaction_Hamiltonian_real_space
+from ..util_jit import prod, permute
+from .util import GET_CUBIC_PERMUTATIONS
 from numba import njit
-
-
-"""
-returns: list of numpy array
-    a list of tensors of coeff.s of the {order}-th order interaction vertices
-    in real space
-    e.g. order=3, returns the coefficients of
-        a^† a^† a
-        a^† a a
-    (there are no terms like a^† a^† a^† or a a a before plugging in the
-    Bogoliubov trafo)
-"""
-def compute_interaction_Hamiltonian_real_space(model: Model, order):
-    if order not in [3] or any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
-        raise NotImplementedError("so far, only implemented for cubic vertices of one- or two-spin interactions.")
-    
-    C = LARGE_S_EXPANSION_COEFF # rename for brevity
-    S = model.get_onsite_spin_quantum_numbers()
-    # caa = creator annihilator annihilator = a^† a a
-    caa = np.zeros((2, 2, 2))
-    caa[1, 0, 0] = 1
-    # cca = creator creator annihilator = a^† a^† a
-    cca = np.zeros((2, 2, 2))
-    cca[1, 1, 0] = 1
-
-    rotated_spin_interactions = model.compute_rotated_interactions()
-    magnon_Hamiltonians = []
-    for inter in rotated_spin_interactions:
-        spin_int_tensor = inter.interaction_tensor
-        if len(inter.sites) == 1:
-            site = inter.sites[0]
-            magnon_BdG_tensor_iii = C[1] * (spin_int_tensor[0] * caa \
-                                          + spin_int_tensor[1] * cca)
-            magnon_H_iii = Interaction([site]*3, magnon_BdG_tensor_iii)
-            magnon_Hamiltonians += [magnon_H_iii]
-        elif len(inter.sites) == 2:
-            site_i, site_j = inter.sites
-            S_iii = S[site_j.subl_idx] / np.sqrt(S[site_i.subl_idx])
-            S_jjj = S[site_i.subl_idx] / np.sqrt(S[site_j.subl_idx])
-            S_jij = S_ijj = np.sqrt(S[site_i.subl_idx])
-            S_iij = S_iji = np.sqrt(S[site_j.subl_idx])
-            magnon_BdG_tensor_iii = S_iii * C[1] * (spin_int_tensor[0, 2] * caa\
-                                                  + spin_int_tensor[1, 2] * cca)
-            magnon_BdG_tensor_jjj = S_jjj * C[1] * (spin_int_tensor[2, 0] * caa\
-                                                  + spin_int_tensor[2, 1] * cca)
-            magnon_BdG_tensor_jij = -S_jij * C[0] * spin_int_tensor[0, 2] * caa
-            magnon_BdG_tensor_ijj = -S_ijj * C[0] * spin_int_tensor[1, 2] * cca
-            magnon_BdG_tensor_iij = -S_iij * C[0] * spin_int_tensor[2, 0] * caa
-            magnon_BdG_tensor_iji = -S_iji * C[0] * spin_int_tensor[2, 1] * cca
-            magnon_H_iii = Interaction([inter.sites[0]]*3, magnon_BdG_tensor_iii)
-            magnon_H_jjj = Interaction([inter.sites[1]]*3, magnon_BdG_tensor_jjj)
-            magnon_H_jij = Interaction([inter.sites[n] for n in [1, 0, 1]], magnon_BdG_tensor_jij)
-            magnon_H_ijj = Interaction([inter.sites[n] for n in [0, 1, 1]], magnon_BdG_tensor_ijj)
-            magnon_H_iij = Interaction([inter.sites[n] for n in [0, 0, 1]], magnon_BdG_tensor_iij)
-            magnon_H_iji = Interaction([inter.sites[n] for n in [0, 1, 0]], magnon_BdG_tensor_iji)
-            magnon_Hamiltonians += [
-                magnon_H_iii, magnon_H_jjj, magnon_H_jij,
-                magnon_H_ijj, magnon_H_iij, magnon_H_iji,
-            ]
-    
-    return magnon_Hamiltonians
-
 
 
 """
@@ -173,6 +107,10 @@ def compute_interaction_Hamiltonian_momentum_space_jit(order, ks,
     return magnon_H_mom_space
 
 
+
+
+
+
 """
 returns: numpy array
     shape is (6, *Nks_BZ, num_bands, num_bands, num_bands)
@@ -205,12 +143,6 @@ def compute_cubic_interaction_Hamiltonian_for_loop_momentum(model: Model,
         interaction_tensors_real_space, sublattice_indices, bravais_vecs,
         model.lattice.num_sites_unit_cell)
     
-
-@njit
-def GET_CUBIC_PERMUTATIONS():
-    return np.array([
-        [0,1,2], [0,2,1], [1,0,2], [1,2,0], [2,0,1], [2,1,0],
-    ])
 
 @njit
 def compute_cubic_interaction_Hamiltonian_for_loop_momentum_jit(
@@ -266,109 +198,3 @@ def __extract_real_space_Hamiltonian_quantities_for_jit(
         magnon_Hs_real_space)))
     
     return interaction_tensors_real_space, sublattice_indices, bravais_vecs
-
-
-
-"""
-returns: list of numpy array
-    tensor of coeff.s of the {order}-th order interaction vertices
-    in momentum/band space (= LSWT eigenspace)
-    e.g. order=3, returns the coefficients of
-        α_{-ks[0]}^† α_{-ks[1]}^† α_{-k[2]}^†
-        α_{-ks[0]}^† α_{-ks[1]}^† α_{k[2]}
-        α_{-ks[0]}^† α_{ks[1]} α_{k[2]}
-        α_{ks[0]} α_{ks[1]} α_{k[2]}
-    where 
-    
-    Note: the eigenvectors {eigvs} must be evaluated at the same momenta as
-          {interaction_Hamiltonian_mom_space} is.
-    Note: momentum conservation is not enforced on this level.
-    Note: the coefficients are not symmetrized.
-"""
-def compute_interaction_Hamiltonian_LSWT_eigenspace(model: Model, order, eigvs,
-        interaction_Hamiltonian_mom_space):
-    if order not in [3] or any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
-        raise NotImplementedError("so far, only implemented for cubic vertices of one- or two-spin interactions.")
-    
-    return compute_interaction_Hamiltonian_LSWT_eigenspace_jit(order, eigvs,
-        interaction_Hamiltonian_mom_space)
-
-
-@njit
-def compute_interaction_Hamiltonian_LSWT_eigenspace_jit(
-        order, eigvs, magnon_H_mom_space):
-    magnon_H_eigenspace = np.zeros(magnon_H_mom_space.shape,
-                                   dtype=np.complex128)
-    H_dim = magnon_H_mom_space.shape
-
-    if order == 3:
-        for mu in range(H_dim[0]):
-            for nu in range(H_dim[1]):
-                for rho in range(H_dim[2]):
-                    for i in range(H_dim[0]):
-                        for j in range(H_dim[1]):
-                            for k in range(H_dim[2]):
-                                magnon_H_eigenspace[mu, nu, rho] += \
-                                    eigvs[0, i, mu] \
-                                  * eigvs[1, j, nu] \
-                                  * eigvs[2, k, rho] \
-                                  * magnon_H_mom_space[i, j, k]
-                                
-    return magnon_H_eigenspace
-
-
-
-
-def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum(
-        model: Model, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ,
-        cubic_interaction_Hamiltonian_for_loop_momentum):
-    num_perms = cubic_interaction_Hamiltonian_for_loop_momentum.shape[0]
-    H_dim = cubic_interaction_Hamiltonian_for_loop_momentum.shape[-3:]
-    Nks = eigvs_BZ.shape[:-2]
-    num_bands = eigvs_BZ.shape[-2] // 2 # == eigvs_BZ.shape[-1]
-    num_ks = np.prod(Nks)
-    eigvs_BZ_flat = eigvs_BZ \
-        .reshape((num_ks, 2*num_bands, 2*num_bands))
-    eigvs_minus_k_minus_BZ_flat = eigvs_minus_k_minus_BZ \
-        .reshape((num_ks, 2*num_bands, 2*num_bands))
-    cubic_interaction_Hamiltonian_for_loop_momentum_flat = \
-        cubic_interaction_Hamiltonian_for_loop_momentum \
-        .reshape((num_perms, num_ks, *H_dim))
-    
-    cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum = \
-    compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum_jit(
-            eigvs_at_k, eigvs_BZ_flat, eigvs_minus_k_minus_BZ_flat,
-            cubic_interaction_Hamiltonian_for_loop_momentum_flat)
-    
-    return cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum \
-        .reshape((num_perms, *Nks, *H_dim))
-
-
-@njit
-def compute_cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum_jit(
-        eigvs_at_k, eigvs_BZ_flat, eigvs_minus_k_minus_BZ_flat,
-        magnon_H_for_loop_momentum_flat):
-    magnon_H_eigenspace_for_loop_momentum_flat = np.zeros(
-        magnon_H_for_loop_momentum_flat.shape, dtype=np.complex128)
-    num_perms = magnon_H_for_loop_momentum_flat.shape[0]
-    num_ks = magnon_H_for_loop_momentum_flat.shape[1]
-    CUBIC_PERMUTATIONS = GET_CUBIC_PERMUTATIONS()
-
-    for nperm, permutation in enumerate(CUBIC_PERMUTATIONS):
-        for nq, magnon_H_mom_space_k_q_minuskminusq, eigvs_at_q, eigvs_at_minus_k_minus_q \
-            in zip(
-                range(num_ks),
-                magnon_H_for_loop_momentum_flat[nperm],
-                eigvs_BZ_flat, eigvs_minus_k_minus_BZ_flat):
-            if nq % 100 == 0:
-                print("nperm = " + str(nperm) + " -- nq = " + str(nq) + " / " + str(len(eigvs_BZ_flat)))
-            eigvs = np.zeros((3, *eigvs_at_k.shape), dtype=np.complex128)
-            eigvs[0] = eigvs_at_minus_k_minus_q
-            eigvs[1] = eigvs_at_q
-            eigvs[2] = eigvs_at_k
-            eigvs = permute(eigvs, permutation)
-            magnon_H_eigenspace_for_loop_momentum_flat[nperm, nq] = \
-                compute_interaction_Hamiltonian_LSWT_eigenspace_jit(
-                    3, eigvs, magnon_H_mom_space_k_q_minuskminusq)
-    
-    return magnon_H_eigenspace_for_loop_momentum_flat
