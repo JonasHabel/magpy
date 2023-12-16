@@ -40,7 +40,35 @@ def permute(arr, perm):
 
 
 @njit
+def permute_all(arr, perms):
+    out_arr = arr
+    for perm in perms[::-1]:
+        out_arr = permute(out_arr, perm)
+    return out_arr
+
+
+@njit
 def Bose_Einstein(energy, T):
     if T == 0:
         return 0
     return 1.0 / (np.exp(energy/T) - 1)
+
+
+__FACTORIAL_LOOKUP_TABLE = np.array([
+    1, 1, 2, 6, 24, 120, 720, 5040, 40320,
+])
+
+@njit
+def factorial(n):
+    if n >= __FACTORIAL_LOOKUP_TABLE.shape[0]:
+        raise ValueError()
+    return __FACTORIAL_LOOKUP_TABLE[n]
+
+
+@njit
+def count(arr, element):
+    counter = 0
+    for x in arr:
+        if x == element:
+            counter += 1
+    return counter

@@ -1,7 +1,7 @@
 import numpy as np
 from ..models import Model
-from ..util_jit import permute
-from .util import GET_CUBIC_PERMUTATIONS
+from ..util_jit import permute, permute_all, factorial, count
+from .util import *
 from numba import njit
 
 
@@ -62,7 +62,8 @@ def compute_interaction_Hamiltonian_jit(
 
 def compute_cubic_interaction_Hamiltonian_loop(
         model: Model, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ,
-        cubic_interaction_Hamiltonian_for_loop_momentum):
+        cubic_interaction_Hamiltonian_for_loop_momentum,
+        normal_order_and_symmetrize=False):
     num_perms = cubic_interaction_Hamiltonian_for_loop_momentum.shape[0]
     H_dim = cubic_interaction_Hamiltonian_for_loop_momentum.shape[-3:]
     Nks = eigvs_BZ.shape[:-2]
@@ -77,9 +78,14 @@ def compute_cubic_interaction_Hamiltonian_loop(
         .reshape((num_perms, num_ks, *H_dim))
     
     cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum = \
-    compute_cubic_interaction_Hamiltonian_loop_jit(
+        compute_cubic_interaction_Hamiltonian_loop_jit(
             eigvs_at_k, eigvs_BZ_flat, eigvs_minus_k_minus_BZ_flat,
             cubic_interaction_Hamiltonian_for_loop_momentum_flat)
+    
+    if normal_order_and_symmetrize:
+        cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum = \
+            normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
+                cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum)
     
     return cubic_interaction_Hamiltonian_LSWT_eigenspace_for_loop_momentum \
         .reshape((num_perms, *Nks, *H_dim))
@@ -113,3 +119,67 @@ def compute_cubic_interaction_Hamiltonian_loop_jit(
                     3, eigvs, magnon_H_mom_space_k_q_minuskminusq)
     
     return magnon_H_eigenspace_for_loop_momentum_flat
+
+
+
+#@njit
+def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
+        magnon_H_eigenspace_for_loop_momentum_flat):
+    CUBIC_PERMUTATIONS = GET_CUBIC_PERMUTATIONS()
+    ANNIHILATOR = 0
+    CREATOR = 1
+    all_ph_idxs = [
+        np.array([
+            [ANNIHILATOR, ANNIHILATOR, ANNIHILATOR],
+        ]),
+        np.array([
+            [CREATOR, ANNIHILATOR, ANNIHILATOR],
+            [ANNIHILATOR, CREATOR, ANNIHILATOR],
+            [ANNIHILATOR, ANNIHILATOR, CREATOR],
+        ]),
+        np.array([
+            [CREATOR, CREATOR, ANNIHILATOR],
+            [CREATOR, ANNIHILATOR, CREATOR],
+            [ANNIHILATOR, CREATOR, CREATOR],
+        ]),
+        np.array([
+            [CREATOR, CREATOR, CREATOR],
+        ]),
+    ]
+    num_perms = magnon_H_eigenspace_for_loop_momentum_flat.shape[0]
+    num_qs = magnon_H_eigenspace_for_loop_momentum_flat.shape[1]
+    H_dim = magnon_H_eigenspace_for_loop_momentum_flat.shape[-3:]
+    H_normal_ordered_dim = np.array(H_dim) // 2
+    # nosym = normal ordered and symmetrized
+    magnon_H_eigenspace_nosym_for_loop_momentum_flat = [
+        [
+            np.zeros((num_qs, *H_normal_ordered_dim), dtype=np.complex128) \
+            for _ in range(len(ph_idxs))
+        ] for ph_idxs in all_ph_idxs
+    ]
+
+    for nph_idxs, ph_idxs in enumerate(all_ph_idxs):
+        for nph_idx, ph_idx in enumerate(ph_idxs):
+            for nperm_bands, perm_bands in enumerate(CUBIC_PERMUTATIONS):
+                ph_idx_permuted = permute(ph_idx, perm_bands)
+                index = (nperm_bands,
+                        slice(None),
+                        *map(lambda ph: slice(ph, None, 2), ph_idx_permuted))
+                # keep BZ momentum index and permute band indices
+                band_permutation = [x+1 for x in perm_bands]
+                magnon_H_eigenspace_nosym_for_loop_momentum_permuted = \
+                    np.transpose(
+                        magnon_H_eigenspace_for_loop_momentum_flat[index],
+                        axes=(0, *band_permutation))
+                
+                magnon_H_eigenspace_nosym_for_loop_momentum_flat[nph_idxs][nph_idx] += \
+                    magnon_H_eigenspace_nosym_for_loop_momentum_permuted
+            
+        # prevent overcounting when symmetrizing
+        normalization_factor = factorial(count(ph_idx, ANNIHILATOR)) * \
+                               factorial(count(ph_idx, CREATOR))
+        for nph_idx, ph_idx in enumerate(ph_idxs):
+            magnon_H_eigenspace_nosym_for_loop_momentum_flat[nph_idxs][nph_idx] /= \
+                normalization_factor
+
+    return magnon_H_eigenspace_nosym_for_loop_momentum_flat
