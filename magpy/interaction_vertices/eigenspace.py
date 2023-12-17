@@ -132,9 +132,12 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
     num_qs = magnon_H_eigenspace_for_loop_momentum_flat.shape[1]
     H_dim = magnon_H_eigenspace_for_loop_momentum_flat.shape[-3:]
     H_normal_ordered_dim = np.array(H_dim) // 2
+    assert np.all(np.array(H_normal_ordered_dim) == H_normal_ordered_dim[0])
     # nosym = normal ordered and symmetrized
     magnon_H_eigenspace_nosym_for_loop_momentum_flat = \
         np.zeros((2**order, num_qs, *H_normal_ordered_dim), dtype=np.complex128)
+    commutator_terms = \
+        np.zeros((order, H_normal_ordered_dim[0]), dtype=np.complex128)
 
     for ph_idx_bits in np.arange(2**order):
         # extract the individual bits representing annihilators/creators.
@@ -164,5 +167,7 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
                                factorial(count(ph_idx, CREATOR))
         magnon_H_eigenspace_nosym_for_loop_momentum_flat[ph_idx_bits] /= \
             normalization_factor
+        
+        
 
     return magnon_H_eigenspace_nosym_for_loop_momentum_flat
