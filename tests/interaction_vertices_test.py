@@ -386,18 +386,18 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
 def test_normal_order_and_symmetrize_one_band_cubic_vertex():
     vertices = np.arange(48).reshape((6, 1, 2, 2, 2)) + 1
     vertices[0, 0, 1, 0, 0] += 990
-    expected_nosym_vertices = [
-        [(1+9+17+25+33+41)/6],
-        [(995+13+19+26+35+42)/2, (21+29+34+43+3+10)/2, (37+45+2+11+18+27)/2],
-        [(7+14+23+30+36+44)/2, (15+20+28+39+46+6)/2, (31+38+47+4+12+22)/2],
-        [(8+16+24+32+40+48)/6],
-    ]
-    for n in range(len(expected_nosym_vertices)):
-        expected_nosym_vertices[n] = np.array(expected_nosym_vertices[n]) \
-            .reshape((len(expected_nosym_vertices[n]), 1, 1, 1, 1))
-
+    vertices[2, 0, 0, 1, 1] += 8800
+    expected_nosym_vertices = np.array([
+        (1+9+17+25+33+41)/6,    # a_{-k-q}  a_{q}    a_{k}
+        (2+11+18+27+37+45)/2,   # a_{-k-q}  a_{q}    a^†_{-k}
+        (3+10+21+29+34+43)/2,   # a_{-k-q}  a^†_{-q} a_{k}
+        (4+12+22+31+38+47)/2,   # a_{-k-q}  a^†_{-q} a^†_{-k}
+        (995+13+19+26+35+42)/2, # a^†_{k+q} a_{q}    a_{k}
+        (6+15+8820+28+39+46)/2, # a^†_{k+q} a_{q}    a^†_{-k}
+        (7+14+23+30+36+44)/2,   # a^†_{k+q} a^†_{-q} a_{k}
+        (8+16+24+32+40+48)/6,   # a^†_{k+q} a^†_{-q} a^†_{-k}
+    ]).reshape((8, 1, 1, 1, 1))
 
     nosym_vertices = eigenspace.normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(vertices)
 
-    for n in range(len(expected_nosym_vertices)):
-        assert np.allclose(expected_nosym_vertices[n], nosym_vertices[n])
+    assert np.allclose(expected_nosym_vertices, nosym_vertices)
