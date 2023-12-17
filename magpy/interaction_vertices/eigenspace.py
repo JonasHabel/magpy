@@ -128,26 +128,7 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
     CUBIC_PERMUTATIONS = GET_CUBIC_PERMUTATIONS()
     ANNIHILATOR = 0
     CREATOR = 1
-    all_ph_idxs = [
-        np.array([
-            [ANNIHILATOR, ANNIHILATOR, ANNIHILATOR],
-        ]),
-        np.array([
-            [CREATOR, ANNIHILATOR, ANNIHILATOR],
-            [ANNIHILATOR, CREATOR, ANNIHILATOR],
-            [ANNIHILATOR, ANNIHILATOR, CREATOR],
-        ]),
-        np.array([
-            [CREATOR, CREATOR, ANNIHILATOR],
-            [CREATOR, ANNIHILATOR, CREATOR],
-            [ANNIHILATOR, CREATOR, CREATOR],
-        ]),
-        np.array([
-            [CREATOR, CREATOR, CREATOR],
-        ]),
-    ]
     order = 3
-    num_perms = magnon_H_eigenspace_for_loop_momentum_flat.shape[0]
     num_qs = magnon_H_eigenspace_for_loop_momentum_flat.shape[1]
     H_dim = magnon_H_eigenspace_for_loop_momentum_flat.shape[-3:]
     H_normal_ordered_dim = np.array(H_dim) // 2
