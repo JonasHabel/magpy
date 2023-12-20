@@ -133,13 +133,13 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
     num_loop_momenta = len(loop_mom_shape)
     H_dim = magnon_H_eigenspace_for_loop_momentum_flat.shape[-order:]
     H_normal_ordered_dim = np.array(H_dim) // 2
-    assert np.all(np.array(loop_mom_shape) == loop_mom_shape[0])
-    assert np.all(np.array(H_normal_ordered_dim) == H_normal_ordered_dim[0])
+    
     # nosym = normal ordered and symmetrized
     magnon_H_eigenspace_nosym_for_loop_momentum_flat = np.zeros(
         (2**order, *loop_mom_shape, *H_normal_ordered_dim),
         dtype=np.complex128)
-    commutator_terms = np.zeros(
+    commutator_terms = {}
+    np.zeros(
         (order, *loop_mom_shape[1:], H_normal_ordered_dim[0]),
         dtype=np.complex128)
 
@@ -168,11 +168,14 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
                 magnon_H_eigenspace_nosym_for_loop_momentum_permuted
             
             # compute commutator terms
-            creator_positions = np.where(ph_idx == CREATOR)[0]
+            creator_positions = np.array(np.where(ph_idx == CREATOR)[0])
+            annihilator_positions = np.array(np.where(ph_idx == ANNIHILATOR)[0])
             for ncreator, creator_pos in enumerate(creator_positions):
                 # for all annihilators left of the creator at {creator_pos},
                 # commute them with the creator. 
-                for annihil_to_left_pos in range(ncreator, creator_pos):
+                annihilator_to_left_positions = annihilator_positions[
+                    np.where(annihilator_positions < creator_pos)]
+                for annihil_to_left_pos in annihilator_to_left_positions:
                     # trace over bands
                     commutator_term = np.trace(
                         magnon_H_eigenspace_nosym_for_loop_momentum_permuted,
