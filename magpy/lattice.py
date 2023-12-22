@@ -16,7 +16,7 @@ class BravaisLattice:
             self.subl_idx = int(sublattice_index)
 
         def __eq__(self, other):
-            return self.bravais_coords == other.bravais_coords \
+            return np.allclose(self.bravais_coords, other.bravais_coords) \
                and self.subl_idx == other.subl_idx
 
         def __hash__(self):
