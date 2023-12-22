@@ -8,7 +8,7 @@ from .lattice import ReciprocalLattice
 
 def tensor_rotate(tensor, rot_matrices):
     if len(tensor.shape) == 1:  # tensor is a vector
-        return np.tensordot(tensor, rot_matrices[0], axes=[[0], [0]])
+        return np.tensordot(rot_matrices[0], tensor, axes=[[0], [0]])
     
     rotated_tensor = np.zeros(tensor.shape, dtype=complex)
     # apply rotation to axes 1, ..., len(tensor.shape)-1
@@ -16,7 +16,7 @@ def tensor_rotate(tensor, rot_matrices):
         rotated_tensor[i] = tensor_rotate(tensor[i], rot_matrices[1:])
 
     # apply rotation to axis 0
-    rotated_tensor = np.tensordot(rotated_tensor, rot_matrices[0],
+    rotated_tensor = np.tensordot(rot_matrices[0], rotated_tensor,
         axes=[[0], [0]])
     
     return rotated_tensor

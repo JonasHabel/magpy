@@ -17,29 +17,29 @@ def test_two_site_quantum_dot_with_DMI():
     # REAL SPACE
     verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
 
-    # expect -1/sqrt(2) [a_2^† a_1 a_2 - a_1^† a_1 a_2 + h.c.] 
-    #       - 1/sqrt(8) [a_1^† a_1 a_1 - a_2^† a_2 a_2 + h.c.]
-    expected_int_tensor_111 = -1/(2*np.sqrt(8)) * np.array([
+    # expect 1/sqrt(2) [a_2^† a_1 a_2 - a_1^† a_1 a_2 + h.c.] 
+    #      + 1/sqrt(8) [a_1^† a_1 a_1 - a_2^† a_2 a_2 + h.c.]
+    expected_int_tensor_111 = 1/(2*np.sqrt(8)) * np.array([
         [[0, 0], [0, 0]],
         [[1j, 0], [-1j, 0]],
     ])
-    expected_int_tensor_222 = 1/(2*np.sqrt(8)) * np.array([
+    expected_int_tensor_222 = -1/(2*np.sqrt(8)) * np.array([
         [[0, 0], [0, 0]],
         [[1j, 0], [-1j, 0]],
     ])
-    expected_int_tensor_212 = -1/(np.sqrt(2)) * np.array([
+    expected_int_tensor_212 = 1/(np.sqrt(2)) * np.array([
         [[0, 0], [0, 0]],
         [[1j, 0], [0, 0]],
     ])
-    expected_int_tensor_122 = -1/(np.sqrt(2)) * np.array([
+    expected_int_tensor_122 = 1/(np.sqrt(2)) * np.array([
         [[0, 0], [0, 0]],
         [[0, 0], [-1j, 0]],
     ])
-    expected_int_tensor_112 = 1/(np.sqrt(2)) * np.array([
+    expected_int_tensor_112 = -1/(np.sqrt(2)) * np.array([
         [[0, 0], [0, 0]],
         [[1j, 0], [0, 0]],
     ])
-    expected_int_tensor_121 = 1/(np.sqrt(2)) * np.array([
+    expected_int_tensor_121 = -1/(np.sqrt(2)) * np.array([
         [[0, 0], [0, 0]],
         [[0, 0], [-1j, 0]],
     ])
@@ -57,7 +57,7 @@ def test_two_site_quantum_dot_with_DMI():
     vert_mom_space = momentum_space.compute_interaction_Hamiltonian(
         mod, 3, np.array([[]]), verts_real_space)
     
-    expected_vert_mom_space = 1/(2*np.sqrt(8)) * np.array([
+    expected_vert_mom_space = -1/(2*np.sqrt(8)) * np.array([
         [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
         [[-1j, 0, 4j, 0], [1j, 0, 0, 0], [0, 0, 0, 0], [-4j, 0, 4j, 0]],
         [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
