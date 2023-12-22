@@ -72,7 +72,7 @@ def compute_magnon_Hamiltonian(model: Model, order: int):
                         CREATOR, *((CREATOR, ANNIHILATOR)*l), #site j
                     )
                     idx_mp = __hc(idx_pm)
-                    idx_mm = __hc(idx_mm)
+                    idx_mm = __hc(idx_pp)
 
                     magnon_BdG_tensor_pp[idx_pp] = spin_int_tensor[0, 0]
                     magnon_BdG_tensor_pm[idx_pm] = spin_int_tensor[0, 1]
@@ -149,6 +149,11 @@ def compute_magnon_Hamiltonian(model: Model, order: int):
                     Interaction([site_i]*2 + [site_j]*2, magnon_BdG_tensor_iijj),
                 ] 
     
+    Hamiltonians = list(filter(
+        lambda H: not np.allclose(
+            H.interaction_tensor, np.zeros(H.interaction_tensor.shape)),
+        Hamiltonians))
+
     return Hamiltonians
 
 
