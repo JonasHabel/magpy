@@ -2,3 +2,7 @@ build/
 magpy.egg-info
 install
 **/__pycache__
+*.aux
+*.pdf
+*.log
+*.synctex.gz

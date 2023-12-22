@@ -1,0 +1,76 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb,braket,bbm}
+\usepackage[margin=2.5cm]{geometry}
+
+\begin{document}
+
+\section{Honeycomb Heisenberg DMI}
+Hamiltonian:
+\begin{align}
+	\hat H &= J \sum_{\braket{ij}} \vec S_{iA} \cdot \vec S_{jB} + D \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu (S^x_{i\nu} S^y_{j\nu} - S^y_{i\nu} S^x_{j\nu})
+\end{align}
+The ground state is a fully polarized ferromagnet:
+\begin{align}
+	\vec S_{iA} = S_A \begin{pmatrix}
+		\sin\theta \\ 0 \\ \cos\theta
+	\end{pmatrix}
+	\qquad
+	\vec S_{iB} = S_B \begin{pmatrix}
+		\sin\theta \\ 0 \\ \cos\theta
+	\end{pmatrix}
+\end{align}
+Transform to the local reference frame:
+\begin{align}
+	\vec S_{i\nu} = \begin{pmatrix}
+		\cos\theta & 0 & \sin\theta \\
+		0 & 1 & 0 \\
+		-\sin\theta & 0 & \cos\theta
+	\end{pmatrix} \vec S'_{i\nu}
+\end{align}
+And plug into Hamiltonian:
+\begin{align}
+	\hat H &= J \sum_{\braket{ij}} \vec S'_{iA} \cdot \vec S'_{jB} + D \cos\theta \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu ((S'_{i\nu})^x (S'_{j\nu})^y - (S'_{i\nu})^y (S'_{j\nu})^x) \\
+	&\hspace{2.7cm} + D \sin\theta \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu ((S'_{i\nu})^z (S'_{j\nu})^y - (S'_{i\nu})^y (S'_{j\nu})^z)
+\end{align}
+HP mapping:
+\begin{align}
+	(S'_{i\nu})^z &= S_\nu - a_{i\nu}^\dagger a_{i\nu} \\
+%
+	(S'_{i\nu})^+ &= \sqrt{2S_\nu - a_{i\nu}^\dagger a_{i\nu}} a_{i\nu} = \sqrt{2} \left(\sqrt{S_\nu} a_{i\nu} - \frac{1}{4\sqrt{S_\nu}} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} + \dots \right) \\
+%
+	(S'_{i\nu})^- &= a_{i\nu}^\dagger \sqrt{2S_\nu - a_{i\nu}^\dagger a_{i\nu}} = \sqrt{2} \left(\sqrt{S_\nu} a^\dagger_{i\nu} - \frac{1}{4\sqrt{S_\nu}} a_{i\nu}^\dagger a^\dagger_{i\nu} a_{i\nu} + \dots \right) \\
+\end{align}
+The Heisenberg term becomes:
+\begin{align}
+	\dots &= (S'_{iA})^z (S'_{jB})^z + \frac{1}{2} ((S'_{iA})^+ (S'_{jB})^- + h.c.) \\
+%
+	&= (S_A - a_{iA}^\dagger a_{iA}) (S_B - a_{iB}^\dagger a_{iB}) \\
+	&\ + \left( \left(\sqrt{S_A} a_{iA} - \frac{1}{4\sqrt{S_A}} a_{iA}^\dagger a_{iA} a_{iA} + \dots \right) \left(\sqrt{S_B} a^\dagger_{jB} - \frac{1}{4\sqrt{S_B}} a_{jB}^\dagger a^\dagger_{jB} a_{jB} + \dots \right) + h.c. \right) \\
+%
+	&= S_A S_B - S_B a_{iA}^\dagger a_{iA} - S_A a_{jB}^\dagger a_{jB} + a_{iA}^\dagger a_{iA} a_{jB}^\dagger a_{jB} \\
+	&\ + \left(\sqrt{S_A S_B} a_{iA} a_{jB}^\dagger - \frac{1}{4}\sqrt{\frac{S_A}{S_B}} a_{iA} a_{jB}^\dagger a_{jB}^\dagger a_{jB} - \frac{1}{4}\sqrt{\frac{S_B}{S_A}} a_{iA}^\dagger a_{iA} a_{iA} a_{jB}^\dagger + h.c. + \dots \right)
+\end{align}
+The $xy$-DMI term becomes:
+\begin{align}
+	\dots &= \frac{i}{2} (S'_{i\nu})^+ (S'_{j\nu})^- - h.c. \\
+%
+	&= i \left(S_\nu a_{i\nu} a_{j\nu}^\dagger - \frac{1}{4} a_{i\nu} a_{j\nu}^\dagger a_{j\nu}^\dagger a_{j\nu} - \frac{1}{4} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} a_{j\nu}^\dagger + h.c. + \dots \right)
+\end{align}
+The $zy$-DMI term becomes:
+\begin{align}
+	\dots &= \frac{1}{i\sqrt 2} \bigg((S_\nu - a_{i\nu}^\dagger a_{i\nu}) \left(\sqrt{S_\nu} a_{j\nu} - \frac{1}{4\sqrt{S_\nu}} a_{j\nu}^\dagger a_{j\nu} a_{j\nu} + \dots \right) \\
+	&\hspace{1cm} - \left(\sqrt{S_\nu} a_{i\nu} - \frac{1}{4\sqrt{S_\nu}} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} + \dots \right) (S_\nu - a_{j\nu}^\dagger a_{j\nu}) \bigg) - h.c. \\
+%
+	&= \frac{1}{i\sqrt 2} \left(S_\nu^{3/2} (a_{j\nu} - a_{i\nu}) - \sqrt{S_\nu} \left(a_{i\nu}^\dagger a_{i\nu} a_{j\nu} + \frac{1}{4} a_{j\nu}^\dagger a_{j\nu} a_{j\nu} - a_{i\nu} a_{j\nu}^\dagger a_{j\nu} - \frac{1}{4} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} \right) \right) - h.c. \\
+%
+	&= \frac{i}{\sqrt 2} \left(S_\nu^{3/2} (a_{i\nu} - a_{j\nu}) + \sqrt{S_\nu} \left(a_{i\nu}^\dagger a_{i\nu} a_{j\nu} + \frac{1}{4} a_{j\nu}^\dagger a_{j\nu} a_{j\nu} - a_{i\nu} a_{j\nu}^\dagger a_{j\nu} - \frac{1}{4} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} \right) \right) - h.c.
+\end{align}
+with n.n.\ vectors $\vec \delta^1_n$ and n.n.n.\ vectors $\vec \delta^2_n$, which are related to the Bravais lattice vectors $\vec a_{1,2}$ as follows:
+\begin{gather}
+	\vec\delta^1_0 = 0 \qquad \vec\delta^1_1 = \vec a_1 \qquad \vec\delta^1_2 = \vec a_2 \\
+%
+	\vec\delta^2_1 = \vec a_1 - \vec a_2 \qquad \vec\delta^2_2 = -\vec a_1 \qquad \vec\delta^2_3 = \vec a_2
+\end{gather}
+
+
+\end{document}
