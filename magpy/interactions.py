@@ -21,6 +21,18 @@ class Interaction:
             ],
             self.interaction_tensor.copy()
         )
+    
+    def __eq__(self, other):
+        assert len(self.sites) == len(other.sites)
+
+        for site, other_site in zip(self.sites, other.sites):
+            if site != other_site:
+                return False
+        
+        return np.allclose(self.interaction_tensor, other.interaction_tensor)
+
+    def __hash__(self):
+        return hash(tuple([*self.sites, self.interaction_tensor]))
 
     """
     See doc of Model.compute_rotated_interactions
