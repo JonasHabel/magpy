@@ -4,11 +4,164 @@
 
 \begin{document}
 
+\section{FM Heisenberg Chain}
+
+\subsection{Real Space}
+
+Hamiltonian:
+\begin{align}
+	\hat H = J \sum_i \vec S_i \cdot \vec S_{i+1}
+\end{align}
+with $J < 0$. \\
+The ground state is a fully polarized ferromagnet:
+\begin{align}
+	\vec S_i = S \begin{pmatrix}
+		0 \\ 0 \\ 1
+	\end{pmatrix}
+\end{align}
+HP mapping:
+\begin{align}
+	S_{i}^z &= S - a_{i}^\dagger a_{i} \\
+	%
+	S_{i}^+ &= \sqrt{2S - a_{i}^\dagger a_{i}} a_{i} = \sqrt{2} \left(\sqrt{S} a_{i} - \frac{1}{4\sqrt{S}} a_{i}^\dagger a_{i} a_{i} + \dots \right) \\
+	%
+	S_{i}^- &= a_{i}^\dagger \sqrt{2S - a_{i}^\dagger a_{i}} = \sqrt{2} \left(\sqrt{S} a^\dagger_{i} - \frac{1}{4\sqrt{S}} a_{i}^\dagger a^\dagger_{i} a_{i} + \dots \right) \\
+\end{align}
+The Heisenberg term becomes:
+\begin{align}
+	\dots &= S_i^z S_{i+1}^z + \frac{1}{2} \left(S_i^+ S_i^- + h.c.\right) \\
+%
+	&= (S - a_i^\dagger a_i) (S - a_{i+1}^\dagger a_{i+1}) + \left(\left(\sqrt S a_i - \frac{1}{4\sqrt S} a_i^\dagger a_i a_i + h.c.\right) \left(\sqrt S a_{i+1}^\dagger - \frac{1}{4\sqrt S} a_{i+1}^\dagger a_{i+1}^\dagger a_{i+1} + \dots\right) + h.c. \right) \\
+%
+	&= S^2 - S(a_i^\dagger a_i + a_{i+1}^\dagger a_{i+1}) + a_i^\dagger a_i a_{i+1}^\dagger a_{i+1} + \left( S a_i a_{i+1}^\dagger - \frac{1}{4} a_i^\dagger a_i a_i a_{i+1}^\dagger - \frac{1}{4} a_i a_{i+1}^\dagger a_{i+1}^\dagger a_{i+1} + h.c. + \dots \right)
+\end{align}
+
+\subsection{Momentum Space}
+Fourier transform:
+\begin{align}
+	a_i = \frac{1}{\sqrt N} \sum_k e^{ikx_i} a_k \hspace{2cm} a_i^\dagger = \frac{1}{\sqrt N} \sum_k e^{ikx_i} a_{-k}^\dagger
+\end{align}
+Quadratic Hamiltonian:
+\begin{align}
+	\hat H_2 &= JS \sum_i \left( -a_i^\dagger a_i - a_{i+1}^\dagger a_{i+1} + a_i a_{i+1}^\dagger + a_{i+1} a_i^\dagger \right) \\
+%
+	&= JS \frac{1}{N} \sum_{kq} \sum_i e^{i (k+q) x_i} \left( -a_{-k}^\dagger a_q - e^{i(k + q) a} a_{-k}^\dagger a_q + e^{iq} a_{k} a_{-q}^\dagger + e^{ik} a_{k} a_{-q}^\dagger \right) \\
+%
+	&= JS \sum_{kq} \delta_{k+q,0} \left( -a_{-k}^\dagger a_q - e^{i(k + q)} a_{-k}^\dagger a_q + e^{iq} a_{k} a_{-q}^\dagger + e^{ik} a_{k} a_{-q}^\dagger \right) \\
+%
+	&= JS \sum_{kq} \delta_{k+q,0} \left( -(1 + e^{i(k + q)}) a_{-k}^\dagger a_q + (e^{iq} + e^{ik}) a_{k} a_{-q}^\dagger \right) \\
+%
+	&= JS \sum_{kq} \delta_{k+q,0} \begin{pmatrix} a_k & a_{-k}^\dagger \end{pmatrix} \begin{pmatrix}
+		0 & e^{iq} + e^{ik} \\ -(1 + e^{i(k+q)}) & 0
+	\end{pmatrix} \begin{pmatrix} a_q \\ a_{-q}^\dagger \end{pmatrix}
+\end{align}
+Quartic Hamiltonian:
+\begin{align}
+	\hat H_4 &= J \sum_i \left(a_i^\dagger a_i a_{i+1}^\dagger a_{i+1} - \frac{1}{4} \left( a_i^\dagger a_i a_i a_{i+1}^\dagger + a_i a_{i+1}^\dagger a_{i+1}^\dagger a_{i+1} + a_{i+1} a_i^\dagger a_i^\dagger a_i + a_{i+1}^\dagger a_{i+1} a_{i+1} a_i^\dagger \right) \right) \\
+%
+	&= J \frac{1}{N^2} \sum_{klpq} \sum_i e^{i(k+l+p+q)x_i} \bigg( e^{i(p+q)} a_{-k}^\dagger a_l a_{-p}^\dagger a_q - \frac{1}{4} \Big( e^{iq} a_{-k}^\dagger a_l a_p a_{-q}^\dagger + e^{i(l+p+q)} a_k a_{-l}^\dagger a_{-p}^\dagger a_q \\
+	&\hspace{8cm} + e^{ik} a_k a_{-l}^\dagger a_{-p}^\dagger a_q + e^{i(k+l+p)} a_{-k}^\dagger a_l a_p a_{-q}^\dagger \Big) \bigg) \\
+%
+	&= J \frac{1}{N} \sum_{klpq} \delta_{k+l+p+q,0} \left( e^{i(p+q)} a_{-k}^\dagger a_l a_{-p}^\dagger a_q - \frac{1}{4} \left( \left( e^{iq} + e^{i(k+l+p)} \right) a_{-k}^\dagger a_l a_p a_{-q}^\dagger + \left(e^{i(l+p+q)} + e^{ik}\right) a_k a_{-l}^\dagger a_{-p}^\dagger a_q \right) \right)
+\end{align}
+
+
+\section{AFM Heisenberg Chain}
+
+\subsection{Real Space}
+Hamiltonian:
+\begin{align}
+	\hat H = J \sum_{\braket{ij}} \vec S_{iA} \cdot \vec S_{jB}
+\end{align}
+with $J > 0$. \\
+The ground state is a Néel state:
+\begin{align}
+	\vec S_{iA} = S_A \begin{pmatrix}
+		0 \\ 0 \\ 1
+	\end{pmatrix}
+	\qquad
+	\vec S_{iB} = S_B \begin{pmatrix}
+	0 \\ 0 \\ -1
+	\end{pmatrix}
+\end{align}
+Transform to the local reference frame:
+\begin{align}
+	\vec S_{iA} = \vec S_{iA}'
+	\qquad
+	\vec S_{iB} = \begin{pmatrix}
+		-1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & -1
+	\end{pmatrix} \vec S_{iB}'
+\end{align}
+And plug into Hamiltonian:
+\begin{align}
+	\hat H &= J \sum_{\braket{ij}} \left( -(S'_{iA})^x (S'_{jB})^x + (S'_{iA})^y (S'_{jB})^y - (S'_{iA})^z (S'_{jB})^z \right) \\
+%
+	&= J \sum_{\braket{ij}} \left( -(S'_{iA})^z (S'_{jB})^z - \frac{1}{2} \left( (S'_{iA})^+ (S'_{jB})^+ + (S'_{iA})^- (S'_{jB})^- \right) \right)
+\end{align}
+HP mapping:
+\begin{align}
+	(S'_{i\nu})^z &= S_\nu - a_{i\nu}^\dagger a_{i\nu} \\
+	%
+	(S'_{i\nu})^+ &= \sqrt{2S_\nu - a_{i\nu}^\dagger a_{i\nu}} a_{i\nu} = \sqrt{2} \left(\sqrt{S_\nu} a_{i\nu} - \frac{1}{4\sqrt{S_\nu}} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} + \dots \right) \\
+	%
+	(S'_{i\nu})^- &= a_{i\nu}^\dagger \sqrt{2S_\nu - a_{i\nu}^\dagger a_{i\nu}} = \sqrt{2} \left(\sqrt{S_\nu} a^\dagger_{i\nu} - \frac{1}{4\sqrt{S_\nu}} a_{i\nu}^\dagger a^\dagger_{i\nu} a_{i\nu} + \dots \right) \\
+\end{align}
+The Heisenberg term becomes:
+\begin{align}
+	\dots &= -(S_A - a_{iA}^\dagger a_{iA}) (S_B - a_{jB}^\dagger a_{jB}) \\
+	&\ + \left( \left(\sqrt{S_A} a_{iA} - \frac{1}{4 \sqrt{S_A}} a_{iA}^\dagger a_{iA} a_{iA} + \dots \right) \left(\sqrt{S_B} a_{jB} - \frac{1}{4 \sqrt{S_B}} a_{jB}^\dagger a_{jB} a_{jB} + \dots \right) + h.c. \right) \\
+%
+	&= -S_A S_B + S_{B} a_{iA}^\dagger a_{iA} + S_{A} a_{jB}^\dagger a_{jB} - a_{iA}^\dagger a_{iA} a_{jB}^\dagger a_{jB} \\
+	&\ - \left( \sqrt{S_A S_B} a_{iA} a_{jB} - \frac{1}{4} \sqrt{\frac{S_A}{S_B}} a_{iA} a_{jB}^\dagger a_{jB} a_{jB} - \frac{1}{4} \sqrt{\frac{S_B}{S_A}} a_{iA}^\dagger a_{iA} a_{iA} a_{jB} + h.c. + \dots \right)
+\end{align}
+
+\subsection{Momentum Space}
+Fourier transform:
+\begin{align}
+	a_i = \frac{1}{\sqrt N} \sum_k e^{ikx_i} a_k \hspace{2cm} a_i^\dagger = \frac{1}{\sqrt N} \sum_k e^{ikx_i} a_{-k}^\dagger
+\end{align}
+Quadratic Hamiltonian:
+\begin{align}
+	\hat H_2 &= J \sum_{\braket{ij}} \left( S_B a_{iA}^\dagger a_{iA} + S_A a_{jB}^\dagger a_{jB} - \sqrt{S_A S_B} a_{iA} a_{jB} - \sqrt{S_A S_B} a_{iB}^\dagger a_{jA}^ \dagger \right) \\
+%
+	&= J \frac{1}{N} \sum_{kq} \sum_i e^{i(k+q)x_i} \sum_{\delta_{ij} = 0, -1} \left( S_B a_{-kA}^\dagger a_{qA} + e^{i(k+q) \delta_{ij}} S_A a_{-kB}^\dagger a_{qB} -e^{iq \delta_{ij}} \sqrt{S_A S_B} a_{kA} a_{qB} - e^{iq \delta_{ij}} \sqrt{S_A S_B} a_{-kB}^\dagger a_{-qA}^\dagger \right) \\
+%
+	&= J \sum_{kq} \delta_{k+q,0} \left( 2 S_B a_{-kA}^\dagger a_{qA} + (1 + e^{-i(k+q)}) S_A a_{-kB}^\dagger a_{qB} - (1 + e^{-iq}) \sqrt{S_A S_B} a_{kA} a_{qB} - (1 + e^{-ik}) \sqrt{S_A S_B} a_{-kB}^\dagger a_{-qA}^\dagger \right) \\
+%
+	&= J \sum_{kq} \delta_{k+q,0} \begin{pmatrix}
+		a_{kA} & a_{-kA}^\dagger & a_{kB} & a_{-kB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & 0 & -(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
+		2S_B & 0 & 0 & 0 \\
+		0 & 0 & 0 & 0 \\
+		0 & -(1 + e^{ik}) \sqrt{S_A S_B} & (1+ e^{-i(k+q)}) S_A & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix}
+\end{align}
+Quartic Hamiltonian:
+\begin{align}
+	\hat H_4 &= J \sum_{\braket{ij}} \left( -a_{iA}^\dagger a_{iA} a_{jB}^\dagger a_{jB} + \frac{1}{4} \left( \sqrt{\frac{S_A}{S_B}} a_{iA} a_{jB}^\dagger a_{jB} a_{jB} + \sqrt{\frac{S_B}{S_A}} a_{iA}^\dagger a_{iA} a_{iA} a_{jB} + \sqrt{\frac{S_A}{S_B}} a_{jB}^\dagger a_{jB}^\dagger a_{jB} a_{iA}^\dagger + \sqrt{\frac{S_B}{S_A}} a_{jB}^\dagger a_{iA}^\dagger a_{iA}^\dagger a_{iA} \right) \right) \\
+%
+	&= J \frac{1}{N^2} \sum_{klpq} \sum_{i} e^{i(k+l+p+q)x_i} \sum_{\delta_{ij} = 0,-1} \Bigg( -e^{i(p+q)\delta_{ij}} a_{-kA}^\dagger a_{lA} a_{-pB}^\dagger a_{qB} \\
+	&\ + \frac{1}{4} \Bigg( e^{i(l+p+q)\delta_{ij}} \sqrt{\frac{S_A}{S_B}} a_{kA} a_{-lB}^\dagger a_{pB} a_{qB} + e^{iq\delta_{ij}} \sqrt{\frac{S_B}{S_A}} a_{-kA}^\dagger a_{lA} a_{pA} a_{qB} \\
+	&\qquad + e^{i(k+l+p)\delta_{ij}} \sqrt{\frac{S_A}{S_B}} a_{-kB}^\dagger a_{-lB}^\dagger a_{pB} a_{-qA}^\dagger + e^{ik\delta_{ij}} \sqrt{\frac{S_B}{S_A}} a_{-kB}^\dagger a_{-lA}^\dagger a_{-pA}^\dagger a_{qA} \Bigg) \Bigg) \\
+%
+	&= J \frac{1}{N} \sum_{klpq} \delta_{k+l+p+q,0} \Bigg( -(1 + e^{-i(p+q)}) a_{-kA}^\dagger a_{lA} a_{-pB}^\dagger a_{qB} \\
+	&\ + \frac{1}{4} \Bigg( (1 + e^{-i(l+p+q)}) \sqrt{\frac{S_A}{S_B}} a_{kA} a_{-lB}^\dagger a_{pB} a_{qB} + (1 + e^{-iq}) \sqrt{\frac{S_B}{S_A}} a_{-kA}^\dagger a_{lA} a_{pA} a_{qB} \\
+	&\qquad + (1 + e^{-i(k+l+p)}) \sqrt{\frac{S_A}{S_B}} a_{-kB}^\dagger a_{-lB}^\dagger a_{pB} a_{-qA}^\dagger + (1 + e^{-ik}) \sqrt{\frac{S_B}{S_A}} a_{-kB}^\dagger a_{-lA}^\dagger a_{-pA}^\dagger a_{qA} \Bigg) \Bigg)
+\end{align}
+
+
 \section{Honeycomb Heisenberg DMI}
+
+\subsection{Real Space}
+
 Hamiltonian:
 \begin{align}
 	\hat H &= J \sum_{\braket{ij}} \vec S_{iA} \cdot \vec S_{jB} + D \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu (S^x_{i\nu} S^y_{j\nu} - S^y_{i\nu} S^x_{j\nu})
 \end{align}
+with $J < 0$. \\
 The ground state is a fully polarized ferromagnet:
 \begin{align}
 	\vec S_{iA} = S_A \begin{pmatrix}
@@ -54,7 +207,7 @@ The $xy$-DMI term becomes:
 \begin{align}
 	\dots &= \frac{i}{2} (S'_{i\nu})^+ (S'_{j\nu})^- - h.c. \\
 %
-	&= i \left(S_\nu a_{i\nu} a_{j\nu}^\dagger - \frac{1}{4} a_{i\nu} a_{j\nu}^\dagger a_{j\nu}^\dagger a_{j\nu} - \frac{1}{4} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} a_{j\nu}^\dagger + h.c. + \dots \right)
+	&= i \left(S_\nu a_{i\nu} a_{j\nu}^\dagger - \frac{1}{4} a_{i\nu} a_{j\nu}^\dagger a_{j\nu}^\dagger a_{j\nu} - \frac{1}{4} a_{i\nu}^\dagger a_{i\nu} a_{i\nu} a_{j\nu}^\dagger - h.c. + \dots \right)
 \end{align}
 The $zy$-DMI term becomes:
 \begin{align}
@@ -72,5 +225,26 @@ with n.n.\ vectors $\vec \delta^1_n$ and n.n.n.\ vectors $\vec \delta^2_n$, whic
 	\vec\delta^2_1 = \vec a_1 - \vec a_2 \qquad \vec\delta^2_2 = -\vec a_1 \qquad \vec\delta^2_3 = \vec a_2
 \end{gather}
 
+\subsection{Momentum Space}
+Fourier transform:
+\begin{align}
+	a_i = \frac{1}{\sqrt N} \sum_k e^{ikx_i} a_k \hspace{2cm} a_i^\dagger = \frac{1}{\sqrt N} \sum_k e^{ikx_i} a_{-k}^\dagger
+\end{align}
+Linear Hamiltonian:
+\begin{align}
+	\hat H_1 &= D \sin\theta \frac{i}{\sqrt 2} \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu S_\nu^{3/2} (a_{i\nu} - a_{j\nu} - a_{i\nu}^\dagger + a_{j\nu}^\dagger) \\
+%
+	&= D \sin\theta \frac{i}{\sqrt 2} \frac{1}{\sqrt N} \sum_k \sum_{i} e^{ikx_i} \sum_{\nu, \delta_{ij}^2} (-1)^\nu S_\nu^{3/2} (a_{k\nu} - e^{ik\delta_{ij}^2} a_{k\nu} - a_{-k\nu}^\dagger + e^{ik\delta_{ij}^2} a_{-k\nu}^\dagger) \\
+%
+	&= D \sin\theta \frac{i}{\sqrt 2} \sqrt N \sum_k \delta_{k0} \sum_{\nu, \delta_{ij}^2} (-1)^\nu S_\nu^{3/2} ((1 - e^{ik\delta_{ij}^2}) a_{k\nu} - (1 - e^{ik\delta_{ij}^2}) a_{-k\nu}^\dagger) \\
+%
+	&= D \sin\theta \frac{i}{\sqrt 2} \sqrt N \sum_k \delta_{k0} \sum_{\nu} (-1)^\nu S_\nu^{3/2} \underbrace{\left(3 - \sum_{\delta_{ij}^2} e^{ik\delta_{ij}^2}\right)}_{\equiv \gamma_{k}} (a_{k\nu} - a_{-k\nu}^\dagger) \\
+%
+	&= D \sin\theta \frac{i}{\sqrt 2} \sqrt N \sum_k \delta_{k0} \gamma_k \left(S_A^{3/2} a_{kA} - S_A^{3/2} a_{-kA}^\dagger - S_B^{3/2} a_{kB} + S_B^{3/2} a_{-kB}^\dagger \right)
+\end{align}
+Quadratic Hamiltonian:
+\begin{align}
+	\hat H_2 &= J \sum_{\braket{ij}} \left( - S_B a_{iA}^\dagger a_{iA} - S_A a_{iB}^\dagger a_{iB} + \sqrt{S_A S_B} a_{iA} a_{jB}^\dagger + \sqrt{S_A S_B} a_{jB} a_{iA}^\dagger \right) + i D \cos\theta \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu S_\nu \left( a_{i\nu} a_{j\nu}^\dagger - a_{j\nu} a_{i\nu}^\dagger \right)
+\end{align}
 
 \end{document}
