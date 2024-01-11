@@ -1,9 +1,8 @@
 import numpy as np
 from magpy.largeS import real_space
-from magpy.models import Model
-from magpy.lattice import ChainLattice, HoneycombLatticeA, BravaisLattice
-from magpy.interactions import Interaction, \
-    NthNearestNeighborHeisenbergInteraction, DMInteraction
+from magpy.lattice import BravaisLattice
+from magpy.interactions import Interaction
+from . import test_models
 
 
 def assert_real_space_Hamiltonian_equal(magnon_H, expected_magnon_H):
@@ -19,17 +18,8 @@ def assert_all_real_space_Hamiltonians_equal(model, expected_magnon_Hs):
 
 
 def test_real_space_Hamiltonian_AFM_Heisenberg_chain():
-    J = 1.0
-    S_A = 3/2
-    S_B = 1
-    lattice = ChainLattice(2)
-    model = Model(
-        lattice,
-        interactions=[
-            NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=J),
-        ],
-        classical_ground_state=np.array([[0, 0, S_A], [0, 0, -S_B]])
-    )
+    model, (J, S_A, S_B) = test_models.FM_Heisenberg_chain()
+
     site_k = BravaisLattice.Site(np.array([-1]), 1)
     site_i = BravaisLattice.Site(np.array([0]), 0)
     site_j = BravaisLattice.Site(np.array([0]), 1)
@@ -37,7 +27,7 @@ def test_real_space_Hamiltonian_AFM_Heisenberg_chain():
     # order S^2
     expected_magnon_H_0 = [
         Interaction([], np.array(-J*S_A*S_B)),  # ij-bond
-        Interaction([], np.array(-J*S_A*S_B)),  # jk-bond
+        Interaction([], np.array(-J*S_A*S_B)),  # ik-bond
     ]
 
     # order S^1
@@ -82,16 +72,8 @@ def test_real_space_Hamiltonian_AFM_Heisenberg_chain():
 
 
 def test_real_space_Hamiltonian_FM_Heisenberg_chain():
-    J = -1.0
-    S = 3/2
-    lattice = ChainLattice()
-    model = Model(
-        lattice,
-        interactions=[
-            NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=J),
-        ],
-        classical_ground_state=S*np.array([[0, 0, 1]])
-    )
+    model, (J, S) = test_models.AFM_Heisenberg_chain()
+
     site_i = BravaisLattice.Site(np.array([0]), 0)
     site_j = BravaisLattice.Site(np.array([1]), 0)
 
@@ -133,29 +115,8 @@ def test_real_space_Hamiltonian_FM_Heisenberg_chain():
 
 
 def test_real_space_Hamiltonian_honeycomb_DMI():
-    J = -1.0
-    D = 0.1
-    D_vec = np.array([0, 0, D])
-    S_A = 5/2
-    S_B = 2
-    theta = 0.1 * np.pi/2
-    lattice = HoneycombLatticeA()
-    model = Model(
-        lattice,
-        interactions=[
-            NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=J),
-            DMInteraction(BravaisLattice.Edge(np.array([1, -1]), np.array([0, 0])), D=D_vec),
-            DMInteraction(BravaisLattice.Edge(np.array([-1, 0]), np.array([0, 0])), D=D_vec),
-            DMInteraction(BravaisLattice.Edge(np.array([0, 1]), np.array([0, 0])), D=D_vec),
-            DMInteraction(BravaisLattice.Edge(np.array([1, -1]), np.array([1, 1])), D=-D_vec),
-            DMInteraction(BravaisLattice.Edge(np.array([-1, 0]), np.array([1, 1])), D=-D_vec),
-            DMInteraction(BravaisLattice.Edge(np.array([0, 1]), np.array([1, 1])), D=-D_vec),
-        ],
-        classical_ground_state=np.array([
-            [S_A*np.sin(theta), 0, S_A*np.cos(theta)],
-            [S_B*np.sin(theta), 0, S_B*np.cos(theta)],
-        ])
-    )
+    model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
+
     site_iA = BravaisLattice.Site(np.array([0, 0]), 0)
     site_iA1 = BravaisLattice.Site(np.array([-1, 0]), 0)
     site_iA2 = BravaisLattice.Site(np.array([0, -1]), 0)
