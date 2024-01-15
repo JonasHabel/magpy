@@ -96,6 +96,9 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
 def test_momentum_space_Hamiltonian_honeycomb_DMI():
     model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
 
+    nns = np.array([
+        [0, 0], [-np.sqrt(3)/2, 3/2], [np.sqrt(3)/2, 3/2],
+    ])
     nnns = np.array([
         [-np.sqrt(3), 0], [np.sqrt(3)/2, -3/2], [np.sqrt(3)/2, 3/2],
     ])
@@ -115,8 +118,13 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
 
     # order S^1
     k, q = ks[0:2]
-    expected_magnon_H_2 = J*np.array([
-        
+    beta_1 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nn)) for nn in nns]))
+    beta_2 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nnn)) for nnn in nnns]))
+    expected_magnon_H_2 = np.array([
+        [0, 1j*D*np.cos(theta)*(beta_2(q) - beta_2(k))*S_A, 0, J*beta_1(q)*np.sqrt(S_A*S_B)],
+        [-3*J*S_B, 0, 0, 0],
+        [0, J*beta_1(k)*np.sqrt(S_A*S_B), 0, -1j*D*np.cos(theta)*(beta_2(q) - beta_2(k))*S_B],
+        [0, 0, -J*beta_1(k+q)*S_A, 0]
     ], dtype=np.complex128)
 
     # order S^(1/2)
@@ -129,7 +137,7 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
     assert_all_momentum_space_Hamiltonians_equal(model, ks, [
         expected_magnon_H_0, 
         expected_magnon_H_1, 
-        # expected_magnon_H_2,
+        expected_magnon_H_2,
         # expected_magnon_H_3, 
         # expected_magnon_H_4,
     ])

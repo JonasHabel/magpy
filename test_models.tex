@@ -244,7 +244,26 @@ Linear Hamiltonian:
 \end{align}
 Quadratic Hamiltonian:
 \begin{align}
-	\hat H_2 &= J \sum_{\braket{ij}} \left( - S_B a_{iA}^\dagger a_{iA} - S_A a_{iB}^\dagger a_{iB} + \sqrt{S_A S_B} a_{iA} a_{jB}^\dagger + \sqrt{S_A S_B} a_{jB} a_{iA}^\dagger \right) + i D \cos\theta \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu S_\nu \left( a_{i\nu} a_{j\nu}^\dagger - a_{j\nu} a_{i\nu}^\dagger \right)
+	\hat H_2 &= J \sum_{\braket{ij}} \left( - S_B a_{iA}^\dagger a_{iA} - S_A a_{iB}^\dagger a_{iB} + \sqrt{S_A S_B} a_{iA} a_{jB}^\dagger + \sqrt{S_A S_B} a_{jB} a_{iA}^\dagger \right) + i D \cos\theta \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu S_\nu \left( a_{i\nu} a_{j\nu}^\dagger - a_{j\nu} a_{i\nu}^\dagger \right) \\
+%
+	&= \frac{1}{N} \sum_{kq} \sum_i e^{i(k+q)x_i} \Bigg[ J \sum_{\delta_{ij}^1} \left( -S_B a_{-kA}^\dagger a_{qA} - e^{i(k+q)\delta_{ij}^1} S_A a_{-kB}^\dagger a_{qB} + e^{iq\delta_{ij}^1} \sqrt{S_A S_B} a_{kA} a_{-qB}^\dagger + e^{ik\delta_{ij}^1} \sqrt{S_A S_B} a_{kB} a_{-qA}^\dagger \right) \\
+	&\hspace{2.2cm} + iD\cos\theta \sum_{\nu,\delta_{ij}^2} (-1)^\nu S_\nu \left( e^{iq\delta_{ij}^2} a_{k\nu} a_{-q\nu}^\dagger - e^{ik\delta_{ij}^2} a_{k\nu} a_{-q\nu}^\dagger \right) \Bigg] \\
+%
+	&= \sum_{kq} \delta_{k+q,0} \Bigg[ J \left( -3 S_B a_{-kA}^\dagger a_{qA} - \beta_{k+q}^1 S_A a_{-kB}^\dagger a_{qB} + \beta_q^1 \sqrt{S_A S_B} a_{kA} a_{-qB}^\dagger + \beta_k^1 \sqrt{S_A S_B} a_{kB} a_{-qA}^\dagger \right) \\
+	&\hspace{1.7cm} + iD\cos\theta \sum_\nu (-1)^\nu (\beta_q^2 - \beta_k^2) S_\nu a_{k\nu} a_{-q\nu}^\dagger \Bigg] \\
+%
+	&= \sum_{kq} \delta_{k+q,0} \begin{pmatrix}
+		a_{kA} & a_{-kA}^\dagger & a_{kB} & a_{-kB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & iD\cos\theta (\beta_q^2 - \beta_k^2) S_A & 0 & J \beta_q^1 \sqrt{S_A S_B} \\
+		-3J S_B & 0 & 0 & 0 \\
+		0 & J \beta_k^1 \sqrt{S_A S_B} & 0 & -iD\cos\theta (\beta_q^2 - \beta_k^2) S_B \\
+		0 & 0 & -J \beta_{k+q}^2 S_A & 0 & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix}
 \end{align}
+where $\beta_k^{1,2} \equiv \sum_{\delta_{ij}^{1,2}} e^{ik\delta_{ij}^{1,2}}$. \\
+Cubic Hamiltonian
 
 \end{document}
