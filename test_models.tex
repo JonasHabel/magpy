@@ -264,6 +264,16 @@ Quadratic Hamiltonian:
 	\end{pmatrix}
 \end{align}
 where $\beta_k^{1,2} \equiv \sum_{\delta_{ij}^{1,2}} e^{ik\delta_{ij}^{1,2}}$. \\
-Cubic Hamiltonian
+Cubic Hamiltonian:
+\begin{align}
+	\hat H_3 &= \frac{i}{\sqrt 2} D \sin\theta \sum_{\braket{\braket{ij}}_\nu} (-1)^\nu \sqrt{S_\nu} \bigg( a_{i\nu}^\dagger a_{i\nu} a_{j\nu} - a_{i\nu} a_{j\nu}^\dagger a_{j\nu} - a_{j\nu}^\dagger a_{i\nu}^\dagger a_{i\nu} + a_{j\nu}^\dagger a_{j\nu} a_{i\nu}^\dagger \\
+	&\hspace{3.9cm} + \frac{1}{4} \left( a_{j\nu}^\dagger a_{j\nu} a_{j\nu} - a_{i\nu}^\dagger a_{i\nu} a_{i\nu} - a_{j\nu}^\dagger a_{j\nu}^\dagger a_{j\nu} + a_{i\nu}^\dagger a_{i\nu}^\dagger a_{i\nu}  \right) \bigg) \\
+%
+	&= \frac{i D \sin\theta}{\sqrt{2N^3}}  \sum_{kpq} \sum_i e^{i(k+p+q)x_i} \sum_{\nu} (-1)^\nu \sqrt{S_\nu} \bigg( \beta_q^2 a_{-k\nu}^\dagger a_{p\nu} a_{q\nu} - \beta_{p+q}^2 a_{k\nu} a_{-p\nu}^\dagger a_{q\nu} - \beta_{k}^2 a_{-k\nu}^\dagger a_{-p\nu}^\dagger a_{q\nu} + \beta_{k+p}^2 a_{-k\nu}^\dagger a_{p\nu} a_{-q\nu}^\dagger \\
+	&\hspace{1cm} +\frac{1}{4} \left( \beta_{k+p+q}^2 a_{-k\nu}^\dagger a_{p\nu} a_{q\nu} - 3 a_{-k\nu}^\dagger a_{p\nu} a_{q\nu} - \beta_{k+p+q}^2 a_{-k\nu}^\dagger a_{-p\nu}^\dagger a_{q\nu} + 3 a_{-k\nu}^\dagger a_{p\nu} a_{-q\nu}^\dagger \right) \bigg) \\
+%
+	&= \frac{i D \sin\theta}{\sqrt{2N}} \sum_{kpq} \delta_{k+p+q,0} \sum_\nu (-1)^\nu \sqrt{S_\nu} \bigg( \left( \beta_q^2 + \frac{1}{4} \left( \beta_{k+p+q}^2 - 3 \right) \right) a_{-k\nu}^\dagger a_{p\nu} a_{q\nu} - \left( \beta_k^2 + \frac{1}{4} \left( \beta_{k+p+q}^2 - 3 \right) \right) a_{-k\nu}^\dagger a_{-p\nu}^\dagger a_{q\nu} \\
+	&\hspace{1cm} - \beta_{p+q}^2 a_{k\nu} a_{-p\nu}^\dagger a_{q\nu} + \beta_{k+p}^2 a_{-k\nu}^\dagger a_{p\nu} a_{-q\nu}^\dagger \bigg)
+\end{align}
 
 \end{document}

@@ -128,7 +128,19 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
     ], dtype=np.complex128)
 
     # order S^(1/2)
+    k, p, q = ks[0:3]
+    prefactor_3 = 1j*D*np.sin(theta) / np.sqrt(2)
     expected_magnon_H_3 = np.zeros((4, 4, 4), dtype=np.complex128)
+    expected_magnon_H_3[1, 0, 0] = np.sqrt(S_A) * (beta_2(q) + 1/4*(beta_2(k+p+q) - 3))
+    expected_magnon_H_3[1, 1, 0] = -np.sqrt(S_A) * (beta_2(k) + 1/4*(beta_2(k+p+q) - 3))
+    expected_magnon_H_3[0, 1, 0] = -np.sqrt(S_A) * beta_2(p+q)
+    expected_magnon_H_3[1, 0, 1] = np.sqrt(S_A) * beta_2(k+p)
+    expected_magnon_H_3[3, 2, 2] = -np.sqrt(S_B) * (beta_2(q) + 1/4*(beta_2(k+p+q) - 3))
+    expected_magnon_H_3[3, 3, 2] = np.sqrt(S_B) * (beta_2(k) + 1/4*(beta_2(k+p+q) - 3))
+    expected_magnon_H_3[2, 3, 2] = np.sqrt(S_B) * beta_2(p+q)
+    expected_magnon_H_3[3, 2, 3] = -np.sqrt(S_B) * beta_2(k+p)
+    expected_magnon_H_3 *= prefactor_3
+
 
     # order S^0
     k, l, p, q = ks
@@ -138,6 +150,6 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
         expected_magnon_H_0, 
         expected_magnon_H_1, 
         expected_magnon_H_2,
-        # expected_magnon_H_3, 
+        expected_magnon_H_3, 
         # expected_magnon_H_4,
     ])
