@@ -65,6 +65,86 @@ Quartic Hamiltonian:
 	&= J \frac{1}{N} \sum_{klpq} \delta_{k+l+p+q,0} \left( e^{i(p+q)} a_{-k}^\dagger a_l a_{-p}^\dagger a_q - \frac{1}{4} \left( \left( e^{iq} + e^{i(k+l+p)} \right) a_{-k}^\dagger a_l a_p a_{-q}^\dagger + \left(e^{i(l+p+q)} + e^{ik}\right) a_k a_{-l}^\dagger a_{-p}^\dagger a_q \right) \right)
 \end{align}
 
+\subsection{LSWT}
+We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill the sum over $k$; (2) switching the order of the creators/annihilators appropriately; and (3) symmetrizing $q \leftrightarrow -q$. In general:
+\begin{tiny}
+\begin{align}
+	\hat H_2 &= \sum_{kq} \delta_{k+q,0} \begin{pmatrix}
+		a_{k1} & a_{-k1}^\dagger & 	a_{k2} & a_{-k2}^\dagger & \dots
+	\end{pmatrix} \mathcal H_2(k, q) \begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} \\
+%
+	&\overset{(1)}{=} \sum_{q} \begin{pmatrix}
+		a_{-q1} & a_{q1}^\dagger & 	a_{-q2} & a_{q2}^\dagger & \dots
+	\end{pmatrix} \mathcal H_2(-q, q) \begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} \\
+%
+	&\overset{(2)}{=} \sum_{q} \begin{pmatrix} 
+		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} \\
+%
+	&\overset{(3)}{=} \sum_{q} \left[ \begin{pmatrix} 
+		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
+	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} + \begin{pmatrix} 
+		a_{-q1}^\dagger & a_{q1} & a_{-q2}^\dagger & a_{q2} & \dots 
+	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(q, -q) \begin{pmatrix}
+		a_{-q1} \\ a_{q1}^\dagger \\ a_{-q2} \\ a_{q2}^\dagger \\ \dots
+	\end{pmatrix} \right] \nonumber \\
+%
+	&= \sum_{q} \begin{pmatrix} 
+		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
+	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \left( \mathcal H_2(-q, q) + \mathcal H_2^\dagger(q, -q) \right) \begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} \\
+\end{align}
+\end{tiny}
+where we have used that
+\begin{align}
+	&\begin{pmatrix} 
+		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} \\
+%
+	=& \begin{pmatrix}
+		a_{q1} & a_{-q1}^\dagger & a_{q2} & a_{-q2}^\dagger & \dots
+	\end{pmatrix} \mathcal H_2^T(-q, q) (\mathbbm 1 \otimes \sigma_x) \begin{pmatrix} 
+		a_{q1}^\dagger \\ a_{-q1} \\ a_{q2}^\dagger \\ a_{-q2} \\ \dots 
+	\end{pmatrix} \nonumber \\
+%
+	=& \begin{pmatrix}
+		a_{-q1}^\dagger & a_{q1} & a_{-q2}^\dagger & a_{q2} & \dots
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2^T(-q, q) \begin{pmatrix} 
+		a_{-q1} \\ a_{q1}^\dagger \\ a_{-q2} \\ a_{q2}^\dagger \\ \dots 
+	\end{pmatrix} \nonumber 
+\end{align}
+\begin{align}
+	\hat H_2 &\overset{(1)}{=} JS \sum_q \begin{pmatrix}
+		a_{-q} & a_{q}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & e^{iq} + e^{-iq} \\
+		-2 & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_q \\ a_{-q}^\dagger
+	\end{pmatrix} \\
+%
+	&= JS \sum_q \begin{pmatrix}
+		a_{q}^\dagger & a_{-q}
+	\end{pmatrix} \begin{pmatrix}
+		-2 & 0 \\
+		0 & e^{iq} + e^{-iq}
+	\end{pmatrix} \begin{pmatrix}
+		a_q \\ a_{-q}^\dagger
+	\end{pmatrix}
+\end{align}
+
+
 
 \section{AFM Heisenberg Chain}
 
