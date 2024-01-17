@@ -2,13 +2,9 @@ import numpy as np
 import itertools
 from magpy.models import Model
 from magpy.largeS import real_space
+from magpy.largeS.util import get_real_space_magnon_Hamiltonian
 
 
-def __get_real_space_magnon_Hamiltonian(
-        interaction_Hamiltonian_real_space, model, order):
-    return interaction_Hamiltonian_real_space \
-        if interaction_Hamiltonian_real_space is not None \
-        else real_space.compute_magnon_Hamiltonian(model, order)
 
 
 def compute_magnon_Hamiltonian(model: Model, ks,
@@ -23,7 +19,7 @@ def compute_magnon_Hamiltonian(model: Model, ks,
     
     order = ks.shape[0]
 
-    magnon_Hs_real_space = __get_real_space_magnon_Hamiltonian(
+    magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
         interaction_Hamiltonian_real_space, model, order)
 
     H_dim = 2*model.lattice.num_sites_unit_cell
@@ -67,7 +63,7 @@ def compute_magnon_Hamiltonians_with_momentum_conservation(
                         + f"{model.lattice.dim}")
     
     order = len(k_arrays) + 1
-    magnon_Hs_real_space = __get_real_space_magnon_Hamiltonian(
+    magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
         interaction_Hamiltonian_real_space, model, order)
     
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)

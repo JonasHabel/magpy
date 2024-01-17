@@ -66,7 +66,7 @@ Quartic Hamiltonian:
 \end{align}
 
 \subsection{LSWT}
-We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill the sum over $k$; (2) switching the order of the creators/annihilators appropriately; and (3) symmetrizing $q \leftrightarrow -q$. In general:
+We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill the sum over $k$; (2) switching the order of the creators/annihilators in the row Nambu spinor appropriately; and (3) symmetrizing $q \leftrightarrow -q$. In general:
 \begin{tiny}
 \begin{align}
 	\hat H_2 &= \sum_{kq} \delta_{k+q,0} \begin{pmatrix}
@@ -87,7 +87,7 @@ We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill th
 		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
 	\end{pmatrix} \\
 %
-	&\overset{(3)}{=} \sum_{q} \left[ \begin{pmatrix} 
+	&\overset{(3)}{=} \sum_{q>0} \left[ \begin{pmatrix} 
 		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
 	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
 		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
@@ -97,9 +97,9 @@ We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill th
 		a_{-q1} \\ a_{q1}^\dagger \\ a_{-q2} \\ a_{q2}^\dagger \\ \dots
 	\end{pmatrix} \right] \nonumber \\
 %
-	&= \sum_{q} \begin{pmatrix} 
+	&= \sum_{q>0} \begin{pmatrix} 
 		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
-	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \left( \mathcal H_2(-q, q) + \mathcal H_2^\dagger(q, -q) \right) \begin{pmatrix}
+	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \left( \mathcal H_2(-q, q) + \mathcal H_2^T(q, -q) \right) \begin{pmatrix}
 		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
 	\end{pmatrix} \\
 \end{align}
@@ -107,25 +107,26 @@ We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill th
 where we have used that
 \begin{align}
 	&\begin{pmatrix} 
-		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
-	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
-		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+		a_{-q1}^\dagger & a_{q1} & a_{-q2}^\dagger & a_{q2} & \dots 
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(q, -q) \begin{pmatrix}
+		a_{-q1} \\ a_{q1}^\dagger \\ a_{-q2} \\ a_{q2}^\dagger \\ \dots
 	\end{pmatrix} \\
 %
 	=& \begin{pmatrix}
 		a_{q1} & a_{-q1}^\dagger & a_{q2} & a_{-q2}^\dagger & \dots
-	\end{pmatrix} \mathcal H_2^T(-q, q) (\mathbbm 1 \otimes \sigma_x) \begin{pmatrix} 
+	\end{pmatrix} \mathcal H_2^T(q, -q) (\mathbbm 1 \otimes \sigma_x) \begin{pmatrix} 
 		a_{q1}^\dagger \\ a_{-q1} \\ a_{q2}^\dagger \\ a_{-q2} \\ \dots 
 	\end{pmatrix} \nonumber \\
 %
 	=& \begin{pmatrix}
 		a_{-q1}^\dagger & a_{q1} & a_{-q2}^\dagger & a_{q2} & \dots
-	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2^T(-q, q) \begin{pmatrix} 
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2^T(q, -q) \begin{pmatrix} 
 		a_{-q1} \\ a_{q1}^\dagger \\ a_{-q2} \\ a_{q2}^\dagger \\ \dots 
 	\end{pmatrix} \nonumber 
 \end{align}
+For the actual model:
 \begin{align}
-	\hat H_2 &\overset{(1)}{=} JS \sum_q \begin{pmatrix}
+	\hat H_2 &= JS \sum_q \begin{pmatrix}
 		a_{-q} & a_{q}^\dagger
 	\end{pmatrix} \begin{pmatrix}
 		0 & e^{iq} + e^{-iq} \\
@@ -137,8 +138,8 @@ where we have used that
 	&= JS \sum_q \begin{pmatrix}
 		a_{q}^\dagger & a_{-q}
 	\end{pmatrix} \begin{pmatrix}
-		-2 & 0 \\
-		0 & e^{iq} + e^{-iq}
+		-1 + \cos(q) & 0 \\
+		0 & -1 + \cos(q)
 	\end{pmatrix} \begin{pmatrix}
 		a_q \\ a_{-q}^\dagger
 	\end{pmatrix}
@@ -214,7 +215,7 @@ Quadratic Hamiltonian:
 		0 & 0 & -(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
 		2S_B & 0 & 0 & 0 \\
 		0 & 0 & 0 & 0 \\
-		0 & -(1 + e^{ik}) \sqrt{S_A S_B} & (1+ e^{-i(k+q)}) S_A & 0
+		0 & -(1 + e^{-ik}) \sqrt{S_A S_B} & (1+ e^{-i(k+q)}) S_A & 0
 	\end{pmatrix} \begin{pmatrix}
 		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
 	\end{pmatrix}
@@ -230,6 +231,43 @@ Quartic Hamiltonian:
 	&= J \frac{1}{N} \sum_{klpq} \delta_{k+l+p+q,0} \Bigg( -(1 + e^{-i(p+q)}) a_{-kA}^\dagger a_{lA} a_{-pB}^\dagger a_{qB} \\
 	&\ + \frac{1}{4} \Bigg( (1 + e^{-i(l+p+q)}) \sqrt{\frac{S_A}{S_B}} a_{kA} a_{-lB}^\dagger a_{pB} a_{qB} + (1 + e^{-iq}) \sqrt{\frac{S_B}{S_A}} a_{-kA}^\dagger a_{lA} a_{pA} a_{qB} \\
 	&\qquad + (1 + e^{-i(k+l+p)}) \sqrt{\frac{S_A}{S_B}} a_{-kB}^\dagger a_{-lB}^\dagger a_{pB} a_{-qA}^\dagger + (1 + e^{-ik}) \sqrt{\frac{S_B}{S_A}} a_{-kB}^\dagger a_{-lA}^\dagger a_{-pA}^\dagger a_{qA} \Bigg) \Bigg)
+\end{align}
+
+\subsection{LSWT}
+We have
+\begin{align}
+	\hat H_2 &= J \sum_{q} \begin{pmatrix}
+		a_{-qA} & a_{qA}^\dagger & a_{-qB} & a_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & 0 & -(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
+		2S_B & 0 & 0 & 0 \\
+		0 & 0 & 0 & 0 \\
+		0 & -(1 + e^{iq}) \sqrt{S_A S_B} & 2S_A & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\ 
+%
+	 &= J \sum_{q} \begin{pmatrix}
+		a_{qA}^\dagger & a_{-qA} & a_{qB}^\dagger & a_{-qB}
+	\end{pmatrix} \begin{pmatrix}
+	2S_B & 0 & 0 & 0 \\
+		0 & 0 & -(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
+		0 & -(1 + e^{iq}) \sqrt{S_A S_B} & 2S_A & 0 \\
+		0 & 0 & 0 & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	 &= J \sum_{q>0} \begin{pmatrix}
+		a_{qA}^\dagger & a_{-qA} & a_{qB}^\dagger & a_{-qB}
+	\end{pmatrix} \begin{pmatrix}
+		S_B & 0 & 0 & -(1 + e^{-iq}) \sqrt{S_A S_B} \\
+		0 & S_B & -(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
+		0 & -(1 + e^{iq}) \sqrt{S_A S_B} & S_A & 0 \\
+		-(1 + e^{iq}) \sqrt{S_A S_B} & 0 & 0 & S_A
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \nonumber 
 \end{align}
 
 
@@ -355,5 +393,46 @@ Cubic Hamiltonian:
 	&= \frac{i D \sin\theta}{\sqrt{2N}} \sum_{kpq} \delta_{k+p+q,0} \sum_\nu (-1)^\nu \sqrt{S_\nu} \bigg( \left( \beta_q^2 + \frac{1}{4} \left( \beta_{k+p+q}^2 - 3 \right) \right) a_{-k\nu}^\dagger a_{p\nu} a_{q\nu} - \left( \beta_k^2 + \frac{1}{4} \left( \beta_{k+p+q}^2 - 3 \right) \right) a_{-k\nu}^\dagger a_{-p\nu}^\dagger a_{q\nu} \\
 	&\hspace{1cm} - \beta_{p+q}^2 a_{k\nu} a_{-p\nu}^\dagger a_{q\nu} + \beta_{k+p}^2 a_{-k\nu}^\dagger a_{p\nu} a_{-q\nu}^\dagger \bigg)
 \end{align}
+\dots
+
+\subsection{LSWT}
+We have
+\begin{tiny}
+\begin{align}
+	\hat H_2 &= \sum_{q} \begin{pmatrix}
+		a_{-qA} & a_{qA}^\dagger & a_{-qB} & a_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_A & 0 & J \beta_q^1 \sqrt{S_A S_B} \\
+		-3J S_B & 0 & 0 & 0 \\
+		0 & J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_B \\
+		0 & 0 & -3J S_A & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \\
+%
+	&= \sum_{q} \begin{pmatrix}
+		a_{qA}^\dagger & a_{-qA} & a_{qB}^\dagger & a_{-qB}
+	\end{pmatrix} \begin{pmatrix}
+		-3J S_B & 0 & 0 & 0 \\
+		0 & iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_A & 0 & J \beta_q^1 \sqrt{S_A S_B} \\
+		0 & 0 & -3J S_A & 0 \\
+		0 & J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_B
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \\
+%
+	&= \dots \begin{pmatrix}
+		-\frac{3}{2} J S_B + \frac{1}{2} iD\cos\theta (\beta_{-q}^2 - \beta_{q}^2) S_A & 0 & \frac{1}{2} J \beta_q^1 \sqrt{S_A S_B} & 0 \\
+		0 & - \frac{3}{2}JS_B + \frac{1}{2} iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_A & 0 & \frac{1}{2} J \beta_q^1 \sqrt{S_A S_B} \\
+		\frac{1}{2} J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -\frac{3}{2} J S_A - \frac{1}{2} iD\cos\theta (\beta_{-q}^2 - \beta_{q}^2) S_B & 0 \\
+		0 & \frac{1}{2} J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -\frac{3}{2} J S_A - \frac{1}{2} iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_B
+	\end{pmatrix} \dots \nonumber \\
+%
+	&\equiv \frac{1}{2} \begin{pmatrix}
+		-3JS_B + B(-q) S_A & 0 & A(q) & 0 \\ 0 & -3JS_B + B(q) S_A & 0 & A(q) \\ A(-q) & 0 & -3JS_A - B(-q) S_B & 0 \\ 0 & A(-q) & 0 & 3JS_A - B(q) S_B
+	\end{pmatrix}
+\end{align}
+\end{tiny}
+where $A(q) \equiv J\beta_q^1 \sqrt{S_A S_B}$ and $B(q) \equiv iD\cos\theta (\beta_q^2 - \beta_{-q}^2)$.
 
 \end{document}
