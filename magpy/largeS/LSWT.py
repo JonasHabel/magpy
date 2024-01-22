@@ -3,6 +3,7 @@ from operator import itemgetter
 from magpy.models import Model
 from magpy.lattice import ReciprocalLattice
 from magpy.interactions import Interaction
+from magpy.momenta import Momenta
 from magpy.util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF
 from magpy.largeS import momentum_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian
@@ -155,3 +156,28 @@ def get_eigensystem_momentum_space(
         eigv = normalize_wrt_metric(eigv, bogo_metric)
 
     return eigw, eigv
+
+
+
+def get_eigensystems_momentum_space(model: Model, momenta):
+    if isinstance(momenta, Momenta):
+        assert momenta.num_momenta == 1
+        ks = momenta.flatten()[0]
+    else: 
+        ks = momenta
+
+    num_ks = len(ks)
+    num_sites_unit_cell = model.lattice.num_sites_unit_cell
+    eigws = np.zeros((num_ks, 2*num_sites_unit_cell))
+    eigvs = np.zeros((num_ks, 2*num_sites_unit_cell, 2*num_sites_unit_cell),
+        dtype=np.complex128)
+
+    for k_idx, k in enumerate(ks):
+        eigws[k_idx], eigvs[k_idx] = get_eigensystem_momentum_space(
+            model, k=k)
+        
+    if isinstance(momenta, Momenta):
+        eigws = momenta.erect(eigws)
+        eigvs = momenta.erect(eigvs)
+
+    return eigws, eigvs
