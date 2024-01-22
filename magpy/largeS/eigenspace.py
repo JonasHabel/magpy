@@ -39,7 +39,7 @@ def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
     return np.einsum(einsum_str, *eigvs, magnon_H_mom_space)
 
 
-def compute_magnon_Hamiltonians(model: Model, momentum_arrays, eigvs, magnon_Hs_mom_space, first_momentum_idx=1):
+def compute_magnon_Hamiltonians(momentum_arrays, eigvs, magnon_Hs_mom_space, first_momentum_idx=1):
     if isinstance(momentum_arrays, Momenta):
         k_arrays = momentum_arrays.flatten()
         eigvs = momentum_arrays.flatten(eigvs)
