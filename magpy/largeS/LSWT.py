@@ -24,14 +24,9 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
         LSWT_Hamiltonian_real_space, model, order=2)
 
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
-    magnon_H_k = \
-        momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(
+    magnon_H_k, magnon_H_minusk = \
+        momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
             model, ks=np.array([k]), 
-            interaction_Hamiltonian_real_space=LSWT_Hamiltonian_real_space)
-    
-    magnon_H_minusk = \
-        momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(
-            model, ks=np.array([-k]), 
             interaction_Hamiltonian_real_space=LSWT_Hamiltonian_real_space)
     
     sigma_x = np.array([[0, 1], [1, 0]])
@@ -44,3 +39,119 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
     # magnon_H_BdG /= 2
 
     return magnon_H_BdG
+
+
+
+
+
+
+
+"""
+The np.linalg.eig method returns a matrix U such that U^{-1} ηH U = D is
+diagonal. However, the condition U^† η U = η, which is required so that the
+Bogoliubov operators obey the canonical commutation relations, does not hold
+in general:
+1) in the case of degenerate eigenvalues, the degenerate eigenspace is not
+   necessarily orthogonal wrt the bogo metric.
+2) U^† η U will be a diagonal matrix. Thus, we need to normalize the n-th
+   eigenvector by sqrt((U^† η U)_{nn})
+
+Therefore, we need to employ the Gram-Schmidt algorithm wrt the bogo metric.
+"""
+def orthogonalize_wrt_metric(eigv, metric):
+    eigv_ortho = np.zeros(eigv.shape, dtype=complex)
+    num_vec = eigv.shape[1]
+
+    def metric_dot(a, b):
+        return a.conj().T @ metric @ b
+
+    for n in range(num_vec):
+        # orthogonalize n-th vector
+        collinear_component = np.sum(np.array([
+            eigv_ortho[:, m] \
+            * metric_dot(eigv_ortho[:, m], eigv[:, n]) \
+            / metric_dot(eigv_ortho[:, m], eigv_ortho[:, m]) \
+            for m in range(n)
+        ]), axis=0)
+        eigv_ortho[:, n] = eigv[:, n] - collinear_component
+        # normalize n-th vector
+        # norm_sq = metric[n, n] * metric_dot(eigv_ortho[:, n], eigv_ortho[:, n])
+        # eigv_ortho[:, n] /= np.sqrt(norm_sq)
+
+    return eigv_ortho
+
+
+def normalize_wrt_metric(eigv, metric):
+    eigv_normalized = np.zeros(eigv.shape, dtype=complex)
+    eigv_norms = np.sqrt(np.diag(metric @ eigv.T.conj() @ metric @ eigv))
+    for n in range(eigv.shape[1]):
+        eigv_normalized[:, n] = eigv[:, n] / eigv_norms[n]
+
+    return eigv_normalized
+
+
+"""
+Say we have eigenvalues [-2, -1, 0, 0, 1, 2].
+This routine sorts the eigenvalues and corresponding eigenvectors in the order
+[0, 0, 1, -1, 2, -2]. This retains the bogo-metric structure
+"""
+def __sort_eigensystem(eigw, eigv):
+    # isolate blocks of positive, negative and zero eigenvalues and eigenvectors
+    eigw_rounded = eigw.copy()
+    eigw_rounded[np.abs(np.real(eigw_rounded)) < 1e-12] = 0
+    pos_idx = np.where(eigw_rounded > 0)[0]
+    zero_idx = np.where(eigw_rounded == 0)[0]
+    neg_idx = np.where(eigw_rounded < 0)[0]
+
+    pos_eigw, pos_eigv = eigw[pos_idx], eigv[:, pos_idx]
+    zero_eigw, zero_eigv = eigw[zero_idx], eigv[:, zero_idx]
+    neg_eigw, neg_eigv = eigw[neg_idx], eigv[:, neg_idx]
+
+    # sort positive (negative) eigenvalues in ascending (descending) order
+    pos_idx_sorted = pos_eigw.argsort()
+    neg_idx_sorted = neg_eigw.argsort()[::-1]
+
+    pos_eigw, pos_eigv = pos_eigw[pos_idx_sorted], pos_eigv[:, pos_idx_sorted]
+    neg_eigw, neg_eigv = neg_eigw[neg_idx_sorted], neg_eigv[:, neg_idx_sorted]
+
+    # insert positive, negative and zero blocks into sorted arrays
+    eigw_sorted = np.zeros(eigw.shape, dtype=float)
+    eigv_sorted = np.zeros(eigv.shape, dtype=complex)
+    zero_block_idx = len(zero_eigw)
+    
+    if pos_eigw.shape[0] != neg_eigw.shape[0]:
+        print(eigw)
+        raise Exception("LSWT is not well-defined: there might be complex eigenvalues")
+
+    eigw_sorted[0:zero_block_idx] = zero_eigw
+    eigv_sorted[:, 0:zero_block_idx] = zero_eigv
+    eigw_sorted[zero_block_idx::2] = pos_eigw
+    eigv_sorted[:, zero_block_idx::2] = pos_eigv
+    eigw_sorted[zero_block_idx+1::2] = neg_eigw
+    eigv_sorted[:, zero_block_idx+1::2] = neg_eigv
+
+    return eigw_sorted, eigv_sorted
+
+
+    
+"""
+This is where the actual diagonalization happens
+"""
+def get_eigensystem_momentum_space(
+        model: Model, k=None, magnon_Hamiltonian=None, orthonormalize=True):
+    num_sites_unit_cell = model.lattice.num_sites_unit_cell
+    bogo_metric = BOGO_METRIC(num_sites_unit_cell)
+
+    H_k = magnon_Hamiltonian if magnon_Hamiltonian is not None \
+        else compute_LSWT_Hamiltonian_momentum_space_BdG(model, k)
+
+    eigw, eigv = np.linalg.eig(bogo_metric @ H_k)
+    # idx = eigw.argsort()
+    # eigw, eigv = eigw[idx], eigv[:, idx]
+    eigw, eigv = __sort_eigensystem(eigw, eigv)
+
+    if orthonormalize:
+        eigv = orthogonalize_wrt_metric(eigv, bogo_metric)
+        eigv = normalize_wrt_metric(eigv, bogo_metric)
+
+    return eigw, eigv

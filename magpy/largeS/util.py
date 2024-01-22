@@ -1,3 +1,4 @@
+import numpy as np
 from magpy.largeS import real_space
 
 
@@ -6,3 +7,27 @@ def get_real_space_magnon_Hamiltonian(
     return interaction_Hamiltonian_real_space \
         if interaction_Hamiltonian_real_space is not None \
         else real_space.compute_magnon_Hamiltonian(model, order)
+
+
+def iterator(k_arrays, func):
+    num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
+    partial_modulos = np.array([
+        np.prod(num_ks[n+1:]) for n in range(len(num_ks))
+    ])
+
+    for i in range(np.prod(num_ks)):
+        k_multiidx = convert_1d_index_into_multiindex(i, partial_modulos)
+        ks = np.array([
+            k_array[k_multiidx[n]] for n, k_array in enumerate(k_arrays)
+        ]).reshape(k_arrays[:,0].shape)   # reshaping required only if len(k_arrays) == 1
+        yield k_multiidx, func(ks)
+
+
+def convert_1d_index_into_multiindex(idx, partial_modulos):
+    quotient, remainder = (0, idx)
+    multiidx = np.zeros(len(partial_modulos), dtype=np.int64)
+    for n, N in enumerate(partial_modulos):
+        quotient, remainder = remainder // N, remainder % N
+        multiidx[n] = quotient
+        
+    return multiidx
