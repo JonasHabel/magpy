@@ -10,6 +10,11 @@ def assert_LSWT_BdG_Hamiltonians_equal(model, k, expected_H_LSWT_BdG):
     assert np.allclose(H_LSWT_BdG, expected_H_LSWT_BdG)
 
 
+def assert_LSWT_energies_equal(model, k, expected_eigw):
+    eigw, eigv = LSWT.get_eigensystem_momentum_space(model, k)
+    assert np.allclose(eigw, expected_eigw)
+
+
 
 def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
     model, (J, S_A, S_B) = test_models.FM_Heisenberg_chain()
@@ -23,8 +28,15 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
         [0, -1/2*(1 + np.exp(1j*q[0]))*np.sqrt(S_A*S_B), S_A, 0],
         [-1/2*(1 + np.exp(1j*q[0]))*np.sqrt(S_A*S_B), 0, 0, S_A],
     ])
-
     assert_LSWT_BdG_Hamiltonians_equal(model, q, expected_H_LSWT_BdG)
+
+    expected_eigw = np.array([
+        J/2*(S_B - S_A + np.sqrt(S_A**2 + S_B**2 - 2*S_A*S_B*np.cos(q[0]))),
+        -J/2*(S_B - S_A + np.sqrt(S_A**2 + S_B**2 - 2*S_A*S_B*np.cos(q[0]))),
+        -J/2*(S_B - S_A - np.sqrt(S_A**2 + S_B**2 - 2*S_A*S_B*np.cos(q[0]))),
+        J/2*(S_B - S_A - np.sqrt(S_A**2 + S_B**2 - 2*S_A*S_B*np.cos(q[0]))),
+    ])
+    assert_LSWT_energies_equal(model, q, expected_eigw)
 
 
 
@@ -37,8 +49,10 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
     q = np.random.rand(1)
 
     expected_H_LSWT_BdG = J*S*np.diag([-1 + np.cos(q.dot(delta_ij))] * 2)
-
     assert_LSWT_BdG_Hamiltonians_equal(model, q, expected_H_LSWT_BdG)
+
+    expected_eigw = J*S*(-1 + np.cos(q)) * np.array([1, -1])
+    assert_LSWT_energies_equal(model, q, expected_eigw)
 
 
 
@@ -56,7 +70,6 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
     np.random.seed(1)
     q = np.random.rand(2)
 
-    # order S^1
     beta_1 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nn)) for nn in nns]))
     beta_2 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nnn)) for nnn in nnns]))
     A = lambda K: J*beta_1(K)*np.sqrt(S_A*S_B)
@@ -67,7 +80,14 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
         [A(-q), 0, -3*J*S_A - B(-q)*S_B, 0],
         [0, A(-q), 0, -3*J*S_A - B(q)*S_B],
     ])
-
     assert_LSWT_BdG_Hamiltonians_equal(model, q, expected_H_LSWT_BdG)
+
+    expected_eigw = np.array([
+        1/4*((-3*J*(S_B + S_A) + B(-q)*(S_A - S_B)) - np.sqrt((-3*J*(S_B - S_A) + B(-q)*(S_A + S_B))**2 + 4*np.abs(A(q))**2)),
+        -1/4*((-3*J*(S_B + S_A) + B(q)*(S_A - S_B)) - np.sqrt((-3*J*(S_B - S_A) + B(q)*(S_A + S_B))**2 + 4*np.abs(A(q))**2)),
+        1/4*((-3*J*(S_B + S_A) + B(-q)*(S_A - S_B)) + np.sqrt((-3*J*(S_B - S_A) + B(-q)*(S_A + S_B))**2 + 4*np.abs(A(q))**2)),
+        -1/4*((-3*J*(S_B + S_A) + B(q)*(S_A - S_B)) + np.sqrt((-3*J*(S_B - S_A) + B(q)*(S_A + S_B))**2 + 4*np.abs(A(q))**2)),
+    ])
+    assert_LSWT_energies_equal(model, q, expected_eigw)
 
     
