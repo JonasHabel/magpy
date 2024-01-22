@@ -7,9 +7,10 @@ class Momenta:
         self.num_momenta = len(k_arrays)
 
 
-    def flatten(self):
+    def flatten(self, quantity=None):
+        quantity = self.k_arrays if quantity is None else quantity
         return np.array([
-            k_array.reshape(np.prod(k_array.shape)) for k_array in self.k_arrays
+            q.reshape(np.prod(q.shape)) for q in quantity
         ])
     
 

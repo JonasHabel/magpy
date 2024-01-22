@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 from magpy.largeS import real_space
 
@@ -20,7 +21,7 @@ def iterator(k_arrays, func):
         ks = np.array([
             k_array[k_multiidx[n]] for n, k_array in enumerate(k_arrays)
         ]).reshape(k_arrays[:,0].shape)   # reshaping required only if len(k_arrays) == 1
-        yield k_multiidx, func(ks)
+        yield k_multiidx, func(k_multiidx, ks)
 
 
 def convert_1d_index_into_multiindex(idx, partial_modulos):
@@ -31,3 +32,11 @@ def convert_1d_index_into_multiindex(idx, partial_modulos):
         multiidx[n] = quotient
         
     return multiidx
+
+
+def get_permutations(num_elements):
+    return list(itertools.permutations(range(num_elements)))
+
+
+def permute(arr, perm):
+    return np.array([arr[perm[i]] for i in range(len(arr))])

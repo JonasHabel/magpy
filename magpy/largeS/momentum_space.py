@@ -1,5 +1,5 @@
 import numpy as np
-import itertools
+from magpy.largeS.util import get_permutations, permute
 from magpy.models import Model
 from magpy.largeS import real_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian, iterator
@@ -91,21 +91,13 @@ def compute_magnon_Hamiltonians_with_momentum_conservation(
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
     for k_multiidx, magnon_H in iterator(
-        k_arrays, lambda ks: 
+        k_arrays, lambda k_multiidx, ks: 
         compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
             model, ks, magnon_Hs_real_space)):
         magnon_Hs[(slice(None), *k_multiidx)] = magnon_H
 
     if isinstance(momentum_arrays, Momenta):
-        magnon_Hs = momentum_arrays.erect(magnon_Hs)
+        magnon_Hs = momentum_arrays.erect(magnon_Hs, first_momentum_idx=1)
 
     return magnon_Hs
     
-
-
-def get_permutations(num_elements):
-    return list(itertools.permutations(range(num_elements)))
-
-
-def permute(arr, perm):
-    return np.array([arr[perm[i]] for i in range(len(arr))])
