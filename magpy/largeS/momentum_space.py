@@ -3,7 +3,7 @@ from magpy.largeS.util import get_permutations, permute
 from magpy.models import Model
 from magpy.largeS import real_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian, iterator
-from magpy.momenta import Momenta
+from magpy.momenta import CollapseMomenta, Momenta
 
 
 
@@ -67,13 +67,19 @@ def compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
     return magnon_Hs
 
 
+@CollapseMomenta(
+    momentum_arrays_arg_idx=1, 
+    target_arg_idxs=(1,), 
+    target_first_momentum_idxs=(0,),
+    output_first_momentum_idx=1,
+)
 def compute_magnon_Hamiltonians_with_momentum_conservation(
-        model: Model, momentum_arrays,
+        model: Model, k_arrays,
         interaction_Hamiltonian_real_space=None):
-    if isinstance(momentum_arrays, Momenta):
-        k_arrays = momentum_arrays.collapse()
-    else: 
-        k_arrays = momentum_arrays
+#    if isinstance(momentum_arrays, Momenta):
+#        k_arrays = momentum_arrays.collapse()
+#    else:
+#        k_arrays = momentum_arrays
 
     if len(k_arrays) >= 1 and any(map(lambda k_array: k_array.shape[-1] != model.lattice.dim, k_arrays)):
         raise Exception(f"dimensions of momentum vectors " \
@@ -96,8 +102,8 @@ def compute_magnon_Hamiltonians_with_momentum_conservation(
             model, ks, magnon_Hs_real_space)):
         magnon_Hs[(slice(None), *k_multiidx)] = magnon_H
 
-    if isinstance(momentum_arrays, Momenta):
-        magnon_Hs = momentum_arrays.restore(magnon_Hs, first_momentum_idx=1)
+#    if isinstance(momentum_arrays, Momenta):
+#        magnon_Hs = momentum_arrays.restore(magnon_Hs, first_momentum_idx=1)
 
     return magnon_Hs
     
