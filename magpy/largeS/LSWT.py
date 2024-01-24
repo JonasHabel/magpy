@@ -32,7 +32,7 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
     
     sigma_x = np.array([[0, 1], [1, 0]])
     # of the form [a_k^†, a_{-k}] H_BdG [a_k, a_{-k}^†]
-    magnon_H_BdG = 0.5 * np.kron(np.eye(num_sites_unit_cell), sigma_x) \
+    magnon_H_BdG = np.kron(np.eye(num_sites_unit_cell), sigma_x) \
         @ (magnon_H_k + magnon_H_minusk.T)
 
     # make BdG Hamiltonians hermitian
