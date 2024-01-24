@@ -162,7 +162,7 @@ def get_eigensystem_momentum_space(
 def get_eigensystems_momentum_space(model: Model, momenta):
     if isinstance(momenta, Momenta):
         assert momenta.num_momenta == 1
-        ks = momenta.flatten()[0]
+        ks = momenta.collapse()[0]
     else: 
         ks = momenta
 
@@ -177,7 +177,7 @@ def get_eigensystems_momentum_space(model: Model, momenta):
             model, k=k)
         
     if isinstance(momenta, Momenta):
-        eigws = momenta.erect(eigws)
-        eigvs = momenta.erect(eigvs)
+        eigws = momenta.restore(eigws)
+        eigvs = momenta.restore(eigvs)
 
     return eigws, eigvs

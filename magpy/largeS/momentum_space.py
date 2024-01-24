@@ -71,7 +71,7 @@ def compute_magnon_Hamiltonians_with_momentum_conservation(
         model: Model, momentum_arrays,
         interaction_Hamiltonian_real_space=None):
     if isinstance(momentum_arrays, Momenta):
-        k_arrays = momentum_arrays.flatten()
+        k_arrays = momentum_arrays.collapse()
     else: 
         k_arrays = momentum_arrays
 
@@ -97,7 +97,7 @@ def compute_magnon_Hamiltonians_with_momentum_conservation(
         magnon_Hs[(slice(None), *k_multiidx)] = magnon_H
 
     if isinstance(momentum_arrays, Momenta):
-        magnon_Hs = momentum_arrays.erect(magnon_Hs, first_momentum_idx=1)
+        magnon_Hs = momentum_arrays.restore(magnon_Hs, first_momentum_idx=1)
 
     return magnon_Hs
     

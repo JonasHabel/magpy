@@ -43,18 +43,18 @@ def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
 
 def compute_magnon_Hamiltonians(momentum_arrays, eigvs, magnon_Hs_mom_space, first_momentum_idx=1):
     if isinstance(momentum_arrays, Momenta):
-        k_arrays = momentum_arrays.flatten()
-        eigvs = momentum_arrays.flatten(eigvs)
-        magnon_Hs_mom_space = momentum_arrays.flatten(magnon_Hs_mom_space)
+        k_arrays = momentum_arrays.collapse()
+        eigvs = momentum_arrays.collapse(eigvs)
+        magnon_Hs_mom_space = momentum_arrays.collapse(magnon_Hs_mom_space, first_momentum_idx=1)
     else: 
         k_arrays = momentum_arrays
     
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
     last_momentum_idx = first_momentum_idx + len(k_arrays)
     magnon_Hs_shape = (
-        *magnon_Hs_mom_space[:first_momentum_idx], 
+        *magnon_Hs_mom_space.shape[:first_momentum_idx], 
         *num_ks, 
-        magnon_Hs_mom_space[last_momentum_idx:]
+        *magnon_Hs_mom_space.shape[last_momentum_idx:]
     )
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
@@ -66,7 +66,7 @@ def compute_magnon_Hamiltonians(momentum_arrays, eigvs, magnon_Hs_mom_space, fir
         magnon_Hs[idx] = magnon_H
 
     if isinstance(momentum_arrays, Momenta):
-        magnon_Hs = momentum_arrays.erect(magnon_Hs, first_momentum_idx)
+        magnon_Hs = momentum_arrays.restore(magnon_Hs, first_momentum_idx)
 
     return magnon_Hs
 
