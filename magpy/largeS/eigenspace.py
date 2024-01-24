@@ -32,7 +32,9 @@ def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
     assert order < 13
 
     einsum_str = ",".join([chr(97 + i) + chr(97+13 + i) for i in range(order)])
-    einsum_str = "".join([chr(97 + i) for i in range(order)])
+    if order >= 1:
+        einsum_str += ","
+    einsum_str += "".join([chr(97 + i) for i in range(order)])
     einsum_str += "->"
     einsum_str += "".join([chr(97+13 + i) for i in range(order)])
 
