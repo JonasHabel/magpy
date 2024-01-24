@@ -25,7 +25,7 @@ def eigvs_allclose_up_to_phase(eigv, expected_eigv):
 
 
 
-def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
+def test_LSWT_AFM_Heisenberg_chain():
     model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
 
     np.random.seed(1)
@@ -60,7 +60,7 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
 
 
 
-def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
+def test_LSWT_FM_Heisenberg_chain():
     model, (J, S) = test_models.FM_Heisenberg_chain()
 
     delta_ij = np.array([1])
@@ -78,7 +78,7 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
 
 
 
-def test_momentum_space_Hamiltonian_honeycomb_DMI():
+def test_LSWT_honeycomb_DMI():
     model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
 
     nns = np.array([
