@@ -22,7 +22,7 @@ def assert_all_momentum_space_Hamiltonians_equal_for_multiple_ks(model, k_arrays
 
 
 def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
-    model, (J, S_A, S_B) = test_models.FM_Heisenberg_chain()
+    model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
 
     np.random.seed(1)
     ks = np.random.rand(4, 1)
@@ -107,7 +107,7 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
 
 
 def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
-    model, (J, S) = test_models.AFM_Heisenberg_chain()
+    model, (J, S) = test_models.FM_Heisenberg_chain()
 
     delta_ij = np.array([1])
 

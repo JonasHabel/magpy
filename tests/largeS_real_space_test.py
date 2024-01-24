@@ -18,7 +18,7 @@ def assert_all_real_space_Hamiltonians_equal(model, expected_magnon_Hs):
 
 
 def test_real_space_Hamiltonian_AFM_Heisenberg_chain():
-    model, (J, S_A, S_B) = test_models.FM_Heisenberg_chain()
+    model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
 
     site_k = BravaisLattice.Site(np.array([-1]), 1)
     site_i = BravaisLattice.Site(np.array([0]), 0)
@@ -72,7 +72,7 @@ def test_real_space_Hamiltonian_AFM_Heisenberg_chain():
 
 
 def test_real_space_Hamiltonian_FM_Heisenberg_chain():
-    model, (J, S) = test_models.AFM_Heisenberg_chain()
+    model, (J, S) = test_models.FM_Heisenberg_chain()
 
     site_i = BravaisLattice.Site(np.array([0]), 0)
     site_j = BravaisLattice.Site(np.array([1]), 0)

@@ -4,7 +4,7 @@ from magpy.lattice import BravaisLattice, ChainLattice, HoneycombLatticeA
 from magpy.interactions import NthNearestNeighborHeisenbergInteraction, DMInteraction
 
 
-def FM_Heisenberg_chain():
+def AFM_Heisenberg_chain():
     J = 1.0
     S_A = 3/2
     S_B = 1
@@ -19,7 +19,7 @@ def FM_Heisenberg_chain():
     ), (J, S_A, S_B)
 
 
-def AFM_Heisenberg_chain():
+def FM_Heisenberg_chain():
     J = -1.0
     S = 3/2
     lattice = ChainLattice()
