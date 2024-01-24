@@ -89,17 +89,17 @@ We transform $\hat H_2$ to BdG form by (1) using the $\delta_{k+q,0}$ to kill th
 %
 	&\overset{(3)}{=} \sum_{q>0} \left[ \begin{pmatrix} 
 		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
-	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \begin{pmatrix}
 		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
 	\end{pmatrix} + \begin{pmatrix} 
 		a_{-q1}^\dagger & a_{q1} & a_{-q2}^\dagger & a_{q2} & \dots 
-	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(q, -q) \begin{pmatrix}
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(q, -q) \begin{pmatrix}
 		a_{-q1} \\ a_{q1}^\dagger \\ a_{-q2} \\ a_{q2}^\dagger \\ \dots
 	\end{pmatrix} \right] \nonumber \\
 %
 	&= \sum_{q>0} \begin{pmatrix} 
 		a_{q1}^\dagger & a_{-q1} & a_{q2}^\dagger & a_{-q2} & \dots 
-	\end{pmatrix} \frac{1}{2} (\mathbbm 1 \otimes \sigma_x) \left( \mathcal H_2(-q, q) + \mathcal H_2^T(q, -q) \right) \begin{pmatrix}
+	\end{pmatrix} (\mathbbm 1 \otimes \sigma_x) \left( \mathcal H_2(-q, q) + \mathcal H_2^T(q, -q) \right) \begin{pmatrix}
 		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
 	\end{pmatrix} \\
 \end{align}
@@ -135,7 +135,7 @@ For the actual model:
 		a_q \\ a_{-q}^\dagger
 	\end{pmatrix} \\
 %
-	&= JS \sum_q \begin{pmatrix}
+	&= 2JS \sum_q \begin{pmatrix}
 		a_{q}^\dagger & a_{-q}
 	\end{pmatrix} \begin{pmatrix}
 		-1 + \cos(q) & 0 \\
@@ -144,7 +144,62 @@ For the actual model:
 		a_q \\ a_{-q}^\dagger
 	\end{pmatrix}
 \end{align}
-The eigenenergies are $\epsilon_q = -JS(1 - \cos(q))$.
+The eigenenergies are $\epsilon_q = -2JS(1 - \cos(q))$. \\
+Introduce the eigenmodes:
+\begin{align}
+	\begin{pmatrix}
+		a_{q1} \\ a_{-q1}^\dagger \\ a_{q2} \\ a_{-q2}^\dagger \\ \dots
+	\end{pmatrix} = \mathcal U(q) \begin{pmatrix}
+		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger \\ \dots
+	\end{pmatrix} \qquad \text{where} \quad \mathcal U(-q) = (\mathbbm 1 \otimes \sigma_x) \mathcal U(q)^* (\mathbbm 1 \otimes \sigma_x)
+\end{align}
+For the actual model: $\mathcal U(q) = \mathbbm 1$.
+%so that
+%\begin{align}
+%	\hat H_2 &= \sum_q \begin{pmatrix}
+%		\alpha_{-q1} & \alpha_{q1}^\dagger & \alpha_{-q2} & \alpha_{q2}^\dagger & \dots
+%	\end{pmatrix} \underbrace{\mathcal U(-q)^T \mathcal H_2(-q, q) \mathcal U(q)}_{\substack{= (\mathbbm 1 \otimes \sigma_x) \mathcal U(q)^\dagger (\mathbbm 1 \otimes \sigma_x) \mathcal H_2(-q, q) \mathcal U(q) \\ \equiv \mathfrak h(q)}} \begin{pmatrix}
+%		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger \\ \dots
+%	\end{pmatrix} \\
+%%
+%	&= \sum_{q > 0} \begin{pmatrix}
+%		\alpha_{-q1} & \alpha_{q1}^\dagger & \alpha_{-q2} & \alpha_{q2}^\dagger & \dots
+%	\end{pmatrix} (\mathfrak h(q) + \mathfrak h^T(-q)) \begin{pmatrix}
+%		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger \\ \dots
+%	\end{pmatrix} \\
+%%
+%	 &= \sum_{q > 0} \begin{pmatrix}
+%		\alpha_{-q1} & \alpha_{q1}^\dagger & \alpha_{-q2} & \alpha_{q2}^\dagger & \dots
+%	\end{pmatrix} \begin{pmatrix}
+%		0 & \epsilon_{-q1} & 0 & 0 & \dots \\
+%		\epsilon_{q1} & 0 & 0 & 0 & \dots \\
+%		0 & 0 & 0 & \epsilon_{-q2} & \dots \\
+%		0 & 0 & \epsilon_{q2} & 0 & \dots \\
+%		\vdots & \vdots & \vdots & \vdots & \ddots
+% 	\end{pmatrix} \begin{pmatrix}
+%		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger \\ \dots
+%	\end{pmatrix}
+%\end{align}
+
+\subsection{Eigenspace}
+
+Quadratic Hamiltonian:
+\begin{align}
+	\hat H_2 &= JS \sum_q \begin{pmatrix}
+		\alpha_{-q} & \alpha_{q}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & e^{iq} + e^{-iq} \\
+		-2 & 0
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_q \\ \alpha_{-q}^\dagger
+	\end{pmatrix}
+\end{align}
+Quartic Hamiltonian:
+\begin{align}
+	\hat H_4 &= J \frac{1}{N} \sum_{kpq} \left( e^{i(p+q)} a_{k+p+q}^\dagger a_{k} a_{-p}^\dagger a_q - \frac{1}{4} \left( \left( e^{iq} + e^{-iq} \right) a_{k+p+q}^\dagger a_{k} a_p a_{-q}^\dagger + \left(e^{i(k+p+q)} + e^{-i(k+p+q)}\right) a_{-k-p-q} a_{-k}^\dagger a_{-p}^\dagger a_q \right) \right) \nonumber \\
+%
+	&= J \frac{1}{N} \sum_{kpq} \left( e^{i(p+q)} \alpha_{k+p+q}^\dagger \alpha_{k} \alpha_{-p}^\dagger \alpha_q - \frac{1}{2} \left( \cos(q) \alpha_{k+p+q}^\dagger \alpha_{k} \alpha_p \alpha_{-q}^\dagger + \cos(k+p+q) \alpha_{-k-p-q} \alpha_{-k}^\dagger \alpha_{-p}^\dagger \alpha_q \right) \right) \nonumber
+\end{align}
 
 
 
@@ -263,10 +318,10 @@ We have
 	 &= J \sum_{q>0} \begin{pmatrix}
 		a_{qA}^\dagger & a_{-qA} & a_{qB}^\dagger & a_{-qB}
 	\end{pmatrix} \begin{pmatrix}
-		S_B & 0 & 0 & -\frac{1}{2}(1 + e^{-iq}) \sqrt{S_A S_B} \\
-		0 & S_B & -\frac{1}{2}(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
-		0 & -\frac{1}{2}(1 + e^{iq}) \sqrt{S_A S_B} & S_A & 0 \\
-		-\frac{1}{2}(1 + e^{iq}) \sqrt{S_A S_B} & 0 & 0 & S_A
+		2S_B & 0 & 0 & -(1 + e^{-iq}) \sqrt{S_A S_B} \\
+		0 & 2S_B & -(1 + e^{-iq}) \sqrt{S_A S_B} & 0 \\
+		0 & -(1 + e^{iq}) \sqrt{S_A S_B} & 2S_A & 0 \\
+		-(1 + e^{iq}) \sqrt{S_A S_B} & 0 & 0 & 2S_A
 	\end{pmatrix} \begin{pmatrix}
 		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
 	\end{pmatrix} \nonumber 
@@ -274,9 +329,163 @@ We have
 \end{footnotesize}
 The eigenenergies are
 \begin{align}
-	\epsilon_q &= \frac{J}{2} \left( S_A - S_B \pm \sqrt{(S_A + S_B)^2 - |1 + e^{iq}|^2 S_A S_B} \right) \\
+	\epsilon_{q\pm} &= \pm J \left( S_B - S_A \pm \sqrt{(S_A + S_B)^2 - |1 + e^{iq}|^2 S_A S_B} \right) \\
 %
-	&= \frac{J}{2} \left( S_A - S_B \pm \sqrt{S_A^2 + S_B^2 - 2 S_A S_B \cos q} \right)
+	&= \pm J \left( S_B - S_A \pm \sqrt{S_A^2 + S_B^2 - 2 S_A S_B \cos q} \right)
+\end{align}
+Introduce the eigenmodes:
+\begin{align}
+	\begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} = \mathcal U(q) \begin{pmatrix}
+		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger
+	\end{pmatrix}
+\end{align}
+To find $\mathcal U(q)$, we need to BdG-diagonalize a matrix of the form
+\begin{align}
+	\begin{pmatrix}
+		A & B^* \\
+		B & C
+	\end{pmatrix}
+\end{align}
+where $A = 2S_B$, $B = -(1 + e^{iq}) \sqrt{S_A S_B}$, $C = 2S_A$. \\
+Eigenvalues are $\epsilon_{\pm} = \pm \frac{A - C}{2} + \sqrt{\left(\frac{A+C}{2}\right)^2 - |B|^2}$. Eigenvectors:
+\begin{align}
+	\begin{pmatrix}
+		A & B^* \\ -B & -C
+	\end{pmatrix} \begin{pmatrix}
+		\cosh u & \sinh u \\ 
+		e^{i\phi} \sinh u & e^{i\phi} \cosh u
+	\end{pmatrix} &= \begin{pmatrix}
+		A \cosh u + B^* e^{i\phi} \sinh u & A \sinh u + B^* e^{i\phi} \cosh u \\ 
+		-B \cosh u - C e^{i\phi} \sinh u & -B \sinh u - C e^{i\phi} \cosh u
+	\end{pmatrix} \\
+%
+	&\overset ! = \begin{pmatrix}
+		\epsilon_+ \cosh u & \epsilon_- \sinh u \\ -\epsilon_+ e^{i\phi} \sinh u & -\epsilon_- e^{i\phi} \cosh u
+	\end{pmatrix} = \begin{pmatrix}
+		\epsilon_+ & 0 \\ 0 & -\epsilon_-
+	\end{pmatrix} \begin{pmatrix}
+		\cosh u & \sinh u \\ 
+		e^{i\phi} \sinh u & e^{i\phi} \cosh u
+	\end{pmatrix} \nonumber
+\end{align}
+\begin{gather}
+	\Rightarrow \begin{pmatrix}
+		A + |B| \tanh u & A \tanh u + |B| \\
+		-|B| - C \tanh u & -|B| \tanh u - C
+	\end{pmatrix} = \begin{pmatrix}
+		\epsilon_+ & -\epsilon_- \tanh u \\
+		\epsilon_+ \tanh u & -\epsilon_-
+	\end{pmatrix}
+\end{gather}
+\begin{gather}
+	\Rightarrow \tanh u = \frac{\epsilon_+ - A}{B^* e^{i\phi}} \overset{\phi = \mathrm{arg}(B)}{=} \frac{1}{|B|} \left( -\frac{A + C}{2} + \sqrt{\left(\frac{A+C}{2}\right)^2 - |B|^2} \right) \\
+%
+	\Rightarrow \sinh u = \frac{\tanh u}{\sqrt{1 - \tanh^2 u}} \qquad \cosh u = \frac{1}{\sqrt{1 - \tanh^2 u}}
+\end{gather}
+
+\subsection{Eigenspace}
+Quadratic Hamiltonian:
+\begin{tiny}
+\begin{align}
+	\hat H_2 &= J \sum_{q} \begin{pmatrix}
+		a_{-qA} & a_{qA}^\dagger & a_{-qB} & a_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & 0 & B^* & 0 \\
+		A & 0 & 0 & 0 \\
+		0 & 0 & 0 & 0 \\
+		0 & B & C & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= J \sum_{q} \begin{pmatrix}
+		a_{-qA} & a_{qA}^\dagger & a_{-qB} & a_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & 0 & B^* & 0 \\
+		A & 0 & 0 & 0 \\
+		0 & 0 & 0 & 0 \\
+		0 & B & C & 0
+	\end{pmatrix} \begin{pmatrix}
+		\cosh u & 0 & 0 & \sinh u \\
+		0 & \cosh u & \sinh u & 0 \\
+		0 & e^{i\phi_q} \sinh u & e^{i\phi_q} \cosh u & 0 \\
+		e^{i\phi_q} \sinh u & 0 & 0 & e^{i\phi_q} \cosh u
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= J \sum_{q} \begin{pmatrix}
+		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		\cosh u & 0 & 0 & e^{i\phi_{-q}} \sinh u \\
+		0 & \cosh u &  e^{i\phi_{-q}} \sinh u & 0 \\
+		0 &\sinh u & e^{i\phi_{-q}} \cosh u & 0 \\
+		\sinh u & 0 & 0 & e^{i\phi_{-q}} \cosh u
+	\end{pmatrix} \begin{pmatrix}
+		0 & B^* e^{i\phi_q} \sinh u & B^* e^{i\phi_q} \cosh u & 0 \\
+		A \cosh u & 0 & 0 & A \sinh u \\
+		0 & 0 & 0 & 0 \\
+		0 & B \cosh u + C e^{i\phi_q} \sinh u & B \sinh u + C e^{i\phi_q} \cosh u & 0
+	\end{pmatrix}  \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= J \sum_{q} \begin{pmatrix}
+		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & 2 |B| \sinh u \cosh u + C \sinh^2 u & |B| (\cosh^2 u + \sinh^2 u) + C \sinh u \cosh u & 0 \\
+		A \cosh^2 u & 0 & 0 & A \sinh u \cosh u \\
+		A \sinh u \cosh u & 0 & 0 & A \sinh^2 u \\
+		0 & |B| (\cosh^2 u + \sinh^2 u) + C \sinh u \cosh u & 2 |B| \sinh u \cosh u + C \cosh^2 u & 0
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= J \sum_{q>0} \begin{pmatrix}
+		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & v & x & 0 \\
+		v & 0 & 0 & x \\
+		x & 0 & 0 & w \\
+		0 & x & w & 0
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= J \sum_{q>0} \begin{pmatrix}
+		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & \epsilon_+ & 0 & 0 \\
+		\epsilon_+ & 0 & 0 & 0 \\
+		0 & 0 & 0 & \epsilon_- \\
+		0 & 0 & \epsilon_- & 0
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber
+\end{align}
+\end{tiny}
+where we used $\phi_q \equiv \operatorname{arg}(B)$ and $\phi_{-q} \equiv \operatorname{arg}(B^*) = -\phi_q$.
+We also used the eigenvalue equation to define
+\begin{align}
+	v &\equiv A \cosh^2 u + C \sinh^2 u + 2|B| \sinh u \cosh u \\
+	&= \frac{A + C \tanh^2 u + 2|B| \tanh u}{1 - \tanh^2 u} \\
+	&= \frac{(A + |B| \tanh u) + \tanh u (C \tanh u + |B|)}{1 - \tanh^2 u} \\
+	&= \epsilon_+
+\end{align}
+\begin{align}	
+	w &\equiv A \sinh^2 u + C \cosh^2 u + 2|B| \sinh u \cosh u \\
+	&= \frac{A \tanh^2 u + C + 2|B| \tanh u}{1 - \tanh^2 u} \\
+	&= \frac{\tanh u (A \tanh u + |B|) + (|B| \tanh u + C)}{1 - \tanh^2 u} \\
+	&= \epsilon_-
+\end{align}
+\begin{align}
+	x &\equiv (A + C) \sinh u \cosh u + |B| (\cosh^2 u + \sinh^2 u) \\
+	&= \frac{(A + C) \tanh u + |B| (1 + \tanh^2 u)}{1 - \tanh^2 u} \\
+	&= \frac{\tanh u (A + |B| \tanh u) + |B| + C \tanh u}{1 - \tanh^2 u} \\
+	&= \frac{\tanh u \epsilon_+ - \tanh u \epsilon_+}{1 - \tanh^2 u} \\
+	&= 0
 \end{align}
 
 
@@ -431,24 +640,58 @@ We have
 	\end{pmatrix} \\
 %
 	&= \dots \begin{pmatrix}
-		-\frac{3}{2} J S_B + \frac{1}{2} iD\cos\theta (\beta_{-q}^2 - \beta_{q}^2) S_A & 0 & \frac{1}{2} J \beta_q^1 \sqrt{S_A S_B} & 0 \\
-		0 & - \frac{3}{2}JS_B + \frac{1}{2} iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_A & 0 & \frac{1}{2} J \beta_q^1 \sqrt{S_A S_B} \\
-		\frac{1}{2} J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -\frac{3}{2} J S_A - \frac{1}{2} iD\cos\theta (\beta_{-q}^2 - \beta_{q}^2) S_B & 0 \\
-		0 & \frac{1}{2} J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -\frac{3}{2} J S_A - \frac{1}{2} iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_B
+		-3J S_B + \frac{1}{2} iD\cos\theta (\beta_{-q}^2 - \beta_{q}^2) S_A & 0 & J \beta_q^1 \sqrt{S_A S_B} & 0 \\
+		0 & -3JS_B + iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_A & 0 & J \beta_q^1 \sqrt{S_A S_B} \\
+		J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -3J S_A - iD\cos\theta (\beta_{-q}^2 - \beta_{q}^2) S_B & 0 \\
+		0 & J \beta_{-q}^1 \sqrt{S_A S_B} & 0 & -3J S_A - iD\cos\theta (\beta_q^2 - \beta_{-q}^2) S_B
 	\end{pmatrix} \dots \nonumber \\
 %
-	&\equiv \frac{1}{2} \begin{pmatrix}
-		-3JS_B + B(-q) S_A & 0 & A(q) & 0 \\ 0 & -3JS_B + B(q) S_A & 0 & A(q) \\ A(-q) & 0 & -3JS_A - B(-q) S_B & 0 \\ 0 & A(-q) & 0 & -3JS_A - B(q) S_B
+	&\equiv \begin{pmatrix}
+		-3JS_B + b(-q) S_A & 0 & a(q) & 0 \\ 0 & -3JS_B + b(q) S_A & 0 & a(q) \\ a(-q) & 0 & -3JS_A - b(-q) S_B & 0 \\ 0 & a(-q) & 0 & -3JS_A - b(q) S_B
 	\end{pmatrix}
 \end{align}
 \end{tiny}
-where $A(q) \equiv J\beta_q^1 \sqrt{S_A S_B}$ and $B(q) \equiv iD\cos\theta (\beta_q^2 - \beta_{-q}^2)$. \\
+where $a(q) \equiv J\beta_q^1 \sqrt{S_A S_B}$ and $b(q) \equiv iD\cos\theta (\beta_q^2 - \beta_{-q}^2)$. \\
 The eigenvalues are
 \begin{align}
 	\epsilon_q = \begin{cases}
-		\frac{1}{2} \left( -3J (S_B + S_A) + B(-q) (S_A - S_B) \pm \sqrt{(-3J (S_B - S_A) + B(-q) (S_A + S_B))^2 + |A(q)|^2} \right) \\
-		\frac{1}{2} \left( -3J (S_B + S_A) + B(q) (S_A - S_B) \pm \sqrt{(-3J (S_B - S_A) + B(q) (S_A + S_B))^2 + |A(q)|^2} \right)
+		\frac{1}{2} \left( -3J (S_B + S_A) + B(-q) (S_A - S_B) \pm \sqrt{(-3J (S_B - S_A) + B(-q) (S_A + S_B))^2 + 4|A(q)|^2} \right) \\
+		\frac{1}{2} \left( -3J (S_B + S_A) + B(q) (S_A - S_B) \pm \sqrt{(-3J (S_B - S_A) + B(q) (S_A + S_B))^2 + 4|A(q)|^2} \right)
 	\end{cases}
+\end{align}Introduce the eigenmodes:
+\begin{align}
+	\begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} = \mathcal U(q) \begin{pmatrix}
+		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger
+	\end{pmatrix}
 \end{align}
+To find $\mathcal U(q)$, we need to unitarily diagonalize a matrix of the form
+\begin{align}
+	\begin{pmatrix}
+		A & B^* \\
+		B & C
+	\end{pmatrix}
+\end{align}
+where $A = -3JS_B + b(-q) S_A$, $B = a(q)$, $C = -3JS_A - b(-q)S_B$. \\
+Eigenvalues are $\epsilon_{\pm} = \frac{A + C}{2} \pm \sqrt{\left(\frac{A-C}{2}\right)^2 + |B|^2}$. Eigenvectors:
+\begin{gather}
+	\begin{pmatrix}
+		A & B^* \\ B & C
+	\end{pmatrix} \begin{pmatrix}
+		\cos u & -\sin u \\ 
+		e^{i\phi} \sin u & e^{i\phi} \cos u
+	\end{pmatrix} = \begin{pmatrix}
+		A \cos u + B^* e^{i\phi} \sin u & -A \sin u + B^* e^{i\phi} \cos u \\ 
+		B \cos u + C e^{i\phi} \sin u & -B \sin u + C e^{i\phi} \cos u
+	\end{pmatrix} \overset ! = \begin{pmatrix}
+		\epsilon_+ \cos u & -\epsilon_- \sin u \\ 
+		\epsilon_+ e^{i\phi} \sin u & \epsilon_- e^{i\phi} \cos u
+	\end{pmatrix} \nonumber \\
+	%
+	\Rightarrow \tan u = \frac{\epsilon_+ - A}{B^* e^{i\phi}} \overset{\phi = \mathrm{arg}(B)}{=} \frac{1}{|B|} \left( -\frac{A - C}{2} + \sqrt{\left(\frac{A-C}{2}\right)^2 + |B|^2} \right) \\
+	%
+	\Rightarrow \sin u = \frac{\tan u}{\sqrt{1 + \tan^2 u}} \qquad \cos u = \frac{1}{\sqrt{1 + \tan^2 u}}
+\end{gather}
 
 \end{document}
