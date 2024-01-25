@@ -3,7 +3,7 @@ from magpy.largeS.util import get_permutations, permute
 from magpy.models import Model
 from magpy.largeS import real_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian, iterator
-from magpy.momenta import CollapseMomenta, Momenta
+from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
 
 
 
@@ -67,11 +67,13 @@ def compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
     return magnon_Hs
 
 
+@RestoreMomenta(
+    momentum_arrays_arg_idx=1,
+    output_first_momentum_idx=1,
+)
 @CollapseMomenta(
     momentum_arrays_arg_idx=1, 
-    target_arg_idxs=(1,), 
-    target_first_momentum_idxs=(0,),
-    output_first_momentum_idx=1,
+    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=True))
 )
 def compute_magnon_Hamiltonians_with_momentum_conservation(
         model: Model, k_arrays,

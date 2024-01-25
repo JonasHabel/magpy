@@ -1,5 +1,5 @@
 import numpy as np
-from magpy.momenta import Momenta
+from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
 from ..models import Model
 from .util import *
 from numba import njit
@@ -41,13 +41,25 @@ def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
     return np.einsum(einsum_str, *eigvs, magnon_H_mom_space)
 
 
-def compute_magnon_Hamiltonians(momentum_arrays, eigvs, magnon_Hs_mom_space, first_momentum_idx=1):
-    if isinstance(momentum_arrays, Momenta):
-        k_arrays = momentum_arrays.collapse()
-        eigvs = momentum_arrays.collapse(eigvs)
-        magnon_Hs_mom_space = momentum_arrays.collapse(magnon_Hs_mom_space, first_momentum_idx=1)
-    else: 
-        k_arrays = momentum_arrays
+@RestoreMomenta(
+    momentum_arrays_arg_idx=0,
+    output_first_momentum_idx=1,
+)
+@CollapseMomenta(
+    momentum_arrays_arg_idx=0, 
+    targets=(
+        Target(arg_idx=0, first_momentum_idx=0, is_tensor=False), # k_arrays
+        Target(arg_idx=1, first_momentum_idx=0, is_tensor=False), # eigvs
+        Target(arg_idx=2, first_momentum_idx=1, is_tensor=True),  # magnon_Hs_mom_space
+    )
+)
+def compute_magnon_Hamiltonians(k_arrays, eigvs, magnon_Hs_mom_space, first_momentum_idx=1):
+    # if isinstance(momentum_arrays, Momenta):
+    #     k_arrays = momentum_arrays.collapse()
+    #     eigvs = momentum_arrays.collapse(eigvs)
+    #     magnon_Hs_mom_space = momentum_arrays.collapse(magnon_Hs_mom_space, first_momentum_idx=1)
+    # else: 
+    #     k_arrays = momentum_arrays
     
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
     last_momentum_idx = first_momentum_idx + len(k_arrays)
@@ -65,8 +77,8 @@ def compute_magnon_Hamiltonians(momentum_arrays, eigvs, magnon_Hs_mom_space, fir
         idx = (*((slice(None),) * (first_momentum_idx-1)), *k_multiidx)
         magnon_Hs[idx] = magnon_H
 
-    if isinstance(momentum_arrays, Momenta):
-        magnon_Hs = momentum_arrays.restore(magnon_Hs, first_momentum_idx)
+    # if isinstance(k_arrays, Momenta):
+    #     magnon_Hs = k_arrays.restore(magnon_Hs, first_momentum_idx)
 
     return magnon_Hs
 

@@ -3,7 +3,7 @@ from operator import itemgetter
 from magpy.models import Model
 from magpy.lattice import ReciprocalLattice
 from magpy.interactions import Interaction
-from magpy.momenta import Momenta
+from magpy.momenta_utils import Momenta
 from magpy.util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF
 from magpy.largeS import momentum_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian
