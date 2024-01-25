@@ -85,7 +85,8 @@ def CollapseMomenta(
 def RestoreMomenta(
         momentum_arrays_arg_idx=0,
         output_first_momentum_idx=0,
-        output_is_tensor=True):
+        output_is_tensor=True,
+        custom_restore_func=None):
     def decorator(func):
         @wraps(func)
         def wrapped_func(*args, **kwargs):
@@ -94,8 +95,11 @@ def RestoreMomenta(
             result = func(*args, **kwargs)
 
             if isinstance(momentum_arrays, Momenta):
-                restore_func = momentum_arrays.restore_tensor if output_is_tensor else momentum_arrays.restore
-                result = restore_func(result, output_first_momentum_idx)
+                if custom_restore_func is None:
+                    restore_func = momentum_arrays.restore_tensor if output_is_tensor else momentum_arrays.restore
+                    result = restore_func(result, output_first_momentum_idx)
+                else:
+                    result = custom_restore_func(result, momentum_arrays)
 
             return result
         

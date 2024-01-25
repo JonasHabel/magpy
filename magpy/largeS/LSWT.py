@@ -3,7 +3,7 @@ from operator import itemgetter
 from magpy.models import Model
 from magpy.lattice import ReciprocalLattice
 from magpy.interactions import Interaction
-from magpy.momenta_utils import Momenta
+from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
 from magpy.util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF
 from magpy.largeS import momentum_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian
@@ -158,14 +158,23 @@ def get_eigensystem_momentum_space(
     return eigw, eigv
 
 
+@RestoreMomenta(
+    momentum_arrays_arg_idx=1,
+    custom_restore_func=lambda result, momenta: tuple(momenta.restore_tensor(x) for x in result)
+)
+@CollapseMomenta(
+    momentum_arrays_arg_idx=1, 
+    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False))
+)
+def get_eigensystems_momentum_space(model: Model, ks):
+    # if isinstance(momenta, Momenta):
+    #     assert momenta.num_momenta == 1
+    #     ks = momenta.collapse()[0]
+    # else: 
+    #     ks = momenta
 
-def get_eigensystems_momentum_space(model: Model, momenta):
-    if isinstance(momenta, Momenta):
-        assert momenta.num_momenta == 1
-        ks = momenta.collapse()[0]
-    else: 
-        ks = momenta
-
+    assert ks.shape[0] == 1
+    ks = ks[0]
     num_ks = len(ks)
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
     eigws = np.zeros((num_ks, 2*num_sites_unit_cell))
@@ -176,8 +185,8 @@ def get_eigensystems_momentum_space(model: Model, momenta):
         eigws[k_idx], eigvs[k_idx] = get_eigensystem_momentum_space(
             model, k=k)
         
-    if isinstance(momenta, Momenta):
-        eigws = momenta.restore(eigws)
-        eigvs = momenta.restore(eigvs)
+    # if isinstance(momenta, Momenta):
+    #     eigws = momenta.restore(eigws)
+    #     eigvs = momenta.restore(eigvs)
 
     return eigws, eigvs
