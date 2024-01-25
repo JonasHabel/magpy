@@ -484,8 +484,16 @@ We also used the eigenvalue equation to define
 	x &\equiv (A + C) \sinh u \cosh u + |B| (\cosh^2 u + \sinh^2 u) \\
 	&= \frac{(A + C) \tanh u + |B| (1 + \tanh^2 u)}{1 - \tanh^2 u} \\
 	&= \frac{\tanh u (A + |B| \tanh u) + |B| + C \tanh u}{1 - \tanh^2 u} \\
-	&= \frac{\tanh u \epsilon_+ - \tanh u \epsilon_+}{1 - \tanh^2 u} \\
+	&= \frac{\tanh u \, \epsilon_+ - \tanh u \, \epsilon_+}{1 - \tanh^2 u} \\
 	&= 0
+\end{align}
+Quartic Hamiltonian:
+\begin{align}
+	\hat H_4 &= \frac{J}{N} \sum_{kpq} \Bigg( -(1 + e^{-i(p+q)}) a_{k+p+qA}^\dagger a_{kA} a_{-pB}^\dagger a_{qB} \\
+	&\ + \frac{1}{4} \Bigg( (1 + e^{-i(k+p+q)}) \sqrt{\frac{S_A}{S_B}} a_{-k-p-qA} a_{-kB}^\dagger a_{pB} a_{qB} + (1 + e^{-iq}) \sqrt{\frac{S_B}{S_A}} a_{k+p+qA}^\dagger a_{kA} a_{pA} a_{qB} \\
+	&\qquad + (1 + e^{iq}) \sqrt{\frac{S_A}{S_B}} a_{k+p+qB}^\dagger a_{-kB}^\dagger a_{pB} a_{-qA}^\dagger + (1 + e^{i(k+p+q)}) \sqrt{\frac{S_B}{S_A}} a_{k+p+qB}^\dagger a_{-kA}^\dagger a_{-pA}^\dagger a_{qA} \Bigg) \Bigg) \\
+%
+	\dots
 \end{align}
 
 
@@ -594,7 +602,7 @@ Quadratic Hamiltonian:
 		0 & iD\cos\theta (\beta_q^2 - \beta_k^2) S_A & 0 & J \beta_q^1 \sqrt{S_A S_B} \\
 		-3J S_B & 0 & 0 & 0 \\
 		0 & J \beta_k^1 \sqrt{S_A S_B} & 0 & -iD\cos\theta (\beta_q^2 - \beta_k^2) S_B \\
-		0 & 0 & -J \beta_{k+q}^2 S_A & 0 & 0
+		0 & 0 & -J \beta_{k+q}^2 S_A & 0
 	\end{pmatrix} \begin{pmatrix}
 		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
 	\end{pmatrix}
@@ -673,25 +681,95 @@ To find $\mathcal U(q)$, we need to unitarily diagonalize a matrix of the form
 		B & C
 	\end{pmatrix}
 \end{align}
-where $A = -3JS_B + b(-q) S_A$, $B = a(q)$, $C = -3JS_A - b(-q)S_B$. \\
+where $A_{1,2} = -3JS_B + b(\mp q) S_A$, $B = a(q)$, $C_{1,2} = -3JS_A - b(\mp q)S_B$. We drop the $1,2$ label for now. \\
 Eigenvalues are $\epsilon_{\pm} = \frac{A + C}{2} \pm \sqrt{\left(\frac{A-C}{2}\right)^2 + |B|^2}$. Eigenvectors:
 \begin{gather}
 	\begin{pmatrix}
 		A & B^* \\ B & C
 	\end{pmatrix} \begin{pmatrix}
-		\cos u & -\sin u \\ 
-		e^{i\phi} \sin u & e^{i\phi} \cos u
+		-\sin u & \cos u \\ 
+		e^{i\phi} \cos u & e^{i\phi} \sin u
 	\end{pmatrix} = \begin{pmatrix}
-		A \cos u + B^* e^{i\phi} \sin u & -A \sin u + B^* e^{i\phi} \cos u \\ 
-		B \cos u + C e^{i\phi} \sin u & -B \sin u + C e^{i\phi} \cos u
+		-A \sin u + B^* e^{i\phi} \cos u & A \cos u + B^* e^{i\phi} \sin u \\ 
+		-B \sin u + C e^{i\phi} \cos u & B \cos u + C e^{i\phi} \sin u
 	\end{pmatrix} \overset ! = \begin{pmatrix}
-		\epsilon_+ \cos u & -\epsilon_- \sin u \\ 
-		\epsilon_+ e^{i\phi} \sin u & \epsilon_- e^{i\phi} \cos u
+		-\epsilon_- \sin u & \epsilon_+ \cos u \\ 
+		\epsilon_- e^{i\phi} \cos u & \epsilon_+ e^{i\phi} \sin u
 	\end{pmatrix} \nonumber \\
 	%
 	\Rightarrow \tan u = \frac{\epsilon_+ - A}{B^* e^{i\phi}} \overset{\phi = \mathrm{arg}(B)}{=} \frac{1}{|B|} \left( -\frac{A - C}{2} + \sqrt{\left(\frac{A-C}{2}\right)^2 + |B|^2} \right) \\
 	%
 	\Rightarrow \sin u = \frac{\tan u}{\sqrt{1 + \tan^2 u}} \qquad \cos u = \frac{1}{\sqrt{1 + \tan^2 u}}
 \end{gather}
+We note that for $q \to -q$, we have $B \to B^*$ and so $\phi \to -\phi$.
+
+\subsection{Eigenspace}
+Linear Hamiltonian:
+\begin{align}
+	\hat H_1 &\propto \gamma_0 = 0
+\end{align}
+as it should be. Quadratic Hamiltonian:
+\begin{tiny}
+\begin{align}
+	\hat H_2 &= \sum_{q} \begin{pmatrix}
+		a_{-qA} & a_{qA}^\dagger & a_{-qB} & a_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & b(q) S_A & 0 & a(q) \\
+		-3J S_B & 0 & 0 & 0 \\
+		0 & a(-q) & 0 & b(-q) S_B \\
+		0 & 0 & -3J S_A & 0
+	\end{pmatrix} \begin{pmatrix}
+		a_{qA} \\ a_{-qA}^\dagger \\ a_{qB} \\ a_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= \sum_{q} \begin{pmatrix}
+		a_{-qA} & a_{qA}^\dagger & a_{-qB} & a_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & b(q) S_A & 0 & a(q) \\
+		-3J S_B & 0 & 0 & 0 \\
+		0 & a(-q) & 0 & -b(q) S_B \\
+		0 & 0 & -3J S_A & 0
+	\end{pmatrix} \begin{pmatrix}
+		-\sin u_1(q) & 0 & \cos u_1(q) & 0 \\
+		0 & -\sin u_2(q) & 0 & \cos u_2(q) \\
+		e^{i\phi} \cos u_1(q) & 0 & e^{i\phi} \sin u_1(q) & 0 \\
+		0 & e^{i\phi} \cos u_2(q) & 0 & e^{i\phi} \sin u_2(q)
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= \sum_{q} \begin{pmatrix}
+		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		-\sin u_1(-q) & 0 & e^{-i\phi} \cos u_1(-q) & 0 \\
+		0 & -\sin u_2(-q) & 0 & e^{-i\phi} \cos u_2(-q) \\
+		\cos u_1(-q) & 0 & e^{-i\phi} \sin u_1(-q) & 0 \\
+		0 & \cos u_2(-q) & 0 & e^{-i\phi} \sin u_2(-q)
+	\end{pmatrix} \\
+	&\hspace{3cm} \begin{pmatrix}
+		0 & -b(q) S_A \sin u_2(q) + a(q) e^{i\phi} \cos u_2(q) & 0 & b(q) S_A \cos u_2(q) + a(q) e^{i\phi} \sin u_2(q) \\
+		3JS_B \sin u_1(q) & 0 & -3JS_B \cos u_1(q) & 0 \\
+		0 & -a(-q) \sin u_2(q) - b(q) S_B e^{i\phi} \cos u_2(q) & 0 & a(-q) \cos u_2(q) - b(q) S_B e^{i\phi} \sin u_2(q) \\
+		-3JS_A e^{i\phi} \cos u_1(q) & 0 & -3JS_A e^{i\phi} \sin u_1(q) & 0
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= \sum_{q} \begin{pmatrix}
+		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		0 & x & 0 & y \\
+		\dots
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+	\end{pmatrix} \nonumber \\
+\end{align}
+\end{tiny}
+where we have defined
+\begin{align}
+	x &= b(q) S_A \sin u_1(-q) \sin u_2(q) - a(q) e^{i\phi} \sin u_1(-q) \cos u_2(q) - a(-q) e^{-i\phi} \sin u_2(q) \cos u_1(-q) - b(q) S_B \cos u_1(-q) \cos u_2(q) \nonumber \\
+%
+	y &= -b(q) S_A \sin u_1(-q) \cos u_2(q) - a(q) e^{i\phi} \sin u_1(-q) \sin u_2(q) + a(-q) e^{-i\phi} \cos u_1(-q) \cos u_2(q) - b(q) S_B \cos u_1(-q) \sin u_2(q) \nonumber
+\end{align}
 
 \end{document}

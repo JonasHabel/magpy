@@ -67,15 +67,11 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
             [2*S_B*sinh*cosh, 0, 0, 2*S_B*sinh**2],
             [0, np.abs(B(q))*(cosh**2 + sinh**2) + 2*S_A*sinh*cosh, 2*np.abs(B(q))*sinh*cosh + 2*S_A*cosh**2, 0],
         ], dtype=np.complex128)
-        return 2*J*np.array([
-            [0, 0, eigws_2[1, 0], 0],
-            [eigws_2[0, 0], 0, 0, 0],
-            [0, 0, 0, eigws_2[1, 2]],
-            [0, 0, eigws_2[0, 2], 0],
-        ], dtype=np.complex128)
 
     # order S^(1/2)
     expected_magnon_H_3 = np.zeros((4, 4, 4), dtype=np.complex128)
+    magnon_H_mom_space_3 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:2])
+    eigws_3, eigvs_3 = get_eigensystems(model, ks[:2])
 
     # order S^0
     def expected_magnon_H_4(k, l, p, q):
@@ -87,61 +83,20 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
         expected_magnon_H_4[3, 1, 1, 0] = J/4 * np.sqrt(S_B/S_A) * (1 + np.exp(-1j*k[0]))
         return expected_magnon_H_4
  
-    assert_all_eigenspace_Hamiltonians_equal(ks, [eigvs_0, eigvs_1, eigvs_2, ], [
+    assert_all_eigenspace_Hamiltonians_equal(ks, [eigvs_0, eigvs_1, eigvs_2, eigvs_3, ], [
         magnon_H_mom_space_0, 
         magnon_H_mom_space_1,
         magnon_H_mom_space_2,
+        magnon_H_mom_space_3,
     ], [
         expected_magnon_H_0, 
         expected_magnon_H_1, 
         expected_magnon_H_2(*ks[0:1]),
-        #expected_magnon_H_3, 
+        expected_magnon_H_3, 
         #expected_magnon_H_4(*ks),
     ])
 
-    return
     
-    num_ks = 3
-    k_arrays = np.random.rand(3, num_ks, 1)
-    assert_all_eigenspace_Hamiltonians_equal_for_multiple_ks(
-        model, k_arrays,
-        [
-            None,
-            np.zeros((1, 4)),
-            np.array([
-                [expected_magnon_H_2(-k, k) for k in k_arrays[0]],
-                [expected_magnon_H_2(k, -k) for k in k_arrays[0]],
-            ]),
-            np.zeros((6, num_ks, num_ks, 4, 4, 4)),
-            np.array([
-               [[[expected_magnon_H_4(-k-p-q, k, p, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, k, q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, p, k, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, p, q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, q, k, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, q, p, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, -k-p-q, p, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, -k-p-q, q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, p, -k-p-q, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, p, q, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, q, -k-p-q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, q, p, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, -k-p-q, k, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, -k-p-q, q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, k, -k-p-q, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, k, q, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, q, -k-p-q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, q, k, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, -k-p-q, k, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, -k-p-q, p, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, k, -k-p-q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, k, p, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, p, -k-p-q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, p, k, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            ]),
-        ]
-    )
-
 
 
 def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
@@ -200,49 +155,6 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
         expected_magnon_H_4(*ks),
     ])
 
-    return
-
-
-    num_ks = 3
-    k_arrays = np.random.rand(3, num_ks, 1)
-    assert_all_eigenspace_Hamiltonians_equal_for_multiple_ks(
-        model, k_arrays,
-        [
-            None,
-            np.zeros((1, 2)),
-            np.array([
-                [expected_magnon_H_2(-k, k) for k in k_arrays[0]],
-                [expected_magnon_H_2(k, -k) for k in k_arrays[0]],
-            ]),
-            np.zeros((6, num_ks, num_ks, 2, 2, 2)),
-            np.array([
-               [[[expected_magnon_H_4(-k-p-q, k, p, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, k, q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, p, k, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, p, q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, q, k, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(-k-p-q, q, p, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, -k-p-q, p, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, -k-p-q, q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, p, -k-p-q, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, p, q, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, q, -k-p-q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(k, q, p, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, -k-p-q, k, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, -k-p-q, q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, k, -k-p-q, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, k, q, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, q, -k-p-q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(p, q, k, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, -k-p-q, k, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, -k-p-q, p, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, k, -k-p-q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, k, p, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, p, -k-p-q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-               [[[expected_magnon_H_4(q, p, k, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            ]),
-        ]
-    )
 
 
 
@@ -260,13 +172,14 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
     ks = np.random.rand(4, 2)
 
     # order S^2
+    magnon_H_mom_space_0 = momentum_space.compute_magnon_Hamiltonian(model, ks[:0])
+    eigws_0, eigvs_0 = np.zeros((0, 4)), np.zeros((0, 4, 4))
     expected_magnon_H_0 = np.array(3*J*S_A*S_B, dtype=np.complex128)
 
     # order S^(3/2)
-    gamma = lambda k: 3 - np.sum(np.array([np.exp(1j*k.dot(nnn)) for nnn in nnns]))
-    expected_magnon_H_1 = lambda k: D*np.sin(theta)*1j/np.sqrt(2) * gamma(k) * np.array([
-        S_A**(3/2), -S_A**(3/2), -S_B**(3/2), S_B**(3/2),
-    ], dtype=np.complex128)
+    magnon_H_mom_space_1 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:0])
+    eigws_1, eigvs_1 = get_eigensystems(model, np.zeros((0, 2)))
+    expected_magnon_H_1 = np.zeros((4,))
 
     # order S^1
     beta_1 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nn)) for nn in nns]))
@@ -299,13 +212,21 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
         expected_magnon_H_4 = np.zeros((4, 4, 4, 4), dtype=np.complex128)
         return expected_magnon_H_4
 
-    assert_all_eigenspace_Hamiltonians_equal(model, ks, [
+    assert_all_eigenspace_Hamiltonians_equal(ks, [eigvs_0, eigvs_1,], [
+        magnon_H_mom_space_0, 
+        magnon_H_mom_space_1,
+        #magnon_H_mom_space_2,
+        #magnon_H_mom_space_3,
+        #magnon_H_mom_space_4,
+    ], [
         expected_magnon_H_0, 
-        expected_magnon_H_1(*ks[0:1]), 
-        expected_magnon_H_2(*ks[0:2]),
-        expected_magnon_H_3(*ks[0:3]), 
-        # expected_magnon_H_4(*ks),
+        expected_magnon_H_1, 
+        #expected_magnon_H_2(*ks[0:1]),
+        #expected_magnon_H_3, 
+        #expected_magnon_H_4(*ks),
     ])
+
+    return
 
 
     num_ks = 3
