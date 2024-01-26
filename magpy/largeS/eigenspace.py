@@ -85,25 +85,23 @@ def compute_magnon_Hamiltonians(k_arrays, eigvs, magnon_Hs_mom_space, first_mome
 
 
 #@njit
-def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
-        magnon_H_eigenspace_for_loop_momentum_flat):
-    order = 3
+"""
+magnon_H_eigenspace.shape == (nperm, num_bands, ..., num_bands)
+where nperm = factorial(order), and num_bands appears order times
+"""
+def normal_order_and_symmetrize_magnon_Hamiltonian(magnon_H_eigenspace):
+    order = len(magnon_H_eigenspace.shape) - 1 # 0th idx is permutation
     permutations = get_permutations(order)
     ANNIHILATOR = 0
     CREATOR = 1
-    loop_mom_shape = magnon_H_eigenspace_for_loop_momentum_flat.shape[1:-order]
-    num_loop_momenta = len(loop_mom_shape)
-    H_dim = magnon_H_eigenspace_for_loop_momentum_flat.shape[-order:]
+    H_dim = magnon_H_eigenspace.shape[1:]
     H_normal_ordered_dim = np.array(H_dim) // 2
     
     # nosym = normal ordered and symmetrized
-    magnon_H_eigenspace_nosym_for_loop_momentum_flat = np.zeros(
-        (2**order, *loop_mom_shape, *H_normal_ordered_dim),
+    magnon_H_eigenspace_nosym = np.zeros(
+        (2**order, *H_normal_ordered_dim),
         dtype=np.complex128)
     commutator_terms = {}
-    np.zeros(
-        (order, *loop_mom_shape[1:], H_normal_ordered_dim[0]),
-        dtype=np.complex128)
 
     for ph_idx_bits in np.arange(2**order):
         # extract the individual bits representing annihilators/creators.
@@ -116,18 +114,15 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
         for nperm_bands, perm_bands in enumerate(permutations):
             ph_idx_permuted = permute(ph_idx, perm_bands)
             index = (nperm_bands,
-                    *((slice(None),)*num_loop_momenta),
                     *map(lambda ph: slice(ph, None, 2), ph_idx_permuted))
-            # keep BZ momentum index and permute band indices
-            momentum_permutation = np.arange(num_loop_momenta)
-            band_permutation = [x+num_loop_momenta for x in perm_bands]
-            magnon_H_eigenspace_nosym_for_loop_momentum_permuted = \
+            # permute band indices
+            magnon_H_eigenspace_nosym_permuted = \
                 np.transpose(
-                    magnon_H_eigenspace_for_loop_momentum_flat[index],
-                    axes=(*momentum_permutation, *band_permutation))
+                    magnon_H_eigenspace[index],
+                    axes=perm_bands)
             
-            magnon_H_eigenspace_nosym_for_loop_momentum_flat[ph_idx_bits] += \
-                magnon_H_eigenspace_nosym_for_loop_momentum_permuted
+            magnon_H_eigenspace_nosym[ph_idx_bits] += \
+                magnon_H_eigenspace_nosym_permuted
             
             # compute commutator terms
             creator_positions = np.array(np.where(ph_idx == CREATOR)[0])
@@ -140,18 +135,49 @@ def normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(
                 for annihil_to_left_pos in annihilator_to_left_positions:
                     # trace over bands
                     commutator_term = np.trace(
-                        magnon_H_eigenspace_nosym_for_loop_momentum_permuted,
-                        axis1=num_loop_momenta+annihil_to_left_pos,
-                        axis2=num_loop_momenta+creator_pos)
+                        magnon_H_eigenspace_nosym_permuted,
+                        axis1=annihil_to_left_pos,
+                        axis2=creator_pos)
             
         # prevent overcounting when symmetrizing
-        counts = dict(zip(np.unique(ph_idx, return_counts=True)))
-        normalization_factor = np.math.factorial(counts[ANNIHILATOR]) * \
-                               np.math.factorial(counts[CREATOR])
-        magnon_H_eigenspace_nosym_for_loop_momentum_flat[ph_idx_bits] /= \
+        counts = dict(zip(*np.unique(ph_idx, return_counts=True)))
+        num_annihilators = counts.get(ANNIHILATOR, 0)
+        num_creators = counts.get(CREATOR, 0)
+        normalization_factor = np.math.factorial(num_annihilators) * \
+                               np.math.factorial(num_creators)
+        magnon_H_eigenspace_nosym[ph_idx_bits] /= \
             normalization_factor
         
         # TODO commutator terms
         
 
-    return magnon_H_eigenspace_nosym_for_loop_momentum_flat
+    return magnon_H_eigenspace_nosym
+
+
+
+@RestoreMomenta(
+    momentum_arrays_arg_idx=1,
+    output_first_momentum_idx=1,
+    output_is_tensor=True,
+    output_restore_deep=True,
+)
+@CollapseMomenta(
+    momentum_arrays_arg_idx=1, 
+    targets=(Target(arg_idx=0, first_momentum_idx=1, is_tensor=True, collapse_deep=True),)
+)
+def normal_order_and_symmetrize_magnon_Hamiltonians(
+        magnon_Hs_eigenspace, k_arrays=None):
+    order = len(magnon_Hs_eigenspace.shape) - 2 # 0th idx is permutation, 1st idx is momenta
+    num_momenta = magnon_Hs_eigenspace.shape[1]
+    magnon_Hs_eigenspace_nosym = np.zeros((
+        2**order,
+        num_momenta,
+        *(np.array(magnon_Hs_eigenspace.shape[2:]) // 2),
+    ), dtype=np.complex128)
+    
+    for k_idx in range(num_momenta):
+        magnon_Hs_eigenspace_nosym[:, k_idx] = \
+            normal_order_and_symmetrize_magnon_Hamiltonian(
+                magnon_Hs_eigenspace[:, k_idx])
+
+    return magnon_Hs_eigenspace_nosym
