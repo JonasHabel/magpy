@@ -4,6 +4,7 @@ from magpy.largeS import momentum_space
 from magpy.largeS import LSWT
 from magpy.lattice import BravaisLattice
 from magpy.interactions import Interaction
+from magpy.momenta_utils import Momenta
 from . import test_models
 
 
@@ -226,54 +227,39 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
         #expected_magnon_H_4(*ks),
     ])
 
-    return
 
 
-    num_ks = 3
-    k_arrays = np.random.rand(3, num_ks, 2)
-    assert_all_eigenspace_Hamiltonians_equal_for_multiple_ks(
-        model, k_arrays[:-1], [
-            None,
-            np.array([
-                expected_magnon_H_1(np.array([0, 0]))
-            ]),
-            np.array([
-                [expected_magnon_H_2(-k, k) for k in k_arrays[0]],
-                [expected_magnon_H_2(k, -k) for k in k_arrays[0]],
-            ]),
-            np.array([
-               [[expected_magnon_H_3(-k-q, k, q) for q in k_arrays[1]] for k in k_arrays[0]],
-               [[expected_magnon_H_3(-k-q, q, k) for q in k_arrays[1]] for k in k_arrays[0]],
-               [[expected_magnon_H_3(k, -k-q, q) for q in k_arrays[1]] for k in k_arrays[0]],
-               [[expected_magnon_H_3(k, q, -k-q) for q in k_arrays[1]] for k in k_arrays[0]],
-               [[expected_magnon_H_3(q, -k-q, k) for q in k_arrays[1]] for k in k_arrays[0]],
-               [[expected_magnon_H_3(q, k, -k-q) for q in k_arrays[1]] for k in k_arrays[0]],
-            ]),
-            # np.array([
-            #    [[[expected_magnon_H_4(-k-p-q, k, p, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(-k-p-q, k, q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(-k-p-q, p, k, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(-k-p-q, p, q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(-k-p-q, q, k, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(-k-p-q, q, p, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(k, -k-p-q, p, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(k, -k-p-q, q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(k, p, -k-p-q, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(k, p, q, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(k, q, -k-p-q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(k, q, p, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(p, -k-p-q, k, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(p, -k-p-q, q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(p, k, -k-p-q, q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(p, k, q, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(p, q, -k-p-q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(p, q, k, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(q, -k-p-q, k, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(q, -k-p-q, p, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(q, k, -k-p-q, p) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(q, k, p, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(q, p, -k-p-q, k) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            #    [[[expected_magnon_H_4(q, p, k, -k-p-q) for q in k_arrays[2]] for p in k_arrays[1]] for k in k_arrays[0]],
-            # ]),
-        ]
-    )
+def test_normal_order_and_symmetrize_one_band_cubic_vertex():
+    vertex = np.arange(48).reshape((6, 2, 2, 2)) + 1
+    vertex[0, 1, 0, 0] += 990
+    vertex[2, 0, 1, 1] += 8800
+    expected_nosym_vertex = np.array([
+        (1+9+17+25+33+41)/6,    # a_{-k-q}  a_{q}    a_{k}
+        (2+11+18+27+37+45)/2,   # a_{-k-q}  a_{q}    a^†_{-k}
+        (3+10+21+29+34+43)/2,   # a_{-k-q}  a^†_{-q} a_{k}
+        (4+12+22+31+38+47)/2,   # a_{-k-q}  a^†_{-q} a^†_{-k}
+        (995+13+19+26+35+42)/2, # a^†_{k+q} a_{q}    a_{k}
+        (6+15+8820+28+39+46)/2, # a^†_{k+q} a_{q}    a^†_{-k}
+        (7+14+23+30+36+44)/2,   # a^†_{k+q} a^†_{-q} a_{k}
+        (8+16+24+32+40+48)/6,   # a^†_{k+q} a^†_{-q} a^†_{-k}
+    ]).reshape((8, 1, 1, 1))
+
+    nosym_vertex = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonian(vertex)
+    assert np.allclose(expected_nosym_vertex, nosym_vertex)
+    
+    vertices = np.zeros((6, 4, 3, 2, 2, 2))
+    vertices[:] = vertex[:, np.newaxis, np.newaxis]
+    expected_nosym_vertices = np.zeros((8, 4, 3, 1, 1, 1))
+    expected_nosym_vertices[:] = np.array([
+        (1+9+17+25+33+41)/6,    # a_{-k-q}  a_{q}    a_{k}
+        (2+11+18+27+37+45)/2,   # a_{-k-q}  a_{q}    a^†_{-k}
+        (3+10+21+29+34+43)/2,   # a_{-k-q}  a^†_{-q} a_{k}
+        (4+12+22+31+38+47)/2,   # a_{-k-q}  a^†_{-q} a^†_{-k}
+        (995+13+19+26+35+42)/2, # a^†_{k+q} a_{q}    a_{k}
+        (6+15+8820+28+39+46)/2, # a^†_{k+q} a_{q}    a^†_{-k}
+        (7+14+23+30+36+44)/2,   # a^†_{k+q} a^†_{-q} a_{k}
+        (8+16+24+32+40+48)/6,   # a^†_{k+q} a^†_{-q} a^†_{-k}
+    ]).reshape((8, 1, 1, 1))[:, np.newaxis, np.newaxis]
+
+    nosym_vertices = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(vertices, Momenta(np.zeros((4, 2)), np.zeros((3, 2))))
+    assert np.allclose(expected_nosym_vertices, nosym_vertices)
