@@ -4,6 +4,20 @@ from .models import *
 from .greens_functions import get_free_propagator_zero_T, get_free_two_magnon_propagator_finite_T
 from .interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from .util import permute
+
+
+
+"""
+TODO: delete or implement
+"""
+def compute_one_magnon_one_loop_self_energies_along_momentum_path(
+        frequencies,
+        energies_along_path, eigvecs_along_path,
+        energies_BZ, eigvecs_BZ,
+        energies_k_path_minus_BZ, eigvecs_k_path_minus_BZ,
+        T, reg):
+    num_bands = energies_along_path.shape[1]
+    self_energies = np.zeros((2*num_bands), dtype=complex)
     
     
 
@@ -65,7 +79,7 @@ def __get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
 
 
 # TODO FIX MOMENTA OF LOOP ENERGIES!
-def compute_one_magnon_self_energy(
+def compute_one_magnon_one_loop_self_energies_at_momentum(
         frequencies,
         energies_BZ,
         energies_k_minus_BZ,
