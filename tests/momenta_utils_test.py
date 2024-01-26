@@ -62,14 +62,22 @@ def test_permuted_magnon_Hamiltonians():
     np.random.seed(1)
     magnon_Hs = np.random.rand(6, 10, 5, 15, 2, 2, 2)
 
-    collapsed_magnon_Hs = momenta.collapse_tensor(magnon_Hs, first_momentum_idx=1)
+    # test non-deep collapse
+    collapsed_magnon_Hs = momenta.collapse_tensor(magnon_Hs, first_momentum_idx=1, deep=False)
     expected_collapsed_magnon_Hs = magnon_Hs.reshape((6, 10, 75, 2, 2, 2))
     assert np.allclose(collapsed_magnon_Hs, expected_collapsed_magnon_Hs)
 
-    restored_magnon_Hs = momenta.restore_tensor(collapsed_magnon_Hs, first_momentum_idx=1)
-    expected_restored_magnon_Hs = magnon_Hs
+    restored_magnon_Hs = momenta.restore_tensor(collapsed_magnon_Hs, first_momentum_idx=1, deep=False)
+    assert np.allclose(restored_magnon_Hs, magnon_Hs)
 
-    assert np.allclose(restored_magnon_Hs, expected_restored_magnon_Hs)
+    # test deep collapse
+    deep_collapsed_magnon_Hs = momenta.collapse_tensor(magnon_Hs, first_momentum_idx=1, deep=True)
+    expected_deep_collapsed_magnon_Hs = magnon_Hs.reshape((6, 750, 2, 2, 2))
+    assert np.allclose(deep_collapsed_magnon_Hs, expected_deep_collapsed_magnon_Hs)
+
+    deep_restored_magnon_Hs = momenta.restore_tensor(deep_collapsed_magnon_Hs, first_momentum_idx=1, deep=True)
+    assert np.allclose(deep_restored_magnon_Hs, magnon_Hs)
+
 
 
 
@@ -90,7 +98,8 @@ def test_decorator():
     @RestoreMomenta(
         momentum_arrays_arg_idx=1,
         output_first_momentum_idx=1,
-        output_is_tensor=True
+        output_is_tensor=True,
+        output_restore_deep=True,
     )
     @CollapseMomenta(
         momentum_arrays_arg_idx=1,
@@ -98,19 +107,21 @@ def test_decorator():
             Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),
             Target(arg_idx=2, first_momentum_idx=0, is_tensor=False),
             Target(arg_idx=3, first_momentum_idx=1, is_tensor=True),
+            Target(arg_idx=4, first_momentum_idx=1, is_tensor=True, collapse_deep=True),
         )
     )
-    def some_function(model, k_arrays, eigvs, magnon_Hs, *args):
+    def some_function(model, k_arrays, eigvs, magnon_Hs, magnon_Hs_deep, *args):
         assert k_arrays[0].shape == (10, 2)
         assert k_arrays[1].shape == (5*15, 2)
         assert eigvs[0].shape == (10, 2, 2)
         assert eigvs[1].shape == (5*15, 2, 2)
         assert magnon_Hs.shape == (6, 10, 5*15, 2, 2, 2)
-        return len(magnon_Hs.shape) * magnon_Hs
+        assert magnon_Hs_deep.shape == (6, 10*5*15, 2, 2, 2)
+        return len(magnon_Hs_deep.shape) * magnon_Hs_deep
     
-    result = some_function(None, momenta, eigvs, magnon_Hs)
+    result = some_function(None, momenta, eigvs, magnon_Hs, magnon_Hs)
 
-    assert np.allclose(result, 6*magnon_Hs)
+    assert np.allclose(result, 5*magnon_Hs)
     
 
 
