@@ -38,5 +38,12 @@ def get_permutations(num_elements):
     return list(itertools.permutations(range(num_elements)))
 
 
+def invert_permutation(permutation):
+    permutation_np = np.array(permutation)
+    inv = np.empty_like(permutation_np)
+    inv[permutation_np] = np.arange(len(inv), dtype=inv.dtype)
+    return inv
+
+
 def permute(arr, perm):
     return np.array([arr[perm[i]] for i in range(len(arr))])
