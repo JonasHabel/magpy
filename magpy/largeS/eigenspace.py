@@ -29,16 +29,31 @@ returns: list of numpy array
 """
 def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
     order = len(eigvs)
-    assert order < 13
+    assert order <= 26
 
-    einsum_str = ",".join([chr(97 + i) + chr(97+13 + i) for i in range(order)])
+    einsum_str = ",".join([chr(97 + i) + chr(65 + i) for i in range(order)])
     if order >= 1:
         einsum_str += ","
     einsum_str += "".join([chr(97 + i) for i in range(order)])
     einsum_str += "->"
-    einsum_str += "".join([chr(97+13 + i) for i in range(order)])
+    einsum_str += "".join([chr(65 + i) for i in range(order)])
 
     return np.einsum(einsum_str, *eigvs, magnon_H_mom_space)
+
+
+
+def compute_magnon_Hamiltonian_with_permutations(eigvs, magnon_H_mom_space):
+    order = len(eigvs)
+    magnon_H = np.zeros(magnon_H_mom_space.shape, dtype=np.complex128)
+
+    for nperm, (perm, magnon_H_mom_space_for_perm) in enumerate(zip(
+        get_permutations(order), magnon_H_mom_space
+    )):
+        eigvs_permuted = permute(eigvs, perm)
+        magnon_H[nperm] = compute_magnon_Hamiltonian(
+            eigvs_permuted, magnon_H_mom_space_for_perm)
+        
+    return magnon_H
 
 
 @RestoreMomenta(
@@ -53,7 +68,7 @@ def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
         Target(arg_idx=2, first_momentum_idx=1, is_tensor=True),  # magnon_Hs_mom_space
     )
 )
-def compute_magnon_Hamiltonians(k_arrays, eigvs, magnon_Hs_mom_space, first_momentum_idx=1):
+def compute_magnon_Hamiltonians(k_arrays, eigvs, magnon_Hs_mom_space):
     # if isinstance(momentum_arrays, Momenta):
     #     k_arrays = momentum_arrays.collapse()
     #     eigvs = momentum_arrays.collapse(eigvs)
@@ -62,11 +77,12 @@ def compute_magnon_Hamiltonians(k_arrays, eigvs, magnon_Hs_mom_space, first_mome
     #     k_arrays = momentum_arrays
     
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
+    first_momentum_idx = 1
     last_momentum_idx = first_momentum_idx + len(k_arrays)
     magnon_Hs_shape = (
-        *magnon_Hs_mom_space.shape[:first_momentum_idx], 
-        *num_ks, 
-        *magnon_Hs_mom_space.shape[last_momentum_idx:]
+        magnon_Hs_mom_space.shape[0],                   # permutations
+        *num_ks,                                        # momenta
+        *magnon_Hs_mom_space.shape[last_momentum_idx:]  # bands 
     )
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
@@ -74,7 +90,7 @@ def compute_magnon_Hamiltonians(k_arrays, eigvs, magnon_Hs_mom_space, first_mome
         k_arrays, lambda k_multiidx, ks: 
             compute_magnon_Hamiltonian(
                 eigvs[k_multiidx], magnon_Hs_mom_space[k_multiidx])):
-        idx = (*((slice(None),) * (first_momentum_idx-1)), *k_multiidx)
+        idx = (slice(None), *k_multiidx)
         magnon_Hs[idx] = magnon_H
 
     # if isinstance(k_arrays, Momenta):
@@ -112,7 +128,7 @@ def normal_order_and_symmetrize_magnon_Hamiltonian(magnon_H_eigenspace):
         ])
 
         for nperm_bands, perm_bands in enumerate(permutations):
-            ph_idx_permuted = permute(ph_idx, perm_bands)
+            ph_idx_permuted = permute(ph_idx, invert_permutation(perm_bands))
             index = (nperm_bands,
                     *map(lambda ph: slice(ph, None, 2), ph_idx_permuted))
             # permute band indices
