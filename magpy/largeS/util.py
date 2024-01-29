@@ -10,7 +10,7 @@ def get_real_space_magnon_Hamiltonian(
         else real_space.compute_magnon_Hamiltonian(model, order)
 
 
-def iterator(k_arrays, func):
+def iterator(k_arrays, dim, func):
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
     partial_modulos = np.array([
         np.prod(num_ks[n+1:]) for n in range(len(num_ks))
@@ -20,7 +20,9 @@ def iterator(k_arrays, func):
         k_multiidx = convert_1d_index_into_multiindex(i, partial_modulos)
         ks = np.array([
             k_array[k_multiidx[n]] for n, k_array in enumerate(k_arrays)
-        ]).reshape(k_arrays[:,0].shape)   # reshaping required only if len(k_arrays) == 1
+        ])
+        if len(k_arrays) == 0:
+            ks = ks.reshape((0, dim))
         yield k_multiidx, func(k_multiidx, ks)
 
 

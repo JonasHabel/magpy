@@ -73,9 +73,9 @@ def compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
 )
 @CollapseMomenta(
     momentum_arrays_arg_idx=1, 
-    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=True))
+    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)
 )
-def compute_magnon_Hamiltonians_with_momentum_conservation(
+def compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
         model: Model, k_arrays,
         interaction_Hamiltonian_real_space=None):
 #    if isinstance(momentum_arrays, Momenta):
@@ -99,7 +99,7 @@ def compute_magnon_Hamiltonians_with_momentum_conservation(
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
     for k_multiidx, magnon_H in iterator(
-        k_arrays, lambda k_multiidx, ks: 
+        k_arrays, model.lattice.dim, lambda k_multiidx, ks: 
         compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
             model, ks, magnon_Hs_real_space)):
         magnon_Hs[(slice(None), *k_multiidx)] = magnon_H

@@ -160,30 +160,33 @@ def get_eigensystem_momentum_space(
 
 @RestoreMomenta(
     momentum_arrays_arg_idx=1,
-    custom_restore_func=lambda result, momenta: tuple(momenta.restore_tensor(x) for x in result)
+    custom_restore_func=lambda result, momenta: tuple(momenta.restore(x) for x in result)
 )
 @CollapseMomenta(
     momentum_arrays_arg_idx=1, 
-    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False))
+    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)
 )
-def get_eigensystems_momentum_space(model: Model, ks):
+def get_eigensystems_momentum_space(model: Model, k_arrays):
     # if isinstance(momenta, Momenta):
     #     assert momenta.num_momenta == 1
     #     ks = momenta.collapse()[0]
     # else: 
     #     ks = momenta
 
-    assert ks.shape[0] == 1
-    ks = ks[0]
-    num_ks = len(ks)
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
-    eigws = np.zeros((num_ks, 2*num_sites_unit_cell))
-    eigvs = np.zeros((num_ks, 2*num_sites_unit_cell, 2*num_sites_unit_cell),
-        dtype=np.complex128)
+    eigws, eigvs = [], []
 
-    for k_idx, k in enumerate(ks):
-        eigws[k_idx], eigvs[k_idx] = get_eigensystem_momentum_space(
-            model, k=k)
+    for k_array in k_arrays:
+        num_ks = len(k_array)
+        eigws_for_k_array = np.zeros((num_ks, 2*num_sites_unit_cell))
+        eigvs_for_k_array = np.zeros((num_ks, 2*num_sites_unit_cell, 2*num_sites_unit_cell),
+            dtype=np.complex128)
+        for k_idx, k in enumerate(k_array):
+            eigws_for_k_array[k_idx], eigvs_for_k_array[k_idx] = \
+                get_eigensystem_momentum_space(model, k=k)
+        
+        eigws.append(eigws_for_k_array)
+        eigvs.append(eigvs_for_k_array)
         
     # if isinstance(momenta, Momenta):
     #     eigws = momenta.restore(eigws)

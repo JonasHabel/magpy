@@ -16,7 +16,7 @@ def assert_all_momentum_space_Hamiltonians_equal_for_multiple_ks(model, k_arrays
     for order, expected_magnon_H in enumerate(expected_magnon_Hs):
         if order == 0: 
             continue
-        magnon_H = momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation(model, k_arrays[:order-1])
+        magnon_H = momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(model, k_arrays[:order-1])
         assert np.allclose(magnon_H, expected_magnon_H)
 
 

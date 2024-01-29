@@ -5,8 +5,8 @@ from functools import wraps
 class Momenta:
     def __init__(self, *k_arrays):
         self.k_arrays = k_arrays
-        self.collapsed_shapes = tuple(np.prod(k_array.shape[:-1]) for k_array in k_arrays)
-        self.collapsed_tensor_shape_deep = (np.prod(np.array(self.collapsed_shapes)), )
+        self.collapsed_shapes = tuple(int(np.prod(k_array.shape[:-1])) for k_array in k_arrays)
+        self.collapsed_tensor_shape_deep = (int(np.prod(np.array(self.collapsed_shapes))), )
         self.restored_shapes = tuple(k_array.shape[:-1] for k_array in k_arrays)
         self.restored_tensor_shape = tuple(dim for shape in self.restored_shapes for dim in shape)
         self.num_momenta = len(k_arrays)

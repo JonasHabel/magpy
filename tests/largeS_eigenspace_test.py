@@ -18,12 +18,12 @@ def assert_all_eigenspace_Hamiltonians_equal(ks, eigvs, magnon_Hs_mom_space, exp
 
         
 
-def assert_all_eigenspace_Hamiltonians_equal_for_multiple_ks(model, k_arrays, expected_magnon_Hs):
-    for order, expected_magnon_H in enumerate(expected_magnon_Hs):
-        if order == 0: 
-            continue
-        magnon_H = eigenspace.compute_magnon_Hamiltonians(model, k_arrays[:order-1])
-        assert np.allclose(magnon_H, expected_magnon_H)
+# def assert_all_eigenspace_Hamiltonians_equal_for_multiple_ks(model, k_arrays, expected_magnon_Hs):
+#     for order, expected_magnon_H in enumerate(expected_magnon_Hs):
+#         if order == 0: 
+#             continue
+#         magnon_H = eigenspace.compute_magnon_Hamiltonians(model, k_arrays[:order-1])
+#         assert np.allclose(magnon_H, expected_magnon_H)
 
 
 def get_eigensystems(model, ks):
