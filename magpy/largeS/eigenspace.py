@@ -133,14 +133,14 @@ def normal_order_and_symmetrize_magnon_Hamiltonian(magnon_H_eigenspace):
         ])
 
         for nperm_bands, perm_bands in enumerate(permutations):
-            ph_idx_permuted = permute(ph_idx, invert_permutation(perm_bands))
+            ph_idx_permuted = permute(ph_idx, perm_bands)
             index = (nperm_bands,
                     *map(lambda ph: slice(ph, None, 2), ph_idx_permuted))
             # permute band indices
             magnon_H_eigenspace_nosym_permuted = \
                 np.transpose(
                     magnon_H_eigenspace[index],
-                    axes=perm_bands)
+                    axes=invert_permutation(perm_bands))
             
             magnon_H_eigenspace_nosym[ph_idx_bits] += \
                 magnon_H_eigenspace_nosym_permuted
