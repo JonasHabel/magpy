@@ -42,7 +42,7 @@ def compute_magnon_Hamiltonian(model: Model, order: int):
                 magnon_BdG_tensor[idx1_hc] = C[t] * spin_int_tensor[1]
             else:
                 pass # no even-order terms if order >= 4
-            magnon_H_i = Interaction([site]*2, magnon_BdG_tensor)
+            magnon_H_i = Interaction([site]*order, magnon_BdG_tensor)
             Hamiltonians += [magnon_H_i]
 
         elif len(inter.sites) == 2:
