@@ -23,7 +23,7 @@ def iterator(k_arrays, dim, func):
         ])
         if len(k_arrays) == 0:
             ks = ks.reshape((0, dim))
-        yield k_multiidx, func(k_multiidx, ks)
+        yield k_multiidx, func(k_multiidx, i, ks)
 
 
 def convert_1d_index_into_multiindex(idx, partial_modulos):

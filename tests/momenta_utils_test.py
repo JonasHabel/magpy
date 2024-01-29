@@ -1,5 +1,5 @@
 import numpy as np
-from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
+from magpy.momenta_utils import MSQ, CollapseMomenta, Momenta, RestoreMomenta, Target
 
 
 def test_momenta():
@@ -85,15 +85,19 @@ def test_decorator():
     k_path = np.linspace(np.array([0, 0]), np.array([1, 2]), 10)
     k_BZ = np.array([*np.meshgrid(np.linspace(0, 1, 5), np.linspace(-1, 2, 15))]).T
 
-    k_arrays = [k_path, k_BZ]
-    momenta = Momenta(*k_arrays)
+    k_arrays = [k_BZ, k_path]
+    momenta_q_k = Momenta(*k_arrays)
+    momenta_minuskminusq_q_k = Momenta(
+        -k_path[:,np.newaxis,np.newaxis]-k_BZ[np.newaxis], 
+        *k_arrays)
 
     np.random.seed(1)
     eigvs = [
-        np.random.rand(10, 2, 2),
+        np.random.rand(10, 5, 15, 2, 2),
         np.random.rand(5, 15, 2, 2),
+        np.random.rand(10, 2, 2),
     ]
-    magnon_Hs = np.random.rand(6, 10, 5, 15, 2, 2, 2)
+    magnon_Hs = np.random.rand(6, 5, 15, 10, 2, 2, 2)
 
     @RestoreMomenta(
         momentum_arrays_arg_idx=1,
@@ -102,7 +106,6 @@ def test_decorator():
         output_restore_deep=True,
     )
     @CollapseMomenta(
-        momentum_arrays_arg_idx=1,
         targets=(
             Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),
             Target(arg_idx=2, first_momentum_idx=0, is_tensor=False),
@@ -111,17 +114,24 @@ def test_decorator():
         )
     )
     def some_function(model, k_arrays, eigvs, magnon_Hs, magnon_Hs_deep, *args):
-        assert k_arrays[0].shape == (10, 2)
-        assert k_arrays[1].shape == (5*15, 2)
-        assert eigvs[0].shape == (10, 2, 2)
+        assert k_arrays[0].shape == (5*15, 2)
+        assert k_arrays[1].shape == (10, 2)
+        assert eigvs[0].shape == (10*5*15, 2, 2)
         assert eigvs[1].shape == (5*15, 2, 2)
-        assert magnon_Hs.shape == (6, 10, 5*15, 2, 2, 2)
+        assert eigvs[2].shape == (10, 2, 2)
+        assert magnon_Hs.shape == (6, 5*15, 10, 2, 2, 2)
         assert magnon_Hs_deep.shape == (6, 10*5*15, 2, 2, 2)
         return len(magnon_Hs_deep.shape) * magnon_Hs_deep
     
-    result = some_function(None, momenta, eigvs, magnon_Hs, magnon_Hs)
+    result = some_function(
+        None, 
+        momenta_q_k, 
+        MSQ(eigvs, momenta_minuskminusq_q_k), 
+        MSQ(magnon_Hs, momenta_q_k), 
+        MSQ(magnon_Hs, momenta_q_k),
+    )
 
-    assert np.allclose(result, 5*magnon_Hs)
+    assert np.allclose(result.raw_quantity, 5*magnon_Hs)
     
 
 

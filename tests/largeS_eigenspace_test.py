@@ -4,7 +4,7 @@ from magpy.largeS import momentum_space
 from magpy.largeS import LSWT
 from magpy.lattice import BravaisLattice
 from magpy.interactions import Interaction
-from magpy.momenta_utils import Momenta
+from magpy.momenta_utils import MSQ, Momenta
 from . import test_models
 
 
@@ -261,5 +261,6 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
         (8+16+24+32+40+48)/6,   # a^†_{k+q} a^†_{-q} a^†_{-k}
     ]).reshape((8, 1, 1, 1))[:, np.newaxis, np.newaxis]
 
-    nosym_vertices = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(vertices, Momenta(np.zeros((4, 2)), np.zeros((3, 2))))
-    assert np.allclose(expected_nosym_vertices, nosym_vertices)
+    nosym_vertices = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+        MSQ(vertices, Momenta(np.zeros((4, 2)), np.zeros((3, 2)))))
+    assert np.allclose(expected_nosym_vertices, nosym_vertices.raw_quantity)

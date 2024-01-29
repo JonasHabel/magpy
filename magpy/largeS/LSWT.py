@@ -3,7 +3,7 @@ from operator import itemgetter
 from magpy.models import Model
 from magpy.lattice import ReciprocalLattice
 from magpy.interactions import Interaction
-from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
+from magpy.momenta_utils import MSQ, CollapseMomenta, Momenta, RestoreMomenta, Target
 from magpy.util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF
 from magpy.largeS import momentum_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian
@@ -40,6 +40,36 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
     # magnon_H_BdG /= 2
 
     return magnon_H_BdG
+
+
+@RestoreMomenta(
+    momentum_arrays_arg_idx=1,
+    custom_restore_func=lambda result, momenta:
+        tuple(MSQ(momenta.restore(x), momenta) for x in result)
+)
+@CollapseMomenta(
+    targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)
+)
+def compute_LSWT_Hamiltonians_momentum_space_BdG(
+        model: Model, k_arrays, LSWT_Hamiltonian_real_space=None):
+    num_sites_unit_cell = model.lattice.num_sites_unit_cell
+    magnon_Hs_BdG = []
+    
+    LSWT_Hamiltonian_real_space = get_real_space_magnon_Hamiltonian(
+        LSWT_Hamiltonian_real_space, model, order=2)
+
+    for k_array in k_arrays:
+        num_ks = len(k_array)
+        magnon_H_BdG = np.zeros(
+            (num_ks, 2*num_sites_unit_cell, 2*num_sites_unit_cell), 
+            dtype=np.complex128)
+        for k_idx, k in enumerate(k_array):
+            magnon_H_BdG[k_idx] = \
+                compute_LSWT_Hamiltonian_momentum_space_BdG(model, k=k)
+        
+        magnon_Hs_BdG.append(magnon_H_BdG)
+
+    return magnon_Hs_BdG
 
 
 
@@ -160,13 +190,14 @@ def get_eigensystem_momentum_space(
 
 @RestoreMomenta(
     momentum_arrays_arg_idx=1,
-    custom_restore_func=lambda result, momenta: tuple(momenta.restore(x) for x in result)
+    custom_restore_func=lambda result, momenta:
+        tuple(MSQ(momenta.restore(x), momenta) for x in result)
 )
 @CollapseMomenta(
-    momentum_arrays_arg_idx=1, 
     targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)
 )
-def get_eigensystems_momentum_space(model: Model, k_arrays):
+def get_eigensystems_momentum_space(
+        model: Model, k_arrays, LSWT_Hamiltonian_real_space=None):
     # if isinstance(momenta, Momenta):
     #     assert momenta.num_momenta == 1
     #     ks = momenta.collapse()[0]

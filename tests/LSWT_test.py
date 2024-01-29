@@ -4,7 +4,7 @@ from magpy import lattice
 from magpy.models import Model
 from magpy import models
 from magpy import interactions
-from magpy import LSWT
+from magpy.largeS import LSWT
 
 
 def test_orthonormalization_wrt_bogo_metric_with_Hamiltonian():
@@ -150,6 +150,6 @@ def test_YFeO_CAFM_zone_center_3d():
         [-h_minus, -h_plus, B, A],
     ])
 
-    H = LSWT.compute_LSWT_Hamiltonian_momentum_space(mod_3d, np.zeros(3))
+    H = LSWT.compute_LSWT_Hamiltonian_momentum_space_BdG(mod_3d, np.zeros(3))
     assert np.allclose(H, expected_H)
     

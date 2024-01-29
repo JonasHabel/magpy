@@ -64,27 +64,36 @@ class Target:
         self.collapse_deep = collapse_deep
 
 
-def CollapseMomenta(
-        momentum_arrays_arg_idx=0, 
-        targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False, collapse_deep=False))):
+class MomentumSpaceQuantity:
+    def __init__(self, raw_quantity, momenta):
+        self.raw_quantity = raw_quantity
+        self.momenta = momenta
+
+# alias
+class MSQ(MomentumSpaceQuantity): pass
+
+
+def CollapseMomenta(targets):
     def decorator(func):
         @wraps(func)
         def wrapped_func(*args, **kwargs):
-            momentum_arrays = args[momentum_arrays_arg_idx]
             collapsed_args = [*args]
-            if isinstance(momentum_arrays, Momenta):
-                for target in targets:
+            for target in targets:
+                arg = args[target.arg_idx]
+                if isinstance(arg, Momenta):
+                    collapsed_args[target.arg_idx] = arg.collapse()
+                elif isinstance(arg, MomentumSpaceQuantity):
                     if target.is_tensor:
                         collapsed_args[target.arg_idx] = \
-                            momentum_arrays.collapse_tensor(
-                                args[target.arg_idx], 
+                            arg.momenta.collapse_tensor(
+                                arg.raw_quantity, 
                                 target.first_momentum_idx, 
                                 target.collapse_deep,
                             )
                     else:
                         collapsed_args[target.arg_idx] = \
-                            momentum_arrays.collapse(
-                                args[target.arg_idx], 
+                            arg.momenta.collapse(
+                                arg.raw_quantity, 
                                 target.first_momentum_idx, 
                             )
 
@@ -110,16 +119,20 @@ def RestoreMomenta(
 
             result = func(*args, **kwargs)
 
-            if isinstance(momentum_arrays, Momenta):
-                if custom_restore_func is None:
-                    if output_is_tensor:
-                        result = momentum_arrays.restore_tensor(result, output_first_momentum_idx, output_restore_deep)
-                    else:
-                        result = momentum_arrays.restore(result, output_first_momentum_idx)
-                else:
-                    result = custom_restore_func(result, momentum_arrays)
+            if isinstance(momentum_arrays, MomentumSpaceQuantity):
+                momentum_arrays = momentum_arrays.momenta
+            elif not isinstance(momentum_arrays, Momenta):
+                return result
 
-            return result
+            if custom_restore_func is not None:
+                return custom_restore_func(result, momentum_arrays)
+
+            if output_is_tensor:
+                result = momentum_arrays.restore_tensor(result, output_first_momentum_idx, output_restore_deep)
+            else:
+                result = momentum_arrays.restore(result, output_first_momentum_idx)
+            return MSQ(result, momentum_arrays)
+            
         
         return wrapped_func
     

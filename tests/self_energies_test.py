@@ -6,7 +6,7 @@ from magpy.largeS import LSWT
 from magpy import self_energies
 import numpy as np
 
-from magpy.momenta_utils import Momenta
+from magpy.momenta_utils import MSQ, Momenta
 
 
 
@@ -44,7 +44,7 @@ def test_two_site_quantum_dot_with_DMI():
     ])
     se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
         freqs, np.array([0.0, 0, 0, 0]), np.array([0.0, 0, 0, 0]),
-        verts_eigenspace_nosym, 0.0, reg)
+        verts_eigenspace_nosym, 0.0, ["p", "pp", "p"], reg)
     
     assert np.allclose(se_p_pp_p, expected_se_pp)
 
@@ -71,12 +71,14 @@ def test_field_orthogonal_to_quantization_direction():
         mod, momenta, verts_real_space)
     
     # VERTICES EIGENSPACE
-    momenta = Momenta(-k-momenta_BZ, momenta_BZ, k)
-    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, momenta)
-    verts_eigenspace = eigenspace.compute_magnon_Hamiltonians(mod, momenta, eigvs, verts_mom_space)
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ, k))
+    verts_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(mod, momenta, eigvs, verts_mom_space)
+    verts_eigenspace_nosym = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(verts_eigenspace)
     
     # SELF-ENERGY
     # TODO FIX ENERGIES OF LOOP MOMENTA!!!
+    energies_minus_k_minus_BZ = eigws.raw_quantity[0]
+    energies_BZ = eigws.raw_quantity[1]
     freqs = np.linspace(0, 5, 11)
     reg = 0.05
     T = 0.0
@@ -93,46 +95,46 @@ def test_field_orthogonal_to_quantization_direction():
     expected_se_hh = np.array(1/16 * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
         .reshape((len(freqs), 1, 1))
     
-    # se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace, T, reg)
-    # assert np.allclose(se_p_pp_p, expected_se_pp)
+    se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "p"], reg)
+    assert np.allclose(se_p_pp_p, expected_se_pp)
     
-    # se_p_ph_p = compute_one_magnon_one_loop_self_energies_at_momentum(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace_for_loop_momentum, T, ["p", "ph", "p"], reg)
-    # assert np.allclose(se_p_ph_p, np.zeros(len(freqs)))
+    se_p_ph_p = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "ph", "p"], reg)
+    assert np.allclose(se_p_ph_p, np.zeros(len(freqs)))
     
-    # se_p_hh_p = compute_one_magnon_one_loop_self_energies_at_momentum(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace_for_loop_momentum, T, ["p", "hh", "p"], reg)
-    # assert np.allclose(se_p_hh_p, np.zeros(len(freqs)))
+    se_p_hh_p = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "hh", "p"], reg)
+    assert np.allclose(se_p_hh_p, np.zeros(len(freqs)))
     
-    # se_p_pp_h = compute_one_magnon_one_loop_self_energies_at_momentum(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace_for_loop_momentum, T, ["p", "pp", "h"], reg)
-    # assert np.allclose(se_p_pp_h, np.zeros(len(freqs)))
+    se_p_pp_h = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "h"], reg)
+    assert np.allclose(se_p_pp_h, np.zeros(len(freqs)))
     
-    # se_p_ph_h = compute_one_magnon_one_loop_self_energies_at_momentum(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace_for_loop_momentum, T, ["p", "ph", "h"], reg)
-    # assert np.allclose(se_p_ph_h, np.zeros(len(freqs)))
+    se_p_ph_h = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "ph", "h"], reg)
+    assert np.allclose(se_p_ph_h, np.zeros(len(freqs)))
     
-    # se_p_ph_h = compute_one_magnon_one_loop_self_energies_at_momentum(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace_for_loop_momentum, T, ["p", "hh", "h"], reg)
-    # assert np.allclose(se_p_ph_h, np.zeros(len(freqs)))
+    se_p_ph_h = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "hh", "h"], reg)
+    assert np.allclose(se_p_ph_h, np.zeros(len(freqs)))
     
-    # se_h_hh_h = compute_one_magnon_one_loop_self_energies_at_momentum(
-    #     freqs, energies_BZ, energies_k_minus_BZ,
-    #     verts_eigenspace_for_loop_momentum, T, ["h", "hh", "h"], reg)
-    # assert np.allclose(se_h_hh_h, expected_se_hh)
+    se_h_hh_h = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, ["h", "hh", "h"], reg)
+    assert np.allclose(se_h_hh_h, expected_se_hh)
 
 
 
 def test_1D_BdG_chain_with_cubic_interaction():
     latt = ChainLattice(1)
-    mod = Model(latt, [
+    mod = models.Model(latt, [
         Interaction([
             BravaisLattice.Site(np.array([0]), 0),
             BravaisLattice.Site(np.array([1]), 0),
@@ -144,12 +146,15 @@ def test_1D_BdG_chain_with_cubic_interaction():
         MagneticField(latt, sublattice_index=0, B=np.array([0, 0, 3.0]))
     ], np.array([[0, 0, 0.5]]))
 
-    H_LSWT_real_space = LSWT.compute_LSWT_Hamiltonian_real_space(mod)
+    H_LSWT_real_space = real_space.compute_magnon_Hamiltonian(mod, order=2)
     assert np.allclose(
         H_LSWT_real_space[0].interaction_tensor,
-        -0.5j*np.array([[1, 0], [0, -1]]))
+        -0.5j*np.array([[1, 0], [0, 0]]))
     assert np.allclose(
-        H_LSWT_real_space[3].interaction_tensor,
+        H_LSWT_real_space[1].interaction_tensor,
+        0.5j*np.array([[0, 0], [0, 1]]))
+    assert np.allclose(
+        H_LSWT_real_space[2].interaction_tensor,
         np.array([[0, 0], [3.0, 0]]))
     
     num_ks = 10
@@ -157,15 +162,15 @@ def test_1D_BdG_chain_with_cubic_interaction():
         np.linspace(0, 2*np.pi, num_ks, endpoint=False).reshape(num_ks, 1))
     sigma_y, sigma_z = np.array([[0, -1j], [1j, 0]]), np.diag([1, -1])
     h0, Delta = 3.0, lambda k: -np.cos(k[0])
-    H_LSWT_along_kpath = LSWT.compute_LSWT_Hamiltonian_along_momentum_path(
-        mod, kpath)
+    H_LSWT_along_kpath = LSWT.compute_LSWT_Hamiltonians_momentum_space_BdG(mod, np.array([kpath.ks]))[0]
     expected_H_LSWT_along_kpath = np.array([
         h0*np.eye(2) + Delta(k)*sigma_y \
         for k in kpath.ks
     ], dtype=complex)
     assert np.allclose(H_LSWT_along_kpath, expected_H_LSWT_along_kpath)
     
-    eigws, eigvs = LSWT.get_eigensystem_along_momentum_path(mod, kpath)
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, np.array([kpath.ks]))
+    eigws, eigvs = eigws[0], eigvs[0]
     epsilon = lambda k: np.sqrt(h0**2 - np.abs(Delta(k))**2)
     expected_eigws = np.array([
         epsilon(k) * np.array([1, -1]) \
@@ -190,6 +195,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     assert np.allclose(eigvs, expected_eigvs)
 
     # make up some real space interaction vertices
+    # a_i^† a_i a_j + a_i^† a_j^† a_i
     cubic_verts_real_space = [
         Interaction([
             BravaisLattice.Site(np.array([0]), 0),
@@ -213,9 +219,9 @@ def test_1D_BdG_chain_with_cubic_interaction():
     k_idx = 2
     k = kpath.ks[k_idx]
     momenta_BZ = kpath.ks
-    cubic_verts_for_loop_momentum_k = \
-        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
-            mod, k, momenta_BZ, cubic_verts_real_space)
+    momenta = Momenta(momenta_BZ, k)
+    cubic_verts_mom_space = \
+        momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(mod, momenta, cubic_verts_real_space)
     caa = np.array([
         [[0, 0], [0, 0]],
         [[1, 0], [0, 0]],
@@ -225,7 +231,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
         [[0, 0], [1, 0]],
     ])
     exp = np.exp
-    expected_cubic_verts_for_loop_momentum = np.array([
+    expected_cubic_verts_mom_space = np.array([
         [exp(1j*k[0])*caa + exp(1j*p[0])*cca for p in momenta_BZ],
         [exp(1j*p[0])*caa + exp(1j*k[0])*cca for p in momenta_BZ],
         [exp(1j*k[0])*caa + exp(-1j*(k[0]+p[0]))*cca for p in momenta_BZ],
@@ -234,20 +240,25 @@ def test_1D_BdG_chain_with_cubic_interaction():
         [exp(-1j*(k[0]+p[0]))*caa + exp(1j*p[0])*cca for p in momenta_BZ],
     ])
     assert np.allclose(
-        cubic_verts_for_loop_momentum_k,
-        expected_cubic_verts_for_loop_momentum)
+        cubic_verts_mom_space.raw_quantity,
+        expected_cubic_verts_mom_space)
     
     # check LSWT eigenspace interaction vertices
     eigvs_minus_k_minus_BZ = np.array([
         eigvs[(-k_idx-p_idx) % num_ks] \
         for p_idx in range(num_ks)
     ])
-    cubic_verts_eigenspace_for_loop_momentum_k = \
-        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
-            mod, eigvs[k_idx], eigvs, eigvs_minus_k_minus_BZ,
-            cubic_verts_for_loop_momentum_k
+    cubic_verts_eigenspace = \
+        eigenspace.compute_magnon_Hamiltonians_with_permutations(
+            mod, momenta, 
+            MSQ(
+                [eigvs_minus_k_minus_BZ, eigvs, eigvs[k_idx]], 
+                Momenta(-k-momenta_BZ, momenta_BZ, k)
+            ),
+            cubic_verts_mom_space
         )
-    expected_cubic_verts_eigenspace_for_loop_momentum_k = np.array([
+
+    expected_cubic_verts_eigenspace = np.array([
         # -k-p, p, k
         [[
             [
@@ -370,8 +381,9 @@ def test_1D_BdG_chain_with_cubic_interaction():
         ] for p in momenta_BZ],
     ])
     assert np.allclose(
-        cubic_verts_eigenspace_for_loop_momentum_k,
-        expected_cubic_verts_eigenspace_for_loop_momentum_k)
+        cubic_verts_eigenspace.raw_quantity,
+        expected_cubic_verts_eigenspace)
+    return
     
     # check all Wick contractions of the pp-bubble, encapsulated in the
     # creator-creator-annihilator (cca) symmetrized interaction vertex
@@ -384,7 +396,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     from magpy import self_energies_old
     symmetrized_vertices_cca_k = \
         self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
-            expected_cubic_verts_eigenspace_for_loop_momentum_k,
+            expected_cubic_verts_eigenspace,
             np.array([[1, 1, 0], [1, 0, 0]]), (num_ks,))
     expected_symmetrized_vertices_cca_k = np.array([
         v(k)*v(-k-p) * (-exp(-1j*(k[0]+p[0]))*1j*v(p) + exp(1j*p[0])*u(p)) + \
@@ -396,12 +408,12 @@ def test_1D_BdG_chain_with_cubic_interaction():
         for p in momenta_BZ
     ])
     expected_symmetrized_vertices_cca_k_2 = np.array([
-        cubic_verts_eigenspace_for_loop_momentum_k[0, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace_for_loop_momentum_k[1, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace_for_loop_momentum_k[2, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace_for_loop_momentum_k[3, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace_for_loop_momentum_k[4, p_idx, 0, 1, 1] +
-        cubic_verts_eigenspace_for_loop_momentum_k[5, p_idx, 0, 1, 1] \
+        cubic_verts_eigenspace[0, p_idx, 1, 1, 0] +
+        cubic_verts_eigenspace[1, p_idx, 1, 0, 1] +
+        cubic_verts_eigenspace[2, p_idx, 1, 1, 0] +
+        cubic_verts_eigenspace[3, p_idx, 1, 0, 1] +
+        cubic_verts_eigenspace[4, p_idx, 0, 1, 1] +
+        cubic_verts_eigenspace[5, p_idx, 0, 1, 1] \
         for p_idx, p in enumerate(momenta_BZ)
     ])
     assert np.allclose(
@@ -588,12 +600,12 @@ def test_1D_BdG_chain_with_cubic_interaction():
             cubic_verts_eigenspace_for_loop_momentum_minusk,
             np.array([[0, 0, 1], [0, 1, 1]]), (num_ks,))
     expected_symmetrized_vertices_caa_minusk = np.array([
-        cubic_verts_eigenspace_for_loop_momentum_k[0, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace_for_loop_momentum_k[1, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace_for_loop_momentum_k[2, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace_for_loop_momentum_k[3, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace_for_loop_momentum_k[4, p_idx, 0, 1, 1] +
-        cubic_verts_eigenspace_for_loop_momentum_k[5, p_idx, 0, 1, 1] \
+        cubic_verts_eigenspace[0, p_idx, 1, 1, 0] +
+        cubic_verts_eigenspace[1, p_idx, 1, 0, 1] +
+        cubic_verts_eigenspace[2, p_idx, 1, 1, 0] +
+        cubic_verts_eigenspace[3, p_idx, 1, 0, 1] +
+        cubic_verts_eigenspace[4, p_idx, 0, 1, 1] +
+        cubic_verts_eigenspace[5, p_idx, 0, 1, 1] \
         for p_idx, p in enumerate(momenta_BZ)
     ]).conj()
     assert np.allclose(
@@ -604,7 +616,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     reg = 0.05
     self_energies_old = compute_one_magnon_one_loop_self_energies_at_momentum(
         freqs, eigws, eigws_minus_k_minus_BZ,
-        cubic_verts_eigenspace_for_loop_momentum_k,
+        cubic_verts_eigenspace,
         0, particle_hole_states, reg)
     expected_self_energies = np.array([
         0.5/num_ks * np.sum(np.array([
@@ -634,31 +646,35 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     mod = models.Model(latt, inter, np.array([[1, 0, 0]]*2))
 
     # VERTICES REAL SPACE
-    verts_real_space = real_space.compute_interaction_Hamiltonian(mod, order=3)
+    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
 
     # VERTICES MOMENTUM SPACE
     k = np.array([0.5, 0.5])
     N_BZ = (5, 5)
-    momenta_BZ = mod.lattice.reciprocal_lattice.sample_inverse_unit_cell(
-        N_BZ).reshape((*N_BZ, 2))
-    verts_for_loop_momentum = \
-        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
-            mod, k, momenta_BZ)
+    momenta_BZ = mod.lattice.reciprocal_lattice \
+        .sample_inverse_unit_cell(N_BZ) \
+        .transpose([1, 2, 0])
+    momenta_q_k = Momenta(momenta_BZ, k)
+    momenta_minuskminusq_q_k = Momenta(-k-momenta_BZ, momenta_BZ, k)
+    verts_mom_space = momentum_space \
+        .compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
+            mod, momenta_q_k, verts_real_space)
     
     # VERTICES EIGENSPACE
-    _, eigvs_at_k = LSWT.get_eigensystem_momentum_space(mod, k)
-    energies_BZ, eigvs_BZ = LSWT.get_eigensystem_for_Brillouin_zone(mod, N_BZ)
-    _, eigvs_minus_k_minus_BZ = LSWT.get_eigensystem_for_loop_momentum(
-        mod, -k, N_BZ)
-    verts_eigenspace_for_loop_momentum = \
-        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
-            mod, eigvs_at_k, eigvs_BZ, eigvs_minus_k_minus_BZ, verts_for_loop_momentum)
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, momenta_minuskminusq_q_k)
+    verts_eigenspace = \
+        eigenspace.compute_magnon_Hamiltonians_with_permutations(
+            mod, momenta_q_k, eigvs, verts_mom_space)
+    verts_eigenspace_nosym = \
+        eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+            verts_eigenspace)
     
     freqs = np.linspace(0, 5, 11)
-    energies_k_minus_BZ, _ = LSWT.get_eigensystem_for_loop_momentum(mod, k, N_BZ)
+    energies_minus_k_minus_BZ = eigws.raw_quantity[0]
+    energies_BZ = eigws.raw_quantity[1]
     reg = 0.05
-    se_p_pp_p = compute_one_magnon_one_loop_self_energies_at_momentum(
-        freqs, energies_BZ, energies_k_minus_BZ,
-        verts_eigenspace_for_loop_momentum, 0, ["p", "pp", "p"], reg)
+    se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, 0, ["p", "pp", "p"], reg)
     
     pass

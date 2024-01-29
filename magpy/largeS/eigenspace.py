@@ -61,14 +61,13 @@ def compute_magnon_Hamiltonian_with_permutations(eigvs, magnon_H_mom_space):
     output_first_momentum_idx=1,
 )
 @CollapseMomenta(
-    momentum_arrays_arg_idx=1, 
     targets=(
         Target(arg_idx=1, first_momentum_idx=0, is_tensor=False), # k_arrays
         Target(arg_idx=2, first_momentum_idx=0, is_tensor=False), # eigvs
         Target(arg_idx=3, first_momentum_idx=1, is_tensor=True),  # magnon_Hs_mom_space
     )
 )
-def compute_magnon_Hamiltonians(model: Model, k_arrays, eigvs, magnon_Hs_mom_space):
+def compute_magnon_Hamiltonians_with_permutations(model: Model, k_arrays, eigvs, magnon_Hs_mom_space):
     # if isinstance(momentum_arrays, Momenta):
     #     k_arrays = momentum_arrays.collapse()
     #     eigvs = momentum_arrays.collapse(eigvs)
@@ -77,6 +76,8 @@ def compute_magnon_Hamiltonians(model: Model, k_arrays, eigvs, magnon_Hs_mom_spa
     #     k_arrays = momentum_arrays
     
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
+    assert len(eigvs) == len(k_arrays) + 1 
+    assert eigvs[0].shape[0] == np.prod([eigvs[n+1].shape[0] for n in range(0, len(num_ks))])
     first_momentum_idx = 1
     last_momentum_idx = first_momentum_idx + len(k_arrays)
     magnon_Hs_shape = (
@@ -86,13 +87,14 @@ def compute_magnon_Hamiltonians(model: Model, k_arrays, eigvs, magnon_Hs_mom_spa
     )
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
-    def compute_magnon_H(k_multiidx, ks):
-        return compute_magnon_Hamiltonian(
-            np.array([eigvs[n][k_multiidx[n]] for n in range(len(num_ks))]),
-            magnon_Hs_mom_space[k_multiidx])
+    def compute_magnon_H(k_multiidx, k_rawindex, ks):
+        idx = (slice(None), *k_multiidx)
+        return compute_magnon_Hamiltonian_with_permutations(
+            np.array([eigvs[0][k_rawindex]] + [eigvs[n+1][k_multiidx[n]] for n in range(0, len(num_ks))]),
+            magnon_Hs_mom_space[idx])
 
     for k_multiidx, magnon_H in iterator(
-        k_arrays, model.lattice.dim, compute_magnon_H):
+            k_arrays, model.lattice.dim, compute_magnon_H):
         idx = (slice(None), *k_multiidx)
         magnon_Hs[idx] = magnon_H
 
@@ -175,17 +177,16 @@ def normal_order_and_symmetrize_magnon_Hamiltonian(magnon_H_eigenspace):
 
 
 @RestoreMomenta(
-    momentum_arrays_arg_idx=1,
+    momentum_arrays_arg_idx=0,
     output_first_momentum_idx=1,
     output_is_tensor=True,
     output_restore_deep=True,
 )
 @CollapseMomenta(
-    momentum_arrays_arg_idx=1, 
     targets=(Target(arg_idx=0, first_momentum_idx=1, is_tensor=True, collapse_deep=True),)
 )
 def normal_order_and_symmetrize_magnon_Hamiltonians(
-        magnon_Hs_eigenspace, k_arrays=None):
+        magnon_Hs_eigenspace):
     order = len(magnon_Hs_eigenspace.shape) - 2 # 0th idx is permutation, 1st idx is momenta
     num_momenta = magnon_Hs_eigenspace.shape[1]
     magnon_Hs_eigenspace_nosym = np.zeros((
