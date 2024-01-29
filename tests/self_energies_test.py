@@ -146,6 +146,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
         MagneticField(latt, sublattice_index=0, B=np.array([0, 0, 3.0]))
     ], np.array([[0, 0, 0.5]]))
 
+    # LSWT
     H_LSWT_real_space = real_space.compute_magnon_Hamiltonian(mod, order=2)
     assert np.allclose(
         H_LSWT_real_space[0].interaction_tensor,
@@ -194,6 +195,8 @@ def test_1D_BdG_chain_with_cubic_interaction():
     ])
     assert np.allclose(eigvs, expected_eigvs)
 
+    # INTERACTIONS
+    #
     # make up some real space interaction vertices
     # a_i^† a_i a_j + a_i^† a_j^† a_i
     cubic_verts_real_space = [
@@ -383,244 +386,318 @@ def test_1D_BdG_chain_with_cubic_interaction():
     assert np.allclose(
         cubic_verts_eigenspace.raw_quantity,
         expected_cubic_verts_eigenspace)
-    return
-    
-    # check all Wick contractions of the pp-bubble, encapsulated in the
-    # creator-creator-annihilator (cca) symmetrized interaction vertex
-    freqs = np.linspace(0, 5, 5, endpoint=False)
-    eigws_minus_k_minus_BZ = np.array([
-        eigws[(-k_idx-p_idx) % num_ks] \
-        for p_idx in range(num_ks)
-    ])
-    particle_hole_states = [["p"], ["p", "p"], ["p"]]
-    from magpy import self_energies_old
-    symmetrized_vertices_cca_k = \
-        self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
-            expected_cubic_verts_eigenspace,
-            np.array([[1, 1, 0], [1, 0, 0]]), (num_ks,))
-    expected_symmetrized_vertices_cca_k = np.array([
-        v(k)*v(-k-p) * (-exp(-1j*(k[0]+p[0]))*1j*v(p) + exp(1j*p[0])*u(p)) + \
-        v(k)*v(p) * (-exp(1j*p[0])*1j*v(-k-p) + exp(-1j*(k[0]+p[0]))*u(-k-p)) + \
-        u(p)*v(-k-p) * (-exp(-1j*(k[0]+p[0]))*1j*u(k) + exp(1j*k[0])*v(k)) + \
-        u(-k-p)*v(p) * (-exp(1j*p[0])*1j*u(k) + exp(1j*k[0])*v(k)) + \
-        u(-k-p)*u(k) * (-exp(1j*k[0])*1j*v(p) + exp(1j*p[0])*u(p)) + \
-        u(p)*u(k) * (-exp(1j*k[0])*1j*v(-k-p) + exp(-1j*(k[0]+p[0]))*u(-k-p)) \
-        for p in momenta_BZ
-    ])
-    expected_symmetrized_vertices_cca_k_2 = np.array([
-        cubic_verts_eigenspace[0, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace[1, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace[2, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace[3, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace[4, p_idx, 0, 1, 1] +
-        cubic_verts_eigenspace[5, p_idx, 0, 1, 1] \
-        for p_idx, p in enumerate(momenta_BZ)
-    ])
-    assert np.allclose(
-        expected_symmetrized_vertices_cca_k,
-        expected_symmetrized_vertices_cca_k_2)
-    assert np.allclose(
-        symmetrized_vertices_cca_k[1],
-        symmetrized_vertices_cca_k[0].conj())
-    assert np.allclose(
-        symmetrized_vertices_cca_k[0],
-        expected_symmetrized_vertices_cca_k.reshape(num_ks, 1, 1, 1))
 
-    # check invariance of symmetrized cca interaction vertex under swapping
-    # the sign of the loop momentum (p -> -p)
-    eigvs_minus_k_plus_BZ = np.array([
-        eigvs[(-k_idx+p_idx) % num_ks] \
-        for p_idx in range(num_ks)
-    ])
-    eigvs_minus_BZ = np.array([
-        eigvs[(-p_idx) % num_ks] \
-        for p_idx in range(num_ks)
-    ])
-    cubic_verts_for_loop_momentum_swapped_k = \
-        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
-            mod, k, -momenta_BZ, cubic_verts_real_space)
-    cubic_verts_eigenspace_for_loop_momentum_swapped_k = \
-        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
-            mod, eigvs[k_idx], eigvs_minus_BZ, eigvs_minus_k_plus_BZ,
-            cubic_verts_for_loop_momentum_swapped_k
-        )
-    symmetrized_vertices_swapped_cca_k = \
-        self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
-            cubic_verts_eigenspace_for_loop_momentum_swapped_k,
-            np.array([[1, 1, 0], [1, 0, 0]]), (num_ks,))
-    expected_symmetrized_vertices_swapped_cca_k = np.array([
-        expected_symmetrized_vertices_cca_k[(-p_idx) % num_ks] \
-        for p_idx in range(num_ks)
-    ])
-    assert np.allclose(
-        symmetrized_vertices_swapped_cca_k[0],
-        expected_symmetrized_vertices_swapped_cca_k.reshape(num_ks, 1, 1, 1))
+    # check symmetrized and normal-ordered eigenspace interaction vertices
+    cubic_verts_eigenspace_nosym = \
+        eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+            cubic_verts_eigenspace)
+    expected_cubic_verts_eigenspace_nosym = np.array([
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 0, 0, 0] + \
+            expected_cubic_verts_eigenspace[1, np, 0, 0, 0] + \
+            expected_cubic_verts_eigenspace[2, np, 0, 0, 0] + \
+            expected_cubic_verts_eigenspace[3, np, 0, 0, 0] + \
+            expected_cubic_verts_eigenspace[4, np, 0, 0, 0] + \
+            expected_cubic_verts_eigenspace[5, np, 0, 0, 0]) / 6
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 0, 0, 1] + \
+            expected_cubic_verts_eigenspace[1, np, 0, 1, 0] + \
+            expected_cubic_verts_eigenspace[2, np, 0, 0, 1] + \
+            expected_cubic_verts_eigenspace[3, np, 0, 1, 0] + \
+            expected_cubic_verts_eigenspace[4, np, 1, 0, 0] + \
+            expected_cubic_verts_eigenspace[5, np, 1, 0, 0]) / 2
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 0, 1, 0] + \
+            expected_cubic_verts_eigenspace[1, np, 0, 0, 1] + \
+            expected_cubic_verts_eigenspace[2, np, 1, 0, 0] + \
+            expected_cubic_verts_eigenspace[3, np, 1, 0, 0] + \
+            expected_cubic_verts_eigenspace[4, np, 0, 0, 1] + \
+            expected_cubic_verts_eigenspace[5, np, 0, 1, 0]) / 2
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 0, 1, 1] + \
+            expected_cubic_verts_eigenspace[1, np, 0, 1, 1] + \
+            expected_cubic_verts_eigenspace[2, np, 1, 0, 1] + \
+            expected_cubic_verts_eigenspace[3, np, 1, 1, 0] + \
+            expected_cubic_verts_eigenspace[4, np, 1, 0, 1] + \
+            expected_cubic_verts_eigenspace[5, np, 1, 1, 0]) / 2
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 1, 0, 0] + \
+            expected_cubic_verts_eigenspace[1, np, 1, 0, 0] + \
+            expected_cubic_verts_eigenspace[2, np, 0, 1, 0] + \
+            expected_cubic_verts_eigenspace[3, np, 0, 0, 1] + \
+            expected_cubic_verts_eigenspace[4, np, 0, 1, 0] + \
+            expected_cubic_verts_eigenspace[5, np, 0, 0, 1]) / 2
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 1, 0, 1] + \
+            expected_cubic_verts_eigenspace[1, np, 1, 1, 0] + \
+            expected_cubic_verts_eigenspace[2, np, 0, 1, 1] + \
+            expected_cubic_verts_eigenspace[3, np, 0, 1, 1] + \
+            expected_cubic_verts_eigenspace[4, np, 1, 1, 0] + \
+            expected_cubic_verts_eigenspace[5, np, 1, 0, 1]) / 2
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 1, 1, 0] + \
+            expected_cubic_verts_eigenspace[1, np, 1, 0, 1] + \
+            expected_cubic_verts_eigenspace[2, np, 1, 1, 0] + \
+            expected_cubic_verts_eigenspace[3, np, 1, 0, 1] + \
+            expected_cubic_verts_eigenspace[4, np, 0, 1, 1] + \
+            expected_cubic_verts_eigenspace[5, np, 0, 1, 1]) / 2
+        ] for np, p in enumerate(momenta_BZ)],
+        [[
+            (expected_cubic_verts_eigenspace[0, np, 1, 1, 1] + \
+            expected_cubic_verts_eigenspace[1, np, 1, 1, 1] + \
+            expected_cubic_verts_eigenspace[2, np, 1, 1, 1] + \
+            expected_cubic_verts_eigenspace[3, np, 1, 1, 1] + \
+            expected_cubic_verts_eigenspace[4, np, 1, 1, 1] + \
+            expected_cubic_verts_eigenspace[5, np, 1, 1, 1]) / 6
+        ] for np, p in enumerate(momenta_BZ)],
+    ]).reshape((8, 10, 1, 1, 1))
+    assert np.allclose(cubic_verts_eigenspace_nosym.raw_quantity, expected_cubic_verts_eigenspace_nosym)
     
-    # check if the annihilator-annihilator-creator (aac) symmetrized interaction
-    # vertex maps to the conjugate of the caa vertex with inverted momenta
-    eigvs_k_plus_BZ = np.array([
-        eigvs[(k_idx+p_idx) % num_ks] \
-        for p_idx in range(num_ks)
-    ])
-    cubic_verts_for_loop_momentum_minusk = \
-        momentum_space.compute_cubic_interaction_Hamiltonian_loop(
-            mod, -k, -momenta_BZ, cubic_verts_real_space)
-    cubic_verts_eigenspace_for_loop_momentum_minusk = \
-        eigenspace.compute_cubic_interaction_Hamiltonian_loop(
-            mod, eigvs[(-k_idx) % num_ks], eigvs_minus_BZ, eigvs_k_plus_BZ,
-            cubic_verts_for_loop_momentum_minusk
-        )
-    expected_cubic_verts_eigenspace_for_loop_momentum_minusk = np.array([
-        # k+p, -p, -k
-        [[
-            [
-                [
-                    v(k+p)*u(-k)*(exp(-1j*k[0])*1j*u(-p) - exp(-1j*p[0])*v(-p)),
-                    v(k+p)*v(-k)*(exp(-1j*k[0])*u(-p) + exp(-1j*p[0])*1j*v(-p))
-                ], [
-                    v(k+p)*u(-k)*(exp(-1j*k[0])*v(-p) + exp(-1j*p[0])*1j*u(-p)),
-                    v(k+p)*v(-k)*(-exp(-1j*k[0])*1j*v(-p) + exp(-1j*p[0])*u(-p)),
-                ],
-            ], [
-                [
-                    u(k+p)*u(-k)*(exp(-1j*k[0])*u(-p) + exp(-1j*p[0])*1j*v(-p)),
-                    u(k+p)*v(-k)*(-exp(-1j*k[0])*1j*u(-p) + exp(-1j*p[0])*v(-p)),
-                ], [
-                    u(k+p)*u(-k)*(-exp(-1j*k[0])*1j*v(-p) + exp(-1j*p[0])*u(-p)),
-                    u(k+p)*v(-k)*(-exp(-1j*k[0])*v(-p) - exp(-1j*p[0])*1j*u(-p))
-                ],
-            ],
-        ] for p in momenta_BZ],
-        # k+p, -k, -p
-        [[
-            [
-                [
-                    v(k+p)*u(-p)*(exp(-1j*p[0])*1j*u(-k) - exp(-1j*k[0])*v(-k)),
-                    v(k+p)*v(-p)*(exp(-1j*p[0])*u(-k) + exp(-1j*k[0])*1j*v(-k))
-                ], [
-                    v(k+p)*u(-p)*(exp(-1j*p[0])*v(-k) + exp(-1j*k[0])*1j*u(-k)),
-                    v(k+p)*v(-p)*(-exp(-1j*p[0])*1j*v(-k) + exp(-1j*k[0])*u(-k)),
-                ],
-            ], [
-                [
-                    u(k+p)*u(-p)*(exp(-1j*p[0])*u(-k) + exp(-1j*k[0])*1j*v(-k)),
-                    u(k+p)*v(-p)*(-exp(-1j*p[0])*1j*u(-k) + exp(-1j*k[0])*v(-k)),
-                ], [
-                    u(k+p)*u(-p)*(-exp(-1j*p[0])*1j*v(-k) + exp(-1j*k[0])*u(-k)),
-                    u(k+p)*v(-p)*(-exp(-1j*p[0])*v(-k) - exp(-1j*k[0])*1j*u(-k))
-                ],
-            ],
-        ] for p in momenta_BZ],
-        # -p, k+p, -k
-        [[
-            [
-                [
-                    v(-p)*u(-k)*(exp(-1j*k[0])*1j*u(k+p) - exp(1j*(k[0]+p[0]))*v(k+p)),
-                    v(-p)*v(-k)*(exp(-1j*k[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p))
-                ], [
-                    v(-p)*u(-k)*(exp(-1j*k[0])*v(k+p) + exp(1j*(k[0]+p[0]))*1j*u(k+p)),
-                    v(-p)*v(-k)*(-exp(-1j*k[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
-                ],
-            ], [
-                [
-                    u(-p)*u(-k)*(exp(-1j*k[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p)),
-                    u(-p)*v(-k)*(-exp(-1j*k[0])*1j*u(k+p) + exp(1j*(k[0]+p[0]))*v(k+p)),
-                ], [
-                    u(-p)*u(-k)*(-exp(-1j*k[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
-                    u(-p)*v(-k)*(-exp(-1j*k[0])*v(k+p) - exp(1j*(k[0]+p[0]))*1j*u(k+p))
-                ],
-            ],
-        ] for p in momenta_BZ],
-        # -p, -k, k+p
-        [[
-            [
-                [
-                    v(-p)*u(k+p)*(exp(1j*(k[0]+p[0]))*1j*u(-k) - exp(-1j*k[0])*v(-k)),
-                    v(-p)*v(k+p)*(exp(1j*(k[0]+p[0]))*u(-k) + exp(-1j*k[0])*1j*v(-k))
-                ], [
-                    v(-p)*u(k+p)*(exp(1j*(k[0]+p[0]))*v(-k) + exp(-1j*k[0])*1j*u(-k)),
-                    v(-p)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-k) + exp(-1j*k[0])*u(-k)),
-                ],
-            ], [
-                [
-                    u(-p)*u(k+p)*(exp(1j*(k[0]+p[0]))*u(-k) + exp(-1j*k[0])*1j*v(-k)),
-                    u(-p)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*u(-k) + exp(-1j*k[0])*v(-k)),
-                ], [
-                    u(-p)*u(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-k) + exp(-1j*k[0])*u(-k)),
-                    u(-p)*v(k+p)*(-exp(1j*(k[0]+p[0]))*v(-k) - exp(-1j*k[0])*1j*u(-k))
-                ],
-            ],
-        ] for p in momenta_BZ],
-        # -k, k-p, -p
-        [[
-            [
-                [
-                    v(-k)*u(-p)*(exp(-1j*p[0])*1j*u(k+p) - exp(1j*(k[0]+p[0]))*v(k+p)),
-                    v(-k)*v(-p)*(exp(-1j*p[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p))
-                ], [
-                    v(-k)*u(-p)*(exp(-1j*p[0])*v(k+p) + exp(1j*(k[0]+p[0]))*1j*u(k+p)),
-                    v(-k)*v(-p)*(-exp(-1j*p[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
-                ],
-            ], [
-                [
-                    u(-k)*u(-p)*(exp(-1j*p[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p)),
-                    u(-k)*v(-p)*(-exp(-1j*p[0])*1j*u(k+p) + exp(1j*(k[0]+p[0]))*v(k+p)),
-                ], [
-                    u(-k)*u(-p)*(-exp(-1j*p[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
-                    u(-k)*v(-p)*(-exp(-1j*p[0])*v(k+p) - exp(1j*(k[0]+p[0]))*1j*u(k+p))
-                ],
-            ],
-        ] for p in momenta_BZ],
-        # -k, -p, k-p
-        [[
-            [
-                [
-                    v(-k)*u(k+p)*(exp(1j*(k[0]+p[0]))*1j*u(-p) - exp(-1j*p[0])*v(-p)),
-                    v(-k)*v(k+p)*(exp(1j*(k[0]+p[0]))*u(-p) + exp(-1j*p[0])*1j*v(-p))
-                ], [
-                    v(-k)*u(k+p)*(exp(1j*(k[0]+p[0]))*v(-p) + exp(-1j*p[0])*1j*u(-p)),
-                    v(-k)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-p) + exp(-1j*p[0])*u(-p)),
-                ],
-            ], [
-                [
-                    u(-k)*u(k+p)*(exp(1j*(k[0]+p[0]))*u(-p) + exp(-1j*p[0])*1j*v(-p)),
-                    u(-k)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*u(-p) + exp(-1j*p[0])*v(-p)),
-                ], [
-                    u(-k)*u(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-p) + exp(-1j*p[0])*u(-p)),
-                    u(-k)*v(k+p)*(-exp(1j*(k[0]+p[0]))*v(-p) - exp(-1j*p[0])*1j*u(-p))
-                ],
-            ],
-        ] for p in momenta_BZ],
-    ])
-    assert np.allclose(
-        cubic_verts_eigenspace_for_loop_momentum_minusk,
-        expected_cubic_verts_eigenspace_for_loop_momentum_minusk)
-    symmetrized_vertices_caa_minusk = \
-        self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
-            cubic_verts_eigenspace_for_loop_momentum_minusk,
-            np.array([[0, 0, 1], [0, 1, 1]]), (num_ks,))
-    expected_symmetrized_vertices_caa_minusk = np.array([
-        cubic_verts_eigenspace[0, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace[1, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace[2, p_idx, 1, 1, 0] +
-        cubic_verts_eigenspace[3, p_idx, 1, 0, 1] +
-        cubic_verts_eigenspace[4, p_idx, 0, 1, 1] +
-        cubic_verts_eigenspace[5, p_idx, 0, 1, 1] \
-        for p_idx, p in enumerate(momenta_BZ)
-    ]).conj()
-    assert np.allclose(
-        symmetrized_vertices_caa_minusk[0],
-        expected_symmetrized_vertices_caa_minusk.reshape(num_ks, 1, 1, 1))
+    # # check all Wick contractions of the pp-bubble, encapsulated in the
+    # # creator-creator-annihilator (cca) symmetrized interaction vertex
+    # eigws_minus_k_minus_BZ = np.array([
+    #     eigws[(-k_idx-p_idx) % num_ks] \
+    #     for p_idx in range(num_ks)
+    # ])
+    # from magpy import self_energies_old
+    # symmetrized_vertices_cca_k = \
+    #     self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
+    #         expected_cubic_verts_eigenspace,
+    #         np.array([[1, 1, 0], [1, 0, 0]]), (num_ks,))
+    # expected_symmetrized_vertices_cca_k = np.array([
+    #     v(k)*v(-k-p) * (-exp(-1j*(k[0]+p[0]))*1j*v(p) + exp(1j*p[0])*u(p)) + \
+    #     v(k)*v(p) * (-exp(1j*p[0])*1j*v(-k-p) + exp(-1j*(k[0]+p[0]))*u(-k-p)) + \
+    #     u(p)*v(-k-p) * (-exp(-1j*(k[0]+p[0]))*1j*u(k) + exp(1j*k[0])*v(k)) + \
+    #     u(-k-p)*v(p) * (-exp(1j*p[0])*1j*u(k) + exp(1j*k[0])*v(k)) + \
+    #     u(-k-p)*u(k) * (-exp(1j*k[0])*1j*v(p) + exp(1j*p[0])*u(p)) + \
+    #     u(p)*u(k) * (-exp(1j*k[0])*1j*v(-k-p) + exp(-1j*(k[0]+p[0]))*u(-k-p)) \
+    #     for p in momenta_BZ
+    # ])
+    # expected_symmetrized_vertices_cca_k_2 = np.array([
+    #     cubic_verts_eigenspace[0, p_idx, 1, 1, 0] +
+    #     cubic_verts_eigenspace[1, p_idx, 1, 0, 1] +
+    #     cubic_verts_eigenspace[2, p_idx, 1, 1, 0] +
+    #     cubic_verts_eigenspace[3, p_idx, 1, 0, 1] +
+    #     cubic_verts_eigenspace[4, p_idx, 0, 1, 1] +
+    #     cubic_verts_eigenspace[5, p_idx, 0, 1, 1] \
+    #     for p_idx, p in enumerate(momenta_BZ)
+    # ])
+    # assert np.allclose(
+    #     expected_symmetrized_vertices_cca_k,
+    #     expected_symmetrized_vertices_cca_k_2)
+    # assert np.allclose(
+    #     symmetrized_vertices_cca_k[1],
+    #     symmetrized_vertices_cca_k[0].conj())
+    # assert np.allclose(
+    #     symmetrized_vertices_cca_k[0],
+    #     expected_symmetrized_vertices_cca_k.reshape(num_ks, 1, 1, 1))
+
+    # # check invariance of symmetrized cca interaction vertex under swapping
+    # # the sign of the loop momentum (p -> -p)
+    # eigvs_minus_k_plus_BZ = np.array([
+    #     eigvs[(-k_idx+p_idx) % num_ks] \
+    #     for p_idx in range(num_ks)
+    # ])
+    # eigvs_minus_BZ = np.array([
+    #     eigvs[(-p_idx) % num_ks] \
+    #     for p_idx in range(num_ks)
+    # ])
+    # cubic_verts_for_loop_momentum_swapped_k = \
+    #     momentum_space.compute_cubic_interaction_Hamiltonian_loop(
+    #         mod, k, -momenta_BZ, cubic_verts_real_space)
+    # cubic_verts_eigenspace_for_loop_momentum_swapped_k = \
+    #     eigenspace.compute_cubic_interaction_Hamiltonian_loop(
+    #         mod, eigvs[k_idx], eigvs_minus_BZ, eigvs_minus_k_plus_BZ,
+    #         cubic_verts_for_loop_momentum_swapped_k
+    #     )
+    # symmetrized_vertices_swapped_cca_k = \
+    #     self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
+    #         cubic_verts_eigenspace_for_loop_momentum_swapped_k,
+    #         np.array([[1, 1, 0], [1, 0, 0]]), (num_ks,))
+    # expected_symmetrized_vertices_swapped_cca_k = np.array([
+    #     expected_symmetrized_vertices_cca_k[(-p_idx) % num_ks] \
+    #     for p_idx in range(num_ks)
+    # ])
+    # assert np.allclose(
+    #     symmetrized_vertices_swapped_cca_k[0],
+    #     expected_symmetrized_vertices_swapped_cca_k.reshape(num_ks, 1, 1, 1))
+    
+    # # check if the annihilator-annihilator-creator (aac) symmetrized interaction
+    # # vertex maps to the conjugate of the caa vertex with inverted momenta
+    # eigvs_k_plus_BZ = np.array([
+    #     eigvs[(k_idx+p_idx) % num_ks] \
+    #     for p_idx in range(num_ks)
+    # ])
+    # cubic_verts_for_loop_momentum_minusk = \
+    #     momentum_space.compute_cubic_interaction_Hamiltonian_loop(
+    #         mod, -k, -momenta_BZ, cubic_verts_real_space)
+    # cubic_verts_eigenspace_for_loop_momentum_minusk = \
+    #     eigenspace.compute_cubic_interaction_Hamiltonian_loop(
+    #         mod, eigvs[(-k_idx) % num_ks], eigvs_minus_BZ, eigvs_k_plus_BZ,
+    #         cubic_verts_for_loop_momentum_minusk
+    #     )
+    # expected_cubic_verts_eigenspace_for_loop_momentum_minusk = np.array([
+    #     # k+p, -p, -k
+    #     [[
+    #         [
+    #             [
+    #                 v(k+p)*u(-k)*(exp(-1j*k[0])*1j*u(-p) - exp(-1j*p[0])*v(-p)),
+    #                 v(k+p)*v(-k)*(exp(-1j*k[0])*u(-p) + exp(-1j*p[0])*1j*v(-p))
+    #             ], [
+    #                 v(k+p)*u(-k)*(exp(-1j*k[0])*v(-p) + exp(-1j*p[0])*1j*u(-p)),
+    #                 v(k+p)*v(-k)*(-exp(-1j*k[0])*1j*v(-p) + exp(-1j*p[0])*u(-p)),
+    #             ],
+    #         ], [
+    #             [
+    #                 u(k+p)*u(-k)*(exp(-1j*k[0])*u(-p) + exp(-1j*p[0])*1j*v(-p)),
+    #                 u(k+p)*v(-k)*(-exp(-1j*k[0])*1j*u(-p) + exp(-1j*p[0])*v(-p)),
+    #             ], [
+    #                 u(k+p)*u(-k)*(-exp(-1j*k[0])*1j*v(-p) + exp(-1j*p[0])*u(-p)),
+    #                 u(k+p)*v(-k)*(-exp(-1j*k[0])*v(-p) - exp(-1j*p[0])*1j*u(-p))
+    #             ],
+    #         ],
+    #     ] for p in momenta_BZ],
+    #     # k+p, -k, -p
+    #     [[
+    #         [
+    #             [
+    #                 v(k+p)*u(-p)*(exp(-1j*p[0])*1j*u(-k) - exp(-1j*k[0])*v(-k)),
+    #                 v(k+p)*v(-p)*(exp(-1j*p[0])*u(-k) + exp(-1j*k[0])*1j*v(-k))
+    #             ], [
+    #                 v(k+p)*u(-p)*(exp(-1j*p[0])*v(-k) + exp(-1j*k[0])*1j*u(-k)),
+    #                 v(k+p)*v(-p)*(-exp(-1j*p[0])*1j*v(-k) + exp(-1j*k[0])*u(-k)),
+    #             ],
+    #         ], [
+    #             [
+    #                 u(k+p)*u(-p)*(exp(-1j*p[0])*u(-k) + exp(-1j*k[0])*1j*v(-k)),
+    #                 u(k+p)*v(-p)*(-exp(-1j*p[0])*1j*u(-k) + exp(-1j*k[0])*v(-k)),
+    #             ], [
+    #                 u(k+p)*u(-p)*(-exp(-1j*p[0])*1j*v(-k) + exp(-1j*k[0])*u(-k)),
+    #                 u(k+p)*v(-p)*(-exp(-1j*p[0])*v(-k) - exp(-1j*k[0])*1j*u(-k))
+    #             ],
+    #         ],
+    #     ] for p in momenta_BZ],
+    #     # -p, k+p, -k
+    #     [[
+    #         [
+    #             [
+    #                 v(-p)*u(-k)*(exp(-1j*k[0])*1j*u(k+p) - exp(1j*(k[0]+p[0]))*v(k+p)),
+    #                 v(-p)*v(-k)*(exp(-1j*k[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p))
+    #             ], [
+    #                 v(-p)*u(-k)*(exp(-1j*k[0])*v(k+p) + exp(1j*(k[0]+p[0]))*1j*u(k+p)),
+    #                 v(-p)*v(-k)*(-exp(-1j*k[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
+    #             ],
+    #         ], [
+    #             [
+    #                 u(-p)*u(-k)*(exp(-1j*k[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p)),
+    #                 u(-p)*v(-k)*(-exp(-1j*k[0])*1j*u(k+p) + exp(1j*(k[0]+p[0]))*v(k+p)),
+    #             ], [
+    #                 u(-p)*u(-k)*(-exp(-1j*k[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
+    #                 u(-p)*v(-k)*(-exp(-1j*k[0])*v(k+p) - exp(1j*(k[0]+p[0]))*1j*u(k+p))
+    #             ],
+    #         ],
+    #     ] for p in momenta_BZ],
+    #     # -p, -k, k+p
+    #     [[
+    #         [
+    #             [
+    #                 v(-p)*u(k+p)*(exp(1j*(k[0]+p[0]))*1j*u(-k) - exp(-1j*k[0])*v(-k)),
+    #                 v(-p)*v(k+p)*(exp(1j*(k[0]+p[0]))*u(-k) + exp(-1j*k[0])*1j*v(-k))
+    #             ], [
+    #                 v(-p)*u(k+p)*(exp(1j*(k[0]+p[0]))*v(-k) + exp(-1j*k[0])*1j*u(-k)),
+    #                 v(-p)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-k) + exp(-1j*k[0])*u(-k)),
+    #             ],
+    #         ], [
+    #             [
+    #                 u(-p)*u(k+p)*(exp(1j*(k[0]+p[0]))*u(-k) + exp(-1j*k[0])*1j*v(-k)),
+    #                 u(-p)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*u(-k) + exp(-1j*k[0])*v(-k)),
+    #             ], [
+    #                 u(-p)*u(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-k) + exp(-1j*k[0])*u(-k)),
+    #                 u(-p)*v(k+p)*(-exp(1j*(k[0]+p[0]))*v(-k) - exp(-1j*k[0])*1j*u(-k))
+    #             ],
+    #         ],
+    #     ] for p in momenta_BZ],
+    #     # -k, k-p, -p
+    #     [[
+    #         [
+    #             [
+    #                 v(-k)*u(-p)*(exp(-1j*p[0])*1j*u(k+p) - exp(1j*(k[0]+p[0]))*v(k+p)),
+    #                 v(-k)*v(-p)*(exp(-1j*p[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p))
+    #             ], [
+    #                 v(-k)*u(-p)*(exp(-1j*p[0])*v(k+p) + exp(1j*(k[0]+p[0]))*1j*u(k+p)),
+    #                 v(-k)*v(-p)*(-exp(-1j*p[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
+    #             ],
+    #         ], [
+    #             [
+    #                 u(-k)*u(-p)*(exp(-1j*p[0])*u(k+p) + exp(1j*(k[0]+p[0]))*1j*v(k+p)),
+    #                 u(-k)*v(-p)*(-exp(-1j*p[0])*1j*u(k+p) + exp(1j*(k[0]+p[0]))*v(k+p)),
+    #             ], [
+    #                 u(-k)*u(-p)*(-exp(-1j*p[0])*1j*v(k+p) + exp(1j*(k[0]+p[0]))*u(k+p)),
+    #                 u(-k)*v(-p)*(-exp(-1j*p[0])*v(k+p) - exp(1j*(k[0]+p[0]))*1j*u(k+p))
+    #             ],
+    #         ],
+    #     ] for p in momenta_BZ],
+    #     # -k, -p, k-p
+    #     [[
+    #         [
+    #             [
+    #                 v(-k)*u(k+p)*(exp(1j*(k[0]+p[0]))*1j*u(-p) - exp(-1j*p[0])*v(-p)),
+    #                 v(-k)*v(k+p)*(exp(1j*(k[0]+p[0]))*u(-p) + exp(-1j*p[0])*1j*v(-p))
+    #             ], [
+    #                 v(-k)*u(k+p)*(exp(1j*(k[0]+p[0]))*v(-p) + exp(-1j*p[0])*1j*u(-p)),
+    #                 v(-k)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-p) + exp(-1j*p[0])*u(-p)),
+    #             ],
+    #         ], [
+    #             [
+    #                 u(-k)*u(k+p)*(exp(1j*(k[0]+p[0]))*u(-p) + exp(-1j*p[0])*1j*v(-p)),
+    #                 u(-k)*v(k+p)*(-exp(1j*(k[0]+p[0]))*1j*u(-p) + exp(-1j*p[0])*v(-p)),
+    #             ], [
+    #                 u(-k)*u(k+p)*(-exp(1j*(k[0]+p[0]))*1j*v(-p) + exp(-1j*p[0])*u(-p)),
+    #                 u(-k)*v(k+p)*(-exp(1j*(k[0]+p[0]))*v(-p) - exp(-1j*p[0])*1j*u(-p))
+    #             ],
+    #         ],
+    #     ] for p in momenta_BZ],
+    # ])
+    # assert np.allclose(
+    #     cubic_verts_eigenspace_for_loop_momentum_minusk,
+    #     expected_cubic_verts_eigenspace_for_loop_momentum_minusk)
+    # symmetrized_vertices_caa_minusk = \
+    #     self_energies_old.__get_all_Wick_contractions_of_cubic_vertices_for_loop_momentum(
+    #         cubic_verts_eigenspace_for_loop_momentum_minusk,
+    #         np.array([[0, 0, 1], [0, 1, 1]]), (num_ks,))
+    # expected_symmetrized_vertices_caa_minusk = np.array([
+    #     cubic_verts_eigenspace[0, p_idx, 1, 1, 0] +
+    #     cubic_verts_eigenspace[1, p_idx, 1, 0, 1] +
+    #     cubic_verts_eigenspace[2, p_idx, 1, 1, 0] +
+    #     cubic_verts_eigenspace[3, p_idx, 1, 0, 1] +
+    #     cubic_verts_eigenspace[4, p_idx, 0, 1, 1] +
+    #     cubic_verts_eigenspace[5, p_idx, 0, 1, 1] \
+    #     for p_idx, p in enumerate(momenta_BZ)
+    # ]).conj()
+    # assert np.allclose(
+    #     symmetrized_vertices_caa_minusk[0],
+    #     expected_symmetrized_vertices_caa_minusk.reshape(num_ks, 1, 1, 1))
         
     # check p,pp,p self-energies
+    freqs = np.linspace(0, 5, 5, endpoint=False)
+    particle_hole_states = [["p"], ["p", "p"], ["p"]]
     reg = 0.05
-    self_energies_old = compute_one_magnon_one_loop_self_energies_at_momentum(
-        freqs, eigws, eigws_minus_k_minus_BZ,
-        cubic_verts_eigenspace,
+    eigws_se, _ = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ))
+    eigws_minus_k_minus_BZ = eigws_se.raw_quantity[0]
+    eigws_BZ = eigws_se.raw_quantity[1]
+    self_energies_old = self_energies.compute_one_magnon_self_energy_bubble(
+        freqs, eigws_BZ, eigws_minus_k_minus_BZ,
+        cubic_verts_eigenspace_nosym.raw_quantity,
         0, particle_hole_states, reg)
     expected_self_energies = np.array([
-        0.5/num_ks * np.sum(np.array([
-            np.abs(expected_symmetrized_vertices_cca_k[p_idx])**2 \
+        2.0/num_ks * np.sum(np.array([
+            np.abs(expected_cubic_verts_eigenspace_nosym[0b110, p_idx])**2 \
                 / (freq - eigws[p_idx, 0] - eigws[(-k_idx-p_idx) % num_ks, 0] + 1j*reg) \
             for p_idx, p in enumerate(momenta_BZ)
         ], dtype=complex)) for freq in freqs
