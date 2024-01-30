@@ -12,6 +12,16 @@ class Momenta:
         self.num_momenta = len(k_arrays)
 
 
+    @staticmethod
+    def of(k_path):
+        return Momenta(k_path.ks)
+    
+    @staticmethod
+    def of_BZ(lattice, N_BZ):
+        k_BZ = lattice.reciprocal_lattice.sample_inverse_unit_cell(N_BZ)
+        return Momenta(k_BZ)
+    
+
     def collapse(self, quantities_arr=None, first_momentum_idx=0):
         quantities_arr = self.k_arrays if quantities_arr is None \
                 else quantities_arr.k_arrays if isinstance(quantities_arr, Momenta) \
@@ -35,7 +45,7 @@ class Momenta:
         return quantity.reshape(new_shape)
     
 
-    def restore(self, quantities, first_momentum_idx=0):
+    def restore(self, quantities, first_momentum_idx=0, strip=True):
         quantities = self.k_arrays if quantities is None \
                 else quantities.k_arrays if isinstance(quantities, Momenta) \
                 else quantities
@@ -45,6 +55,9 @@ class Momenta:
             last_momentum_idx = first_momentum_idx + 1
             new_shape = (*quantity_arr.shape[:first_momentum_idx], *restored_shape, *quantity_arr.shape[last_momentum_idx:])
             restored_quantities.append(quantity_arr.reshape(new_shape))
+
+        if strip and len(quantities) == 1:
+            restored_quantities = restored_quantities[0]
 
         return restored_quantities
     
@@ -71,6 +84,27 @@ class MomentumSpaceQuantity:
 
 # alias
 class MSQ(MomentumSpaceQuantity): pass
+
+
+def Raw(arg_idxs):
+    def decorator(func):
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            raw_args = [*args]
+            for arg_idx in arg_idxs:
+                arg = args[arg_idx]
+                if isinstance(arg, Momenta):
+                    raw_args[arg_idx] = arg.k_arrays
+                elif isinstance(arg, MomentumSpaceQuantity):
+                    raw_args[arg_idx] = arg.raw_quantity
+
+            result = func(*raw_args, **kwargs)
+
+            return result
+        
+        return wrapped_func
+    
+    return decorator
 
 
 def CollapseMomenta(targets):
@@ -131,6 +165,7 @@ def RestoreMomenta(
                 result = momentum_arrays.restore_tensor(result, output_first_momentum_idx, output_restore_deep)
             else:
                 result = momentum_arrays.restore(result, output_first_momentum_idx)
+            
             return MSQ(result, momentum_arrays)
             
         
