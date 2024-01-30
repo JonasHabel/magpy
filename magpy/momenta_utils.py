@@ -18,7 +18,7 @@ class Momenta:
     
     @staticmethod
     def of_BZ(lattice, N_BZ, trans=None):
-        k_BZ = lattice.reciprocal_lattice.sample_inverse_unit_cell(N_BZ)
+        k_BZ = lattice.reciprocal_lattice.sample_inverse_unit_cell(N_BZ, as_meshgrid=False)
         if trans is not None: k_BZ = trans(k_BZ)
         return Momenta(k_BZ)
     

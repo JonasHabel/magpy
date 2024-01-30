@@ -316,7 +316,8 @@ class ReciprocalLattice:
     returns: numpy array
         meshgrid of sampled points
     """
-    def sample_inverse_unit_cell(self, Nks, reciprocal_vecs=None, offset=None):
+    def sample_inverse_unit_cell(
+            self, Nks, reciprocal_vecs=None, offset=None, as_meshgrid=True):
         if len(Nks) != len(self.reciprocal_vecs):
             raise Exception(f"invalid number of axes {len(Nks)}. Should be " \
                           + f"{len(self.reciprocal_vecs)}")
@@ -338,6 +339,9 @@ class ReciprocalLattice:
             offset = -0.5*np.sum(reciprocal_vecs, axis=0)
         for coord_idx in range(embedding_dim):
             momenta[coord_idx] += offset[coord_idx]
+
+        if not as_meshgrid:
+            momenta = momenta.transpose([*range(1, len(Nks)+1), 0])
 
         return momenta
     
