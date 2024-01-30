@@ -38,7 +38,7 @@ def test_orthonormalization_wrt_bogo_metric_with_Hamiltonian():
         N = H.shape[0] // 2
         bogo_metric = np.diag([1, -1]*N)
         model = Model(DotLattice(N), [], np.array([[0, 0, 1]]*N))
-        eigw, eigv = LSWT.get_eigensystem_momentum_space(model, magnon_Hamiltonian=H)
+        eigw, eigv = LSWT.get_eigensystem_momentum_space(model, LSWT_Hamiltonian_momentum_space_BdG=H)
         # eigv = np.random.rand(2*N, 2*N)
         eigv_ortho = LSWT.orthogonalize_wrt_metric(eigv, bogo_metric)
         eigv_ortho = LSWT.normalize_wrt_metric(eigv_ortho, bogo_metric)
@@ -64,7 +64,7 @@ def test_orthonormalization_wrt_bogo_metric_with_given_eigenvectors():
         ])
     _, eigv0 = LSWT.get_eigensystem_momentum_space(
         Model(DotLattice(2), [], np.array([[0, 0, 1]]*2)),
-        magnon_Hamiltonian=H0
+        LSWT_Hamiltonian_momentum_space_BdG=H0
     )
     # mix up the eigenvectors a bit so that they are not orthogonal anymore
     eigv0[:, 0] += 0.4*eigv0[:, 2]
