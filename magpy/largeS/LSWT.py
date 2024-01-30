@@ -44,8 +44,8 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
 
 @RestoreMomenta(
     momentum_arrays_arg_idx=1,
-    custom_restore_func=lambda result, momenta:
-        tuple(MSQ(momenta.restore(x), momenta) for x in result)
+    output_first_momentum_idx=0,
+    output_is_tensor=False,
 )
 @CollapseMomenta(
     targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)
@@ -169,12 +169,17 @@ def __sort_eigensystem(eigw, eigv):
 This is where the actual diagonalization happens
 """
 def get_eigensystem_momentum_space(
-        model: Model, k=None, magnon_Hamiltonian=None, orthonormalize=True):
+        model: Model, k=None, 
+        LSWT_Hamiltonian_real_space=None, 
+        LSWT_Hamiltonian_momentum_space_BdG=None, 
+        orthonormalize=True):
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
     bogo_metric = BOGO_METRIC(num_sites_unit_cell)
 
-    H_k = magnon_Hamiltonian if magnon_Hamiltonian is not None \
-        else compute_LSWT_Hamiltonian_momentum_space_BdG(model, k)
+    H_k = compute_LSWT_Hamiltonian_momentum_space_BdG(
+            model, k, LSWT_Hamiltonian_real_space) \
+        if LSWT_Hamiltonian_momentum_space_BdG is None \
+        else LSWT_Hamiltonian_momentum_space_BdG
 
     eigw, eigv = np.linalg.eig(bogo_metric @ H_k)
     # idx = eigw.argsort()
@@ -203,6 +208,9 @@ def get_eigensystems_momentum_space(
     #     ks = momenta.collapse()[0]
     # else: 
     #     ks = momenta
+    
+    LSWT_Hamiltonian_real_space = get_real_space_magnon_Hamiltonian(
+        LSWT_Hamiltonian_real_space, model, order=2)
 
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
     eigws, eigvs = [], []
@@ -210,11 +218,13 @@ def get_eigensystems_momentum_space(
     for k_array in k_arrays:
         num_ks = len(k_array)
         eigws_for_k_array = np.zeros((num_ks, 2*num_sites_unit_cell))
-        eigvs_for_k_array = np.zeros((num_ks, 2*num_sites_unit_cell, 2*num_sites_unit_cell),
+        eigvs_for_k_array = np.zeros(
+            (num_ks, 2*num_sites_unit_cell, 2*num_sites_unit_cell),
             dtype=np.complex128)
         for k_idx, k in enumerate(k_array):
             eigws_for_k_array[k_idx], eigvs_for_k_array[k_idx] = \
-                get_eigensystem_momentum_space(model, k=k)
+                get_eigensystem_momentum_space(
+                    model, k, LSWT_Hamiltonian_real_space)
         
         eigws.append(eigws_for_k_array)
         eigvs.append(eigvs_for_k_array)
