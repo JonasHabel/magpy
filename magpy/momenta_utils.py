@@ -17,8 +17,9 @@ class Momenta:
         return Momenta(k_path.ks)
     
     @staticmethod
-    def of_BZ(lattice, N_BZ):
+    def of_BZ(lattice, N_BZ, trans=None):
         k_BZ = lattice.reciprocal_lattice.sample_inverse_unit_cell(N_BZ)
+        if trans is not None: k_BZ = trans(k_BZ)
         return Momenta(k_BZ)
     
 
