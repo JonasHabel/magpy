@@ -75,7 +75,7 @@ def compute_one_magnon_self_energy_bubble(
     
 
 
-#@njit
+@njit
 def compute_one_magnon_self_energy_bubble_jit(
         out_arr, frequencies,
         pos_energies_BZ_flat, pos_energies_k_minus_BZ_flat,
