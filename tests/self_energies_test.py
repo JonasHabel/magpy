@@ -3,7 +3,7 @@ from magpy import models
 from magpy.interactions import *
 from magpy.largeS import real_space, momentum_space, eigenspace, normal_order
 from magpy.largeS import LSWT
-from magpy import self_energies
+from magpy.self_energies import bubble
 import numpy as np
 
 from magpy.momenta_utils import MSQ, Momenta
@@ -42,7 +42,7 @@ def test_two_site_quantum_dot_with_DMI():
             [-1., 9./8],
         ]) for freq in freqs
     ])
-    se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, np.array([0.0, 0, 0, 0]), np.array([0.0, 0, 0, 0]),
         verts_eigenspace_nosym, 0.0, ["p", "pp", "p"], reg)
     
@@ -95,37 +95,37 @@ def test_field_orthogonal_to_quantization_direction():
     expected_se_hh = np.array(1/16 * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
         .reshape((len(freqs), 1, 1))
     
-    se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "p"], reg)
     assert np.allclose(se_p_pp_p, expected_se_pp)
     
-    se_p_ph_p = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_ph_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "ph", "p"], reg)
     assert np.allclose(se_p_ph_p, np.zeros(len(freqs)))
     
-    se_p_hh_p = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_hh_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "hh", "p"], reg)
     assert np.allclose(se_p_hh_p, np.zeros(len(freqs)))
     
-    se_p_pp_h = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_pp_h = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "h"], reg)
     assert np.allclose(se_p_pp_h, np.zeros(len(freqs)))
     
-    se_p_ph_h = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_ph_h = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "ph", "h"], reg)
     assert np.allclose(se_p_ph_h, np.zeros(len(freqs)))
     
-    se_p_ph_h = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_ph_h = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "hh", "h"], reg)
     assert np.allclose(se_p_ph_h, np.zeros(len(freqs)))
     
-    se_h_hh_h = self_energies.compute_one_magnon_self_energy_bubble(
+    se_h_hh_h = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["h", "hh", "h"], reg)
     assert np.allclose(se_h_hh_h, expected_se_hh)
@@ -704,7 +704,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     eigws_se, _ = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ))
     eigws_minus_k_minus_BZ = eigws_se.raw_quantity[0]
     eigws_BZ = eigws_se.raw_quantity[1]
-    self_energies_old = self_energies.compute_one_magnon_self_energy_bubble(
+    self_energies_old = bubble.compute_one_magnon_self_energy(
         freqs, eigws_BZ, eigws_minus_k_minus_BZ,
         cubic_verts_eigenspace_nosym.raw_quantity,
         0, particle_hole_states, reg)
@@ -763,7 +763,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     energies_minus_k_minus_BZ = eigws.raw_quantity[0]
     energies_BZ = eigws.raw_quantity[1]
     reg = 0.05
-    se_p_pp_p = self_energies.compute_one_magnon_self_energy_bubble(
+    se_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, 0, ["p", "pp", "p"], reg)
     

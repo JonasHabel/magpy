@@ -1,8 +1,8 @@
 import numpy as np
 from numba import njit
 
-from .models import *
-from .greens_functions import get_free_propagator_zero_T
+from ..models import *
+from ..greens_functions import get_free_propagator_zero_T
 
 
 def __convert_ph_labels_to_indices(particle_hole_labels):
@@ -30,7 +30,7 @@ def __to_binary(bits):
 
 
 
-def compute_one_magnon_self_energy_bubble(
+def compute_one_magnon_self_energy(
         frequencies,
         energies_BZ,
         energies_k_minus_BZ,
@@ -65,7 +65,7 @@ def compute_one_magnon_self_energy_bubble(
     self_energy = np.zeros((num_freqs, num_bands, num_bands),
                             dtype=np.complex128)
     
-    compute_one_magnon_self_energy_bubble_jit(
+    compute_one_magnon_self_energy_jit(
         self_energy, frequencies,
         pos_energies_BZ_flat, pos_energies_k_minus_BZ_flat,
         cubic_vert_left_flat, cubic_vert_right_flat,
@@ -76,7 +76,7 @@ def compute_one_magnon_self_energy_bubble(
 
 
 @njit
-def compute_one_magnon_self_energy_bubble_jit(
+def compute_one_magnon_self_energy_jit(
         out_arr, frequencies,
         pos_energies_BZ_flat, pos_energies_k_minus_BZ_flat,
         cubic_vert_flat1, cubic_vert_flat2,
@@ -95,7 +95,7 @@ def compute_one_magnon_self_energy_bubble_jit(
             .reshape((num_bands**2, num_bands))
         cubic_vert2_reshaped = np.ascontiguousarray(cubic_vert2) \
             .reshape((num_bands**2, num_bands))
-        compute_one_magnon_self_energy_bubble_loop_integral_contribution_jit(
+        compute_one_magnon_self_energy_loop_integral_contribution_jit(
             out_arr,
             frequencies, pos_energies_at_q, pos_energies_at_k_minus_q,
             cubic_vert1_reshaped, cubic_vert2_reshaped, ph_signs, T, reg)
@@ -107,7 +107,7 @@ def compute_one_magnon_self_energy_bubble_jit(
     
 
 @njit
-def compute_one_magnon_self_energy_bubble_loop_integral_contribution_jit(
+def compute_one_magnon_self_energy_loop_integral_contribution_jit(
         out_arr,
         frequencies, pos_energies_at_q, pos_energies_at_k_minus_q,
         cubic_vert1, cubic_vert2, ph_signs, T, reg):
