@@ -3,30 +3,7 @@ from numba import njit
 
 from ..models import *
 from ..greens_functions import get_free_propagator_zero_T
-
-
-def __convert_ph_labels_to_indices(particle_hole_labels):
-    def map_label_to_idx(ph):
-        if ph == "p":
-            return 1
-        elif ph == "h":
-            return 0
-        else:
-            raise Exception(f"invalid particle-hole state {ph}: "
-                          + f"m be either p or h.")
-        
-    particle_hole_idxs = []
-    for ph_label in particle_hole_labels:
-        particle_hole_idxs.append(list(map(
-            map_label_to_idx, ph_label
-        )))
-
-    return particle_hole_idxs
-
-
-
-def __to_binary(bits):
-    return sum(2**i * bit for i, bit in enumerate(reversed(bits)))
+from .util import *
 
 
 
@@ -40,7 +17,7 @@ def compute_one_magnon_self_energy(
         reg):
     
     # 1 for particle, 0 for hole
-    ph_idxs = __convert_ph_labels_to_indices(ph_labels)
+    ph_idxs = convert_ph_labels_to_indices(ph_labels)
     ph_idxs_left_vert = \
         np.array([ph_idxs[1][1], ph_idxs[1][0], 1-ph_idxs[0][0]])
     ph_idxs_right_vert = \
@@ -52,9 +29,9 @@ def compute_one_magnon_self_energy(
     num_freqs = len(frequencies)
     num_ks = int(np.prod(N_BZ))
     num_bands = energies_BZ.shape[-1] // 2
-    cubic_vert_left_flat = cubic_verts[__to_binary(ph_idxs_left_vert)] \
+    cubic_vert_left_flat = cubic_verts[to_binary(ph_idxs_left_vert)] \
         .reshape((num_ks, *([num_bands]*3)))
-    cubic_vert_right_flat = cubic_verts[__to_binary(ph_idxs_right_vert)] \
+    cubic_vert_right_flat = cubic_verts[to_binary(ph_idxs_right_vert)] \
         .reshape((num_ks, *([num_bands]*3))) \
         .conj()
     pos_energies_BZ_flat = energies_BZ[..., ::2].reshape(
