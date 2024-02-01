@@ -22,15 +22,20 @@ def flat_iterator(quantity_arrs, default_shape, func, iteration_dim=0):
     )
 
     def wrapped_func(multiidx, flat_idx):
-        quantities_at_idx = np.array([
-            quantity_arr[(*((slice(None),)*(iteration_dim-1)), multiidx[n])] \
-            for n, quantity_arr in enumerate(quantity_arrs)
-        ])
+        quantities_at_idx = get_quantities_at_multiidx(
+            quantity_arrs, multiidx, iteration_dim)
         if len(quantity_arrs) == 0:
             quantities_at_idx = quantities_at_idx.reshape((0, *default_shape))
         return func(multiidx, flat_idx, quantities_at_idx)
 
     yield from flat_iterator_index(dimensions, wrapped_func)
+
+
+def get_quantities_at_multiidx(quantity_arrs, multiidx, iteration_dim=0):
+    return np.array([
+        quantity_arr[(*((slice(None),)*(iteration_dim-1)), multiidx[n])] \
+        for n, quantity_arr in enumerate(quantity_arrs)
+    ])
 
 
 def flat_iterator_index(dimensions, func):
@@ -65,7 +70,7 @@ def invert_permutation(permutation):
     permutation_np = np.array(permutation)
     inv = np.empty_like(permutation_np)
     inv[permutation_np] = np.arange(len(inv), dtype=inv.dtype)
-    return inv
+    return tuple(inv)
 
 
 def permute(arr, perm):
