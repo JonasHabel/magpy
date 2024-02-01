@@ -4,6 +4,7 @@ from ..models import Model
 from .util import *
 from numba import njit
 from magpy.largeS.util import get_permutations, permute
+from magpy.largeS import momentum_space
 
 
 
@@ -204,3 +205,116 @@ def normal_order_and_symmetrize_magnon_Hamiltonians(
                 magnon_Hs_eigenspace[:, k_idx])
 
     return magnon_Hs_eigenspace_nosym
+
+
+
+
+
+
+
+
+
+def compute_commutator_term_with_permutations(
+        model: Model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, 
+        interaction_Hamiltonian_real_space=None):
+    order = len(eigvs)
+    ANNIHILATOR = 0
+    CREATOR = 1
+
+    # get all permutations which do not switch the order of the second last and last indices;
+    # the second last and last indices correspond to the momenta we have to trace over
+    # due to the Kronecker delta from the commutators;
+    # switching their order would be redundant.
+    # permutations_and_inv_permutations is a list of tuples (perm, inv_perm)
+    permutations_and_inv_permutations = [
+        (perm, inv_perm) for perm, inv_perm in zip(
+            get_permutations(num_elements = order+2),
+            get_inverse_permutations(num_elements = order+2)
+        ) if perm.index(order+1) > perm.index(order)
+    ]
+    # woco = without commuted operators
+    permutations_woco = get_permutations(num_elements=order)
+
+    H_dim = 2*model.lattice.num_sites_unit_cell
+    commutator_term_shape = (np.math.factorial(order), *((H_dim,) * order))
+    commutator_term = np.zeros(commutator_term_shape, dtype=np.complex128)
+    
+    for k_BZ, eigv_BZ, eigv_minus_BZ in zip(ks_BZ, eigvs_BZ, eigvs_minus_BZ):
+        ks_conserved = np.array([-np.sum(ks, axis=0), *ks, -k_BZ, k_BZ]) \
+            if order >= 1 else np.array([-k_BZ, k_BZ])
+        eigvs_conserved = [*eigvs, eigv_minus_BZ, eigv_BZ]
+        for nperm, (permutation, inv_permutation) in enumerate(permutations_and_inv_permutations):
+            ks_permuted = permute(ks_conserved, permutation)
+            eigvs_permuted = permute(eigvs_conserved, permutation)
+            commutator_term_loop_contrib_mom_space = \
+                momentum_space.compute_magnon_Hamiltonian(
+                    model, ks_permuted, interaction_Hamiltonian_real_space)
+            commutator_term_loop_contrib_eigenspace = \
+                compute_magnon_Hamiltonian(
+                    eigvs_permuted, 
+                    commutator_term_loop_contrib_mom_space)
+            commuted_operator_idx_1 = inv_permutation[-2]
+            commuted_operator_idx_2 = inv_permutation[-1]
+            commuted_operators_ph_idx = (
+                *((slice(None),) * commuted_operator_idx_1),
+                slice(ANNIHILATOR, None, 2), # commuted_operator_idx_1
+                *((slice(None),) * (commuted_operator_idx_2 - commuted_operator_idx_1 - 1)),
+                slice(CREATOR, None, 2),     # commuted_operator_idx_2
+            )
+            
+            # woco = without commuted operators
+            permutation_woco = tuple(x for x in permutation if x < order)
+            nperm_woco = permutations_woco.index(permutation_woco)
+            commutator_term[nperm_woco] += np.trace(  # trace over sublattice indices
+                commutator_term_loop_contrib_eigenspace[commuted_operators_ph_idx],
+                axis1=commuted_operator_idx_1, axis2=commuted_operator_idx_2
+            )
+        
+    return commutator_term
+
+
+
+@RestoreMomenta(
+    momentum_arrays_arg_idx=1,
+    output_first_momentum_idx=1,
+    output_is_tensor=True,
+)
+@CollapseMomenta(
+    targets=(
+        Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),
+        Target(arg_idx=2, first_momentum_idx=0, is_tensor=False),
+        Target(arg_idx=3, first_momentum_idx=0, is_tensor=True),
+        Target(arg_idx=4, first_momentum_idx=0, is_tensor=True),
+    )
+)
+def compute_commutator_terms_with_permutations(
+        model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, interaction_Hamiltonian_real_space=None):
+    assert len(ks_BZ.shape) == 2 # 1st index: pos in BZ; 2nd index: momentum component (kx/ky/kz/...)
+
+    # order is the number of boson operators in the commutator term; 
+    # the actual vertex that gives rise to the commutator term contains order+2 boson operators
+    order = len(k_arrays) + 1
+
+    magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
+        interaction_Hamiltonian_real_space, model, order)
+        
+    num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
+    H_dim = 2*model.lattice.num_sites_unit_cell
+    commutator_terms_shape = \
+        (np.math.factorial(order), *num_ks, *((H_dim,) * order))
+    commutator_terms = \
+        np.zeros(commutator_terms_shape, dtype=np.complex128)
+    
+    def compute_commutator_term(k_multiidx, k_flat_idx, ks):
+        return compute_commutator_term_with_permutations(
+            model, 
+            ks, get_quantities_at_multiidx(eigvs, k_multiidx),
+            ks_BZ, eigvs_BZ, 
+            magnon_Hs_real_space)
+    
+    for k_multiidx, commutator_term in flat_iterator(
+            k_arrays, (model.lattice.dim,), compute_commutator_term):
+        commutator_terms[(slice(None), *k_multiidx)] = commutator_term
+
+    return commutator_terms
+    
