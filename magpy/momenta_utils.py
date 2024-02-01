@@ -146,11 +146,14 @@ def RestoreMomenta(
         output_first_momentum_idx=0,
         output_is_tensor=True,
         output_restore_deep=False,
+        custom_momentum_arrays_func=None,
         custom_restore_func=None):
     def decorator(func):
         @wraps(func)
         def wrapped_func(*args, **kwargs):
-            momentum_arrays = args[momentum_arrays_arg_idx]
+            momentum_arrays = custom_momentum_arrays_func(*args) \
+                    if custom_momentum_arrays_func is not None \
+                    else args[momentum_arrays_arg_idx]
 
             result = func(*args, **kwargs)
 

@@ -10,23 +10,42 @@ def get_real_space_magnon_Hamiltonian(
         else real_space.compute_magnon_Hamiltonian(model, order)
 
 
-def iterator(k_arrays, dim, func):
-    num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
+def flat_iterator(quantity_arrs, default_shape, func, iteration_dim=0):
+    if len(quantity_arrs) >= 2:
+        for quantity_arr in quantity_arrs:
+            assert quantity_arr.shape[:iteration_dim] == quantity_arrs[0].shape[:iteration_dim]
+            assert quantity_arr.shape[iteration_dim+1:] == quantity_arrs[0].shape[iteration_dim+1:]
+
+    dimensions = np.array(
+        [quantity_arr.shape[iteration_dim] for quantity_arr in quantity_arrs], 
+        dtype=np.int64
+    )
     partial_modulos = np.array([
-        np.prod(num_ks[n+1:]) for n in range(len(num_ks))
+        np.prod(dimensions[n+1:]) for n in range(len(dimensions))
     ])
 
-    for i in range(np.prod(num_ks)):
-        k_multiidx = convert_1d_index_into_multiindex(i, partial_modulos)
-        ks = np.array([
-            k_array[k_multiidx[n]] for n, k_array in enumerate(k_arrays)
+    for flat_idx in range(np.prod(dimensions)):
+        multiidx = convert_flat_index_into_multiindex(flat_idx, partial_modulos)
+        quantities_at_idx = np.array([
+            quantity_arr[(*((slice(None),)*(iteration_dim-1)), multiidx[n])] \
+            for n, quantity_arr in enumerate(quantity_arrs)
         ])
-        if len(k_arrays) == 0:
-            ks = ks.reshape((0, dim))
-        yield k_multiidx, func(k_multiidx, i, ks)
+        if len(quantity_arrs) == 0:
+            quantities_at_idx = quantities_at_idx.reshape((0, *default_shape))
+        yield multiidx, func(multiidx, flat_idx, quantities_at_idx)
 
 
-def convert_1d_index_into_multiindex(idx, partial_modulos):
+def flat_iterator_index(dimensions, func):
+    partial_modulos = np.array([
+        np.prod(dimensions[n+1:]) for n in range(len(dimensions))
+    ])
+
+    for flat_idx in range(np.prod(dimensions)):
+        multiidx = convert_flat_index_into_multiindex(flat_idx, partial_modulos)
+        yield multiidx, func(multiidx, flat_idx)
+
+
+def convert_flat_index_into_multiindex(idx, partial_modulos):
     quotient, remainder = (0, idx)
     multiidx = np.zeros(len(partial_modulos), dtype=np.int64)
     for n, N in enumerate(partial_modulos):

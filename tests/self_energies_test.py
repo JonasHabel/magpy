@@ -72,7 +72,7 @@ def test_field_orthogonal_to_quantization_direction():
     
     # VERTICES EIGENSPACE
     eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ, k))
-    verts_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(mod, momenta, eigvs, verts_mom_space)
+    verts_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(mod, eigvs, verts_mom_space)
     verts_eigenspace_nosym = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(verts_eigenspace)
     
     # SELF-ENERGY
@@ -253,7 +253,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     ])
     cubic_verts_eigenspace = \
         eigenspace.compute_magnon_Hamiltonians_with_permutations(
-            mod, momenta, 
+            mod, 
             MSQ(
                 [eigvs_minus_k_minus_BZ, eigvs, eigvs[k_idx]], 
                 Momenta(-k-momenta_BZ, momenta_BZ, k)
@@ -513,7 +513,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
             mod, swapped_momenta, cubic_verts_real_space)
     cubic_verts_eigenspace_swapped_k = \
         eigenspace.compute_magnon_Hamiltonians_with_permutations(
-            mod, swapped_momenta, 
+            mod, 
             MSQ(
                 [eigvs_minus_k_plus_BZ, eigvs_minus_BZ, eigvs[k_idx]], 
                 Momenta(-k+momenta_BZ, -momenta_BZ, k)
@@ -545,7 +545,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
             mod, momenta_minusk, cubic_verts_real_space)
     cubic_verts_eigenspace_minusk = \
         eigenspace.compute_magnon_Hamiltonians_with_permutations(
-            mod, swapped_momenta, 
+            mod, 
             MSQ(
                 [eigvs_plus_k_plus_BZ, eigvs_minus_BZ, eigvs[(-k_idx) % num_ks]], 
                 Momenta(k+momenta_BZ, -momenta_BZ, -k)
@@ -754,7 +754,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, momenta_minuskminusq_q_k)
     verts_eigenspace = \
         eigenspace.compute_magnon_Hamiltonians_with_permutations(
-            mod, momenta_q_k, eigvs, verts_mom_space)
+            mod, eigvs, verts_mom_space)
     verts_eigenspace_nosym = \
         eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
             verts_eigenspace)

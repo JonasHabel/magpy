@@ -2,7 +2,7 @@ import numpy as np
 from magpy.largeS.util import get_permutations, permute
 from magpy.models import Model
 from magpy.largeS import real_space
-from magpy.largeS.util import get_real_space_magnon_Hamiltonian, iterator
+from magpy.largeS.util import get_real_space_magnon_Hamiltonian, flat_iterator
 from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
 
 
@@ -97,10 +97,12 @@ def compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
     magnon_Hs_shape = (np.math.factorial(order), *num_ks, *((H_dim,) * order))
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
-    for k_multiidx, magnon_H in iterator(
-            k_arrays, model.lattice.dim, lambda k_multiidx, k_rawindex, ks: 
-        compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
-            model, ks, magnon_Hs_real_space)):
+    def compute_magnon_H(k_multiidx, k_flat_idx, ks):
+        return compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
+            model, ks, magnon_Hs_real_space)
+
+    for k_multiidx, magnon_H in flat_iterator(
+            k_arrays, (model.lattice.dim,), compute_magnon_H):
         magnon_Hs[(slice(None), *k_multiidx)] = magnon_H
 
 #    if isinstance(momentum_arrays, Momenta):
