@@ -200,6 +200,24 @@ Quartic Hamiltonian:
 %
 	&= J \frac{1}{N} \sum_{kpq} \left( e^{i(p+q)} \alpha_{k+p+q}^\dagger \alpha_{k} \alpha_{-p}^\dagger \alpha_q - \frac{1}{2} \left( \cos(q) \alpha_{k+p+q}^\dagger \alpha_{k} \alpha_p \alpha_{-q}^\dagger + \cos(k+p+q) \alpha_{-k-p-q} \alpha_{-k}^\dagger \alpha_{-p}^\dagger \alpha_q \right) \right) \nonumber
 \end{align}
+Constant commutator terms fom the quadratic vertex:
+\begin{align}
+	\hat H_2 &= JS \sum_q \left( -2\alpha_{q}^\dagger \alpha_{q} + 2\cos(q) \alpha_{-q} \alpha_{-q}^\dagger \right) \\
+%
+	&= JS \sum_q \left( -2\alpha_{q}^\dagger \alpha_{q} + 2\cos(q) \alpha_{-q}^\dagger \alpha_{-q} + 2\cos(q) \right) \\
+%
+	&= \dots + 2JS \sum_q \cos(q)
+\end{align}
+Quadratic commutator terms from the quartic vertex:
+\begin{tiny}
+\begin{align}
+	\hat H_4 &= \dots + \frac{J}{N} \sum_{kpq} \left( e^{i(p+q)} \alpha_{k+p+q}^\dagger \alpha_q \delta_{k,-p} - \frac{1}{2} \left( \cos(q) \alpha_{k+p+q}^\dagger \left( \alpha_k \delta_{p,-q} + \alpha_p \delta_{k,-q} \right) + \cos(k+p+q) \left(\alpha_{-p}^\dagger \alpha_q \delta_{-p-q,0} + \alpha_{-k}^\dagger \alpha_q \delta_{-k-q,0} \right) \right) \right) \nonumber \\
+%
+	&= \dots + \frac{J}{N} \left(  \sum_q\left(\sum_p e^{i(p+q)}\right) \alpha_{q}^\dagger \alpha_q - \frac{1}{2} \left( \sum_k \left( \sum_q \cos(q) \right) \alpha_k^\dagger \alpha_k + \sum_p \left( \sum_q \cos(q) \right) \alpha_p^\dagger \alpha_p + \sum_q \left( \sum_k \cos(k) \right) \alpha_q^\dagger \alpha_q \right) + \sum_q \left( \sum_p \cos(p) \right) \alpha_q^\dagger \alpha_q \right) \nonumber \\
+%
+	&= \dots + \frac{J}{N} \sum_q \left( \sum_k \left( e^{i(k+q)} - 2 \cos(k) \right) \right) \alpha_q^\dagger \alpha_q
+\end{align}
+\end{tiny}
 
 
 

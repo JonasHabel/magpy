@@ -16,6 +16,12 @@ def assert_all_eigenspace_Hamiltonians_equal(ks, eigvs, magnon_Hs_mom_space, exp
         else:
             assert np.allclose(magnon_H, expected_magnon_H)
 
+
+def assert_all_commutator_terms_equal(model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, expected_commutator_terms):
+    for order, expected_commutator_term in enumerate(expected_commutator_terms):
+        commutator_term = eigenspace.compute_commutator_term_with_permutations(model, ks[:max(order-1, 0)], eigvs[order], ks_BZ, eigvs_BZ, eigvs_minus_BZ)
+        assert np.allclose(commutator_term, expected_commutator_term)
+
         
 
 # def assert_all_eigenspace_Hamiltonians_equal_for_multiple_ks(model, k_arrays, expected_magnon_Hs):
@@ -75,7 +81,10 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
     eigws_3, eigvs_3 = get_eigensystems(model, ks[:2])
 
     # order S^0
-    def expected_magnon_H_4(k, l, p, q):
+    magnon_H_mom_space_4 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks)
+    eigws_4, eigvs_4 = get_eigensystems(model, ks)
+    def expected_magnon_H_4(l, p, q):
+        k = -l-p-q
         expected_magnon_H_4 = np.zeros((4, 4, 4, 4), dtype=np.complex128)
         expected_magnon_H_4[1, 0, 3, 2] = -J * (1 + np.exp(-1j*(p+q)[0]))
         expected_magnon_H_4[0, 3, 2, 2] = J/4 * np.sqrt(S_A/S_B) * (1 + np.exp(-1j*(l+p+q)[0]))
@@ -89,6 +98,7 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
         magnon_H_mom_space_1,
         magnon_H_mom_space_2,
         magnon_H_mom_space_3,
+        #magnon_H_mom_space_4,
     ], [
         expected_magnon_H_0, 
         expected_magnon_H_1, 
@@ -155,6 +165,28 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
         expected_magnon_H_3, 
         expected_magnon_H_4(*ks),
     ])
+
+    # COMMUTATOR TERMS
+    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
+    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ))
+    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(-ks_BZ))
+
+    expected_commutator_terms_0 = np.array([2*J*S*np.sum([np.cos(q[0]) for q in ks_BZ])])
+    expected_commutator_terms_1 = np.zeros((1, 2))
+    expected_commutator_terms_2 = J * np.array([
+        [[0, 0], [np.sum(np.exp(1j*(ks[0,0] + ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{-q} α_{q}
+        [[0, 0], [np.sum(np.exp(1j*(-ks[0,0] + ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{q} α_{-q}
+    ])
+
+    assert_all_commutator_terms_equal(
+        model,
+        ks, [eigvs_0, eigvs_1, eigvs_2, ],
+        ks_BZ, eigvs_BZ.raw_quantity, eigvs_minus_BZ.raw_quantity,
+        [
+            expected_commutator_terms_0,
+            expected_commutator_terms_1,
+            expected_commutator_terms_2,
+        ])
 
 
 
