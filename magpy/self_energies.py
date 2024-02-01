@@ -5,7 +5,7 @@ from .models import *
 from .greens_functions import get_free_propagator_zero_T
 
 
-def __convert_ph_states_to_indices(particle_hole_labels):
+def __convert_ph_labels_to_indices(particle_hole_labels):
     def map_label_to_idx(ph):
         if ph == "p":
             return 1
@@ -40,7 +40,7 @@ def compute_one_magnon_self_energy_bubble(
         reg):
     
     # 1 for particle, 0 for hole
-    ph_idxs = __convert_ph_states_to_indices(ph_labels)
+    ph_idxs = __convert_ph_labels_to_indices(ph_labels)
     ph_idxs_left_vert = \
         np.array([ph_idxs[1][1], ph_idxs[1][0], 1-ph_idxs[0][0]])
     ph_idxs_right_vert = \
