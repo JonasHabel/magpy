@@ -166,28 +166,6 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
         expected_magnon_H_4(*ks),
     ])
 
-    # COMMUTATOR TERMS
-    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
-    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ))
-    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(-ks_BZ))
-
-    expected_commutator_terms_0 = np.array([2*J*S*np.sum([np.cos(q[0]) for q in ks_BZ])])
-    expected_commutator_terms_1 = np.zeros((1, 2))
-    expected_commutator_terms_2 = J * np.array([
-        [[0, 0], [np.sum(np.exp(1j*(ks[0,0] + ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{-q} α_{q}
-        [[0, 0], [np.sum(np.exp(1j*(-ks[0,0] + ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{q} α_{-q}
-    ])
-
-    assert_all_commutator_terms_equal(
-        model,
-        ks, [eigvs_0, eigvs_1, eigvs_2, ],
-        ks_BZ, eigvs_BZ.raw_quantity, eigvs_minus_BZ.raw_quantity,
-        [
-            expected_commutator_terms_0,
-            expected_commutator_terms_1,
-            expected_commutator_terms_2,
-        ])
-
 
 
 
@@ -259,40 +237,3 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
         #expected_magnon_H_4(*ks),
     ])
 
-
-
-def test_normal_order_and_symmetrize_one_band_cubic_vertex():
-    vertex = np.arange(48).reshape((6, 2, 2, 2)) + 1
-    vertex[0, 1, 0, 0] += 990
-    vertex[2, 0, 1, 1] += 8800
-    expected_nosym_vertex = np.array([
-        (1+9+17+25+33+41)/6,    # a_{-k-q}  a_{q}    a_{k}
-        (2+11+18+27+37+45)/2,   # a_{-k-q}  a_{q}    a^†_{-k}
-        (3+10+21+29+34+43)/2,   # a_{-k-q}  a^†_{-q} a_{k}
-        (4+12+22+31+38+47)/2,   # a_{-k-q}  a^†_{-q} a^†_{-k}
-        (995+13+19+26+35+42)/2, # a^†_{k+q} a_{q}    a_{k}
-        (6+15+8820+28+39+46)/2, # a^†_{k+q} a_{q}    a^†_{-k}
-        (7+14+23+30+36+44)/2,   # a^†_{k+q} a^†_{-q} a_{k}
-        (8+16+24+32+40+48)/6,   # a^†_{k+q} a^†_{-q} a^†_{-k}
-    ]).reshape((8, 1, 1, 1))
-
-    nosym_vertex = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonian(vertex)
-    assert np.allclose(expected_nosym_vertex, nosym_vertex)
-    
-    vertices = np.zeros((6, 4, 3, 2, 2, 2))
-    vertices[:] = vertex[:, np.newaxis, np.newaxis]
-    expected_nosym_vertices = np.zeros((8, 4, 3, 1, 1, 1))
-    expected_nosym_vertices[:] = np.array([
-        (1+9+17+25+33+41)/6,    # a_{-k-q}  a_{q}    a_{k}
-        (2+11+18+27+37+45)/2,   # a_{-k-q}  a_{q}    a^†_{-k}
-        (3+10+21+29+34+43)/2,   # a_{-k-q}  a^†_{-q} a_{k}
-        (4+12+22+31+38+47)/2,   # a_{-k-q}  a^†_{-q} a^†_{-k}
-        (995+13+19+26+35+42)/2, # a^†_{k+q} a_{q}    a_{k}
-        (6+15+8820+28+39+46)/2, # a^†_{k+q} a_{q}    a^†_{-k}
-        (7+14+23+30+36+44)/2,   # a^†_{k+q} a^†_{-q} a_{k}
-        (8+16+24+32+40+48)/6,   # a^†_{k+q} a^†_{-q} a^†_{-k}
-    ]).reshape((8, 1, 1, 1))[:, np.newaxis, np.newaxis]
-
-    nosym_vertices = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
-        MSQ(vertices, Momenta(np.zeros((4, 2)), np.zeros((3, 2)))))
-    assert np.allclose(expected_nosym_vertices, nosym_vertices.raw_quantity)

@@ -1,7 +1,7 @@
 from magpy.lattice import *
 from magpy import models
 from magpy.interactions import *
-from magpy.largeS import real_space, momentum_space, eigenspace
+from magpy.largeS import real_space, momentum_space, eigenspace, normal_order
 from magpy.largeS import LSWT
 from magpy import self_energies
 import numpy as np
@@ -31,7 +31,7 @@ def test_two_site_quantum_dot_with_DMI():
         eigvs, verts_mom_space)
 
     # NORMAL-ORDER AND SYMMETRIZE
-    verts_eigenspace_nosym = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonian(verts_eigenspace)
+    verts_eigenspace_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonian(verts_eigenspace)
 
     # SELF-ENERGY
     freqs = np.array([0.0]) # np.linspace(0, 5, 11)
@@ -73,7 +73,7 @@ def test_field_orthogonal_to_quantization_direction():
     # VERTICES EIGENSPACE
     eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ, k))
     verts_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(mod, eigvs, verts_mom_space)
-    verts_eigenspace_nosym = eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(verts_eigenspace)
+    verts_eigenspace_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(verts_eigenspace)
     
     # SELF-ENERGY
     # TODO FIX ENERGIES OF LOOP MOMENTA!!!
@@ -389,7 +389,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
 
     # check symmetrized and normal-ordered eigenspace interaction vertices
     cubic_verts_eigenspace_nosym = \
-        eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+        normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
             cubic_verts_eigenspace)
     expected_cubic_verts_eigenspace_nosym = np.array([
         [[
@@ -521,7 +521,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
             cubic_verts_mom_space_swapped_k
         )
     cubic_verts_eigenspace_nosym_swapped_k = \
-        eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+        normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
             cubic_verts_eigenspace_swapped_k)
     symmetrized_vertices_swapped_cca_k = \
         cubic_verts_eigenspace_nosym_swapped_k.raw_quantity[0b110]
@@ -679,7 +679,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
         expected_cubic_verts_eigenspace_minusk)
     
     cubic_verts_eigenspace_nosym_minusk = \
-        eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+        normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
             cubic_verts_eigenspace_minusk)
     symmetrized_vertices_aac_minusk = \
         cubic_verts_eigenspace_nosym_minusk.raw_quantity[0b001]
@@ -756,7 +756,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
         eigenspace.compute_magnon_Hamiltonians_with_permutations(
             mod, eigvs, verts_mom_space)
     verts_eigenspace_nosym = \
-        eigenspace.normal_order_and_symmetrize_magnon_Hamiltonians(
+        normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
             verts_eigenspace)
     
     freqs = np.linspace(0, 5, 11)
