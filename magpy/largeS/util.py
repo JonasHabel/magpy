@@ -20,19 +20,17 @@ def flat_iterator(quantity_arrs, default_shape, func, iteration_dim=0):
         [quantity_arr.shape[iteration_dim] for quantity_arr in quantity_arrs], 
         dtype=np.int64
     )
-    partial_modulos = np.array([
-        np.prod(dimensions[n+1:]) for n in range(len(dimensions))
-    ])
 
-    for flat_idx in range(np.prod(dimensions)):
-        multiidx = convert_flat_index_into_multiindex(flat_idx, partial_modulos)
+    def wrapped_func(multiidx, flat_idx):
         quantities_at_idx = np.array([
             quantity_arr[(*((slice(None),)*(iteration_dim-1)), multiidx[n])] \
             for n, quantity_arr in enumerate(quantity_arrs)
         ])
         if len(quantity_arrs) == 0:
             quantities_at_idx = quantities_at_idx.reshape((0, *default_shape))
-        yield multiidx, func(multiidx, flat_idx, quantities_at_idx)
+        return func(multiidx, flat_idx, quantities_at_idx)
+
+    yield from flat_iterator_index(dimensions, wrapped_func)
 
 
 def flat_iterator_index(dimensions, func):
