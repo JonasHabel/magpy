@@ -70,6 +70,7 @@ def compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
 @RestoreMomenta(
     momentum_arrays_arg_idx=1,
     output_first_momentum_idx=1,
+    output_is_tensor=True,
 )
 @CollapseMomenta(
     targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)
@@ -167,6 +168,7 @@ def compute_commutator_term_with_momentum_conservation_and_permutations(
 @RestoreMomenta(
     momentum_arrays_arg_idx=1,
     output_first_momentum_idx=1,
+    output_is_tensor=True,
 )
 @CollapseMomenta(
     targets=(
