@@ -8,7 +8,7 @@ def convert_ph_labels_to_indices(particle_hole_labels):
             return 0
         else:
             raise Exception(f"invalid particle-hole state {ph}: "
-                          + f"m be either p or h.")
+                          + f"must be either p or h.")
         
     particle_hole_idxs = []
     for ph_label in particle_hole_labels:
