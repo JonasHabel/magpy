@@ -12,6 +12,7 @@ def compute_one_magnon_self_energy(
         energies_Gamma,
         cubic_verts,
         linear_commutator_terms,
+        num_ks_BZ,
         T, 
         ph_labels,
         reg):
@@ -36,5 +37,5 @@ def compute_one_magnon_self_energy(
         "mln,l,l->nm", 
         cubic_vert, 1.0/(-pos_energies_Gamma), linear_comm_term)
     
-    return self_energy
+    return self_energy / num_ks_BZ
     
