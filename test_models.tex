@@ -757,7 +757,7 @@ as it should be. Quadratic Hamiltonian:
 	\end{pmatrix} \nonumber \\
 %
 	&= \sum_{q} \begin{pmatrix}
-		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+		\alpha_{-q1} & \alpha_{q1}^\dagger & \alpha_{-q2} & \alpha_{q2}^\dagger
 	\end{pmatrix} \begin{pmatrix}
 		-\sin u_1(-q) & 0 & e^{-i\phi} \cos u_1(-q) & 0 \\
 		0 & -\sin u_2(-q) & 0 & e^{-i\phi} \cos u_2(-q) \\
@@ -770,16 +770,16 @@ as it should be. Quadratic Hamiltonian:
 		0 & -a(-q) \sin u_2(q) - b(q) S_B e^{i\phi} \cos u_2(q) & 0 & a(-q) \cos u_2(q) - b(q) S_B e^{i\phi} \sin u_2(q) \\
 		-3JS_A e^{i\phi} \cos u_1(q) & 0 & -3JS_A e^{i\phi} \sin u_1(q) & 0
 	\end{pmatrix} \begin{pmatrix}
-		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger
 	\end{pmatrix} \nonumber \\
 %
 	&= \sum_{q} \begin{pmatrix}
-		\alpha_{-qA} & \alpha_{qA}^\dagger & \alpha_{-qB} & \alpha_{qB}^\dagger
+		\alpha_{-q1} & \alpha_{q1}^\dagger & \alpha_{-q2} & \alpha_{q2}^\dagger
 	\end{pmatrix} \begin{pmatrix}
 		0 & x & 0 & y \\
 		\dots
 	\end{pmatrix} \begin{pmatrix}
-		\alpha_{qA} \\ \alpha_{-qA}^\dagger \\ \alpha_{qB} \\ \alpha_{-qB}^\dagger
+		\alpha_{q1} \\ \alpha_{-q1}^\dagger \\ \alpha_{q2} \\ \alpha_{-q2}^\dagger
 	\end{pmatrix} \nonumber \\
 \end{align}
 \end{tiny}
@@ -787,7 +787,32 @@ where we have defined
 \begin{align}
 	x &= b(q) S_A \sin u_1(-q) \sin u_2(q) - a(q) e^{i\phi} \sin u_1(-q) \cos u_2(q) - a(-q) e^{-i\phi} \sin u_2(q) \cos u_1(-q) - b(q) S_B \cos u_1(-q) \cos u_2(q) \nonumber \\
 %
-	y &= -b(q) S_A \sin u_1(-q) \cos u_2(q) - a(q) e^{i\phi} \sin u_1(-q) \sin u_2(q) + a(-q) e^{-i\phi} \cos u_1(-q) \cos u_2(q) - b(q) S_B \cos u_1(-q) \sin u_2(q) \nonumber
+	y &= -b(q) S_A \sin u_1(-q) \cos u_2(q) - a(q) e^{i\phi} \sin u_1(-q) \sin u_2(q) + a(-q) e^{-i\phi} \cos u_1(-q) \cos u_2(q) - b(q) S_B \cos u_1(-q) \sin u_2(q) \nonumber \\
+%
+	\dots
+\end{align}
+
+\subsection{Normal Order}
+Quadratic Hamiltonian in eigenspace:
+\begin{align}
+	\hat H_2 &= \sum_q \sum_{n=1}^2 \begin{pmatrix}
+		\alpha_{-qn} & \alpha_{qn}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		g^{--}_{-q,q;n} & g^{-+}_{-q,q;n} \\
+		g^{+-}_{-q,q;n} & g^{++}_{-q,q;n} \\
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{qn} \\ \alpha_{-qn}^\dagger
+	\end{pmatrix}
+	= \sum_q \sum_{n=1}^2 \begin{pmatrix}
+		\alpha_{qn} & \alpha_{-qn}^\dagger
+	\end{pmatrix} \begin{pmatrix}
+		g^{--}_{q,-q;n} & g^{-+}_{q,-q;n} \\
+		g^{+-}_{q,-q;n} & g^{++}_{q,-q;n} \\
+	\end{pmatrix} \begin{pmatrix}
+		\alpha_{-qn} \\ \alpha_{qn}^\dagger
+	\end{pmatrix} \nonumber \\
+%
+	&= \sum_q \sum_{n=1}^2 \bigg( \frac{1}{2} (g^{--}_{-q,q;n} + g^{--}_{q,-q;n}) \alpha_{-qn} \alpha_{qn} + \underbrace{(g^{-+}_{q,-q;n} + g^{+-}_{-q,q;n}) \alpha_{qn}^\dagger \alpha_{-qn}}_{\text{or} (g^{-+}_{-q,q;n} + g^{+-}_{q,-q;n}) \alpha_{qn} \alpha_{-qn}^\dagger} + \frac{1}{2} (g^{++}_{-q,q;n} + g^{++}_{q,-q;n}) \alpha_{qn}^\dagger \alpha_{-qn}^\dagger \bigg) + \sum_q \sum_{n=1}^2 g^{-+}_{-q,q;n}
 \end{align}
 
 \end{document}

@@ -8,19 +8,16 @@ from magpy.momenta_utils import MSQ, Momenta
 from . import test_models
 
 
-def assert_all_eigenspace_Hamiltonians_equal(ks, eigvs, magnon_Hs_mom_space, expected_magnon_Hs):
+def assert_all_eigenspace_Hamiltonians_equal(ks, eigvs, magnon_Hs_mom_space, expected_magnon_Hs, symmetrize_LSWT=True):
     for order, expected_magnon_H in enumerate(expected_magnon_Hs):
         magnon_H = eigenspace.compute_magnon_Hamiltonian(eigvs[order], magnon_Hs_mom_space[order])
         if order == 2:
-            assert np.allclose(magnon_H + magnon_H.T.conj(), expected_magnon_H + expected_magnon_H.T.conj())    # symmetrize q, -q
+            if symmetrize_LSWT:
+                assert np.allclose(magnon_H + magnon_H.T.conj(), expected_magnon_H + expected_magnon_H.T.conj())    # symmetrize q, -q
+            else:
+                assert np.allclose(magnon_H, expected_magnon_H)
         else:
             assert np.allclose(magnon_H, expected_magnon_H)
-
-
-def assert_all_commutator_terms_equal(model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, expected_commutator_terms):
-    for order, expected_commutator_term in enumerate(expected_commutator_terms):
-        commutator_term = eigenspace.compute_commutator_term_with_permutations(model, ks[:max(order-1, 0)], eigvs[order], ks_BZ, eigvs_BZ, eigvs_minus_BZ)
-        assert np.allclose(commutator_term, expected_commutator_term)
 
         
 
@@ -43,7 +40,7 @@ def get_eigensystems(model, ks):
     return eigws, eigvs
 
 
-def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
+def test_eigenspace_Hamiltonian_AFM_Heisenberg_chain():
     model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
 
     np.random.seed(1)
@@ -110,7 +107,7 @@ def test_momentum_space_Hamiltonian_AFM_Heisenberg_chain():
     
 
 
-def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
+def test_eigenspace_Hamiltonian_FM_Heisenberg_chain():
     model, (J, S) = test_models.FM_Heisenberg_chain()
 
     delta_ij = np.array([1])
@@ -169,7 +166,7 @@ def test_momentum_space_Hamiltonian_FM_Heisenberg_chain():
 
 
 
-def test_momentum_space_Hamiltonian_honeycomb_DMI():
+def test_eigenspace_Hamiltonian_honeycomb_DMI():
     model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
 
     nns = np.array([
@@ -193,47 +190,26 @@ def test_momentum_space_Hamiltonian_honeycomb_DMI():
     expected_magnon_H_1 = np.zeros((4,))
 
     # order S^1
-    beta_1 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nn)) for nn in nns]))
-    beta_2 = lambda K: np.sum(np.array([np.exp(1j*K.dot(nnn)) for nnn in nnns]))
-    expected_magnon_H_2 = lambda k, q: np.array([
-        [0, 1j*D*np.cos(theta)*(beta_2(q) - beta_2(k))*S_A, 0, J*beta_1(q)*np.sqrt(S_A*S_B)],
-        [-3*J*S_B, 0, 0, 0],
-        [0, J*beta_1(k)*np.sqrt(S_A*S_B), 0, -1j*D*np.cos(theta)*(beta_2(q) - beta_2(k))*S_B],
-        [0, 0, -J*beta_1(k+q)*S_A, 0]
-    ], dtype=np.complex128)
+    magnon_H_mom_space_2 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:1])
+    eigws_2, eigvs_2 = get_eigensystems(model, ks[:1])
+    expected_magnon_H_2 = eigvs_2[0].T @ magnon_H_mom_space_2 @ eigvs_2[1]
 
     # order S^(1/2)
-    prefactor_3 = 1j*D*np.sin(theta) / np.sqrt(2)
-    def expected_magnon_H_3(k, p, q):
-        expected_magnon_H_3 = np.zeros((4, 4, 4), dtype=np.complex128)
-        expected_magnon_H_3[1, 0, 0] = np.sqrt(S_A) * (beta_2(q) + 1/4*(beta_2(k+p+q) - 3))
-        expected_magnon_H_3[1, 1, 0] = -np.sqrt(S_A) * (beta_2(k) + 1/4*(beta_2(k+p+q) - 3))
-        expected_magnon_H_3[0, 1, 0] = -np.sqrt(S_A) * beta_2(p+q)
-        expected_magnon_H_3[1, 0, 1] = np.sqrt(S_A) * beta_2(k+p)
-        expected_magnon_H_3[3, 2, 2] = -np.sqrt(S_B) * (beta_2(q) + 1/4*(beta_2(k+p+q) - 3))
-        expected_magnon_H_3[3, 3, 2] = np.sqrt(S_B) * (beta_2(k) + 1/4*(beta_2(k+p+q) - 3))
-        expected_magnon_H_3[2, 3, 2] = np.sqrt(S_B) * beta_2(p+q)
-        expected_magnon_H_3[3, 2, 3] = -np.sqrt(S_B) * beta_2(k+p)
-        expected_magnon_H_3 *= prefactor_3
-        return expected_magnon_H_3
-
+    
 
     # order S^0
-    def expected_magnon_H_4(k, l, p, q):
-        expected_magnon_H_4 = np.zeros((4, 4, 4, 4), dtype=np.complex128)
-        return expected_magnon_H_4
 
-    assert_all_eigenspace_Hamiltonians_equal(ks, [eigvs_0, eigvs_1,], [
+    assert_all_eigenspace_Hamiltonians_equal(ks, [eigvs_0, eigvs_1, eigvs_2, ], [
         magnon_H_mom_space_0, 
         magnon_H_mom_space_1,
-        #magnon_H_mom_space_2,
+        magnon_H_mom_space_2,
         #magnon_H_mom_space_3,
         #magnon_H_mom_space_4,
     ], [
         expected_magnon_H_0, 
         expected_magnon_H_1, 
-        #expected_magnon_H_2(*ks[0:1]),
+        expected_magnon_H_2,
         #expected_magnon_H_3, 
         #expected_magnon_H_4(*ks),
-    ])
+    ], symmetrize_LSWT=False)
 
