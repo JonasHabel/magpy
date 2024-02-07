@@ -73,5 +73,6 @@ def invert_permutation(permutation):
     return tuple(inv)
 
 
-def permute(arr, perm):
-    return np.array([arr[perm[i]] for i in range(len(arr))])
+def permute(arr, perm, as_np_array=True):
+    perm_arr = [arr[perm[i]] for i in range(len(arr))]
+    return np.array(perm_arr) if as_np_array else perm_arr

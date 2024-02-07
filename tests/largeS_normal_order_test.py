@@ -306,3 +306,16 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
     nosym_vertices = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
         MSQ(vertices, Momenta(np.zeros((4, 2)), np.zeros((3, 2)))))
     assert np.allclose(expected_nosym_vertices, nosym_vertices.raw_quantity)
+
+
+
+def test_commutator_terms():
+    model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
+    ks = []
+    eigvs = [np.zeros((1, 4, 4))]
+    ks_BZ = Momenta.of_BZ(model.lattice, (10, 10))
+    eigvs_BZ = np.zeros((10, 10, 4, 4))
+    eigvs_minus_BZ = np.zeros((10, 10, 4, 4))
+
+    normal_order.compute_commutator_terms_with_permutations(
+        model, ks, eigvs, ks_BZ, MSQ(eigvs_BZ, ks_BZ), MSQ(eigvs_minus_BZ, ks_BZ))

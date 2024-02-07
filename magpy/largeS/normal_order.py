@@ -145,7 +145,7 @@ def compute_commutator_term_with_permutations(
         eigvs_conserved = [*eigvs, eigv_minus_BZ, eigv_BZ]
         for nperm, (permutation, inv_permutation) in enumerate(permutations_and_inv_permutations):
             ks_permuted = permute(ks_conserved, permutation)
-            eigvs_permuted = permute(eigvs_conserved, permutation)
+            eigvs_permuted = permute(eigvs_conserved, permutation, as_np_array=False)
             commutator_term_loop_contrib_mom_space = \
                 momentum_space.compute_magnon_Hamiltonian(
                     model, ks_permuted, interaction_Hamiltonian_real_space)
@@ -185,10 +185,12 @@ def compute_commutator_term_with_permutations(
         Target(arg_idx=2, first_momentum_idx=0, is_tensor=False),
         Target(arg_idx=3, first_momentum_idx=0, is_tensor=True),
         Target(arg_idx=4, first_momentum_idx=0, is_tensor=True),
+        Target(arg_idx=5, first_momentum_idx=0, is_tensor=True),
     )
 )
 def compute_commutator_terms_with_permutations(
-        model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, interaction_Hamiltonian_real_space=None):
+        model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, 
+        interaction_Hamiltonian_real_space=None):
     assert len(ks_BZ.shape) == 2 # 1st index: pos in BZ; 2nd index: momentum component (kx/ky/kz/...)
     assert len(eigvs[0]) == np.prod([len(eigv) for eigv in eigvs[1:]])
 
@@ -197,7 +199,7 @@ def compute_commutator_terms_with_permutations(
     order = len(k_arrays) + 1
 
     magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
-        interaction_Hamiltonian_real_space, model, order)
+        interaction_Hamiltonian_real_space, model, order + 2)
         
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
     H_dim = 2*model.lattice.num_sites_unit_cell
@@ -209,9 +211,9 @@ def compute_commutator_terms_with_permutations(
     def compute_commutator_term(k_multiidx, k_flat_idx, ks):
         eigv_multiidx = np.array([k_flat_idx, *k_multiidx], dtype=np.int64)
         return compute_commutator_term_with_permutations(
-            model, 
+            model,
             ks, get_quantities_at_multiidx(eigvs, eigv_multiidx),
-            ks_BZ, eigvs_BZ, 
+            ks_BZ, eigvs_BZ, eigvs_minus_BZ,
             magnon_Hs_real_space)
     
     for k_multiidx, commutator_term in flat_iterator(
