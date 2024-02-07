@@ -175,7 +175,7 @@ def compute_commutator_term_with_permutations(
 
 
 @RestoreMomenta(
-    momentum_arrays_arg_idx=1,
+    momentum_arrays_arg_idx=2,
     output_first_momentum_idx=1,
     output_is_tensor=True,
 )
@@ -201,10 +201,10 @@ def compute_commutator_terms_with_permutations(
     magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
         interaction_Hamiltonian_real_space, model, order + 2)
         
-    num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
+    momenta_shape = np.array([len(eigv) for eigv in eigvs], dtype=np.int64)
     H_dim = 2*model.lattice.num_sites_unit_cell
     commutator_terms_shape = \
-        (np.math.factorial(order), *num_ks, *((H_dim,) * order))
+        (np.math.factorial(order), *momenta_shape, *((H_dim,) * order))
     commutator_terms = \
         np.zeros(commutator_terms_shape, dtype=np.complex128)
     

@@ -3,7 +3,7 @@ from magpy import models
 from magpy.interactions import *
 from magpy.largeS import real_space, momentum_space, eigenspace, normal_order
 from magpy.largeS import LSWT
-from magpy.self_energies import bubble
+from magpy.self_energies import bubble, tadpole
 import numpy as np
 
 from magpy.momenta_utils import MSQ, Momenta
@@ -768,3 +768,14 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
         verts_eigenspace_nosym.raw_quantity, 0, ["p", "pp", "p"], reg)
     
     pass
+
+
+
+
+def test_tadpole():
+    freqs = np.linspace(0, 1, 120)
+    eigw_Gamma = np.random.rand(12)
+    cubic_verts = np.random.rand(8, 6, 6, 6)
+    linear_commutator_terms = np.random.rand(2, 6)
+    
+    tadpole.compute_one_magnon_self_energy(freqs, eigw_Gamma, cubic_verts, linear_commutator_terms, (20, 20, 20), 0, ["p", "p", "p"], reg=0.05)

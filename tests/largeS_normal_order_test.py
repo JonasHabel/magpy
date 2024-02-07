@@ -311,11 +311,15 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
 
 def test_commutator_terms():
     model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
-    ks = []
-    eigvs = [np.zeros((1, 4, 4))]
+    ks = Momenta()     # order 3
+    eigvs = MSQ([np.random.rand(1, 4, 4)], Momenta(np.zeros((1, 2))))
     ks_BZ = Momenta.of_BZ(model.lattice, (10, 10))
-    eigvs_BZ = np.zeros((10, 10, 4, 4))
-    eigvs_minus_BZ = np.zeros((10, 10, 4, 4))
+    eigvs_BZ = np.random.rand(10, 10, 4, 4)
+    eigvs_minus_BZ = np.random.rand(10, 10, 4, 4)
 
-    normal_order.compute_commutator_terms_with_permutations(
+    comm_terms = normal_order.compute_commutator_terms_with_permutations(
         model, ks, eigvs, ks_BZ, MSQ(eigvs_BZ, ks_BZ), MSQ(eigvs_minus_BZ, ks_BZ))
+    assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
+
+    comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
+    assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands

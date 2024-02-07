@@ -37,5 +37,5 @@ def compute_one_magnon_self_energy(
         "mln,l,l->nm", 
         cubic_vert, 1.0/(-pos_energies_Gamma + 1j*reg), linear_comm_term)
     
-    return self_energy / num_ks_BZ
+    return self_energy / np.prod(num_ks_BZ)
     
