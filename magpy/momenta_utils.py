@@ -116,7 +116,11 @@ def CollapseMomenta(targets):
             for target in targets:
                 arg = args[target.arg_idx]
                 if isinstance(arg, Momenta):
-                    collapsed_args[target.arg_idx] = arg.collapse()
+                    if target.is_tensor:
+                        assert len(arg.k_arrays) == 1
+                        collapsed_args[target.arg_idx] = arg.collapse()[0]
+                    else:
+                        collapsed_args[target.arg_idx] = arg.collapse()
                 elif isinstance(arg, MomentumSpaceQuantity):
                     if target.is_tensor:
                         collapsed_args[target.arg_idx] = \
