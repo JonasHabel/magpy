@@ -33,7 +33,7 @@ def flat_iterator(quantity_arrs, default_shape, func, iteration_dim=0):
 
 def get_quantities_at_multiidx(quantity_arrs, multiidx, iteration_dim=0):
     return np.array([
-        quantity_arr[(*((slice(None),)*(iteration_dim-1)), multiidx[n])] \
+        quantity_arr[(*((slice(None),)*iteration_dim), multiidx[n])] \
         for n, quantity_arr in enumerate(quantity_arrs)
     ])
 

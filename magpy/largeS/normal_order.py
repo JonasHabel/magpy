@@ -190,6 +190,7 @@ def compute_commutator_term_with_permutations(
 def compute_commutator_terms_with_permutations(
         model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, interaction_Hamiltonian_real_space=None):
     assert len(ks_BZ.shape) == 2 # 1st index: pos in BZ; 2nd index: momentum component (kx/ky/kz/...)
+    assert eigvs[0].shape == np.prod([eigv.shape for eigv in eigvs[1:]])
 
     # order is the number of boson operators in the commutator term; 
     # the actual vertex that gives rise to the commutator term contains order+2 boson operators
@@ -206,9 +207,10 @@ def compute_commutator_terms_with_permutations(
         np.zeros(commutator_terms_shape, dtype=np.complex128)
     
     def compute_commutator_term(k_multiidx, k_flat_idx, ks):
+        eigv_multiidx = np.array([k_flat_idx, *k_multiidx], dtype=np.int64)
         return compute_commutator_term_with_permutations(
             model, 
-            ks, get_quantities_at_multiidx(eigvs, k_multiidx),
+            ks, get_quantities_at_multiidx(eigvs, eigv_multiidx),
             ks_BZ, eigvs_BZ, 
             magnon_Hs_real_space)
     
