@@ -33,9 +33,9 @@ def compute_one_magnon_self_energy(
     self_energy = np.zeros((num_freqs, num_bands, num_bands),
                             dtype=np.complex128)
     
-    self_energy = np.einsum(
+    self_energy[:] = np.einsum(
         "mln,l,l->nm", 
-        cubic_vert, 1.0/(-pos_energies_Gamma + 1j*reg), linear_comm_term)
+        cubic_vert, 1.0/(-pos_energies_Gamma + 1j*reg), linear_comm_term)[np.newaxis]
     
     return self_energy / np.prod(num_ks_BZ)
     
