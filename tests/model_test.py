@@ -289,7 +289,7 @@ def test_FM_Heisenberg_periodic_stacking():
     ks = mod_2D.lattice.reciprocal_lattice \
         .sample_inverse_unit_cell([Nk, Nk]) \
         .transpose([1, 2, 0])
-    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod_2D, Momenta(ks))
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod_2D, Momenta(ks), strip=True)
     eigws, eigvs = eigws.raw_quantity, eigvs.raw_quantity
 
     a = mod_2D.lattice.bravais_vecs

@@ -163,14 +163,14 @@ def test_1D_BdG_chain_with_cubic_interaction():
         np.linspace(0, 2*np.pi, num_ks, endpoint=False).reshape(num_ks, 1))
     sigma_y, sigma_z = np.array([[0, -1j], [1j, 0]]), np.diag([1, -1])
     h0, Delta = 3.0, lambda k: -np.cos(k[0])
-    H_LSWT_along_kpath = LSWT.compute_LSWT_Hamiltonians_momentum_space_BdG(mod, Momenta.of(kpath)).raw_quantity
+    H_LSWT_along_kpath = LSWT.compute_LSWT_Hamiltonians_momentum_space_BdG(mod, Momenta.of(kpath), strip=True).raw_quantity
     expected_H_LSWT_along_kpath = np.array([
         h0*np.eye(2) + Delta(k)*sigma_y \
         for k in kpath.ks
     ], dtype=complex)
     assert np.allclose(H_LSWT_along_kpath, expected_H_LSWT_along_kpath)
     
-    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, Momenta.of(kpath))
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, Momenta.of(kpath), strip=True)
     eigws, eigvs = eigws.raw_quantity, eigvs.raw_quantity
     epsilon = lambda k: np.sqrt(h0**2 - np.abs(Delta(k))**2)
     expected_eigws = np.array([

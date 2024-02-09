@@ -80,8 +80,8 @@ def test_normal_order_FM_Heisenberg_chain():
 
     # COMMUTATOR TERMS
     ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
-    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ))
-    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(-ks_BZ))
+    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
+    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(-ks_BZ), strip=True)
 
     np.random.seed(1)
     ks = np.random.rand(3, 1)
@@ -310,16 +310,19 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
 
 
 def test_commutator_terms():
-    model, (J, D, S_A, S_B, theta) = test_models.FM_Heisenberg_with_DMI_honeycomb()
+    model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain(B=np.array([0, 0.1, 0]))
     ks = Momenta()     # order 3
-    eigvs = MSQ([np.random.rand(1, 4, 4)], Momenta(np.zeros((1, 2))))
-    ks_BZ = Momenta.of_BZ(model.lattice, (10, 10))
-    eigvs_BZ = np.random.rand(10, 10, 4, 4)
-    eigvs_minus_BZ = np.random.rand(10, 10, 4, 4)
+    _, eigvs = LSWT.get_eigensystems_momentum_space(model, Momenta(np.zeros((1, model.lattice.dim))))
+    ks_BZ = Momenta.of_BZ(model.lattice, (10,))
+    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, ks_BZ, strip=True)
+    minus_ks_BZ = Momenta.of_BZ(model.lattice, (10,), trans=lambda x: -x)
+    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, minus_ks_BZ, strip=True)
 
     comm_terms = normal_order.compute_commutator_terms_with_permutations(
-        model, ks, eigvs, ks_BZ, MSQ(eigvs_BZ, ks_BZ), MSQ(eigvs_minus_BZ, ks_BZ))
+        model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ)
     assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
     assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands
+    assert np.allclose(comm_terms_nosym.raw_quantity[0], comm_terms_nosym.raw_quantity[1].conj())
+    

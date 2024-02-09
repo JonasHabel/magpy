@@ -1,22 +1,7 @@
 import numpy as np
 from magpy.models import Model
 from magpy.lattice import BravaisLattice, ChainLattice, HoneycombLatticeA
-from magpy.interactions import NthNearestNeighborHeisenbergInteraction, DMInteraction
-
-
-def AFM_Heisenberg_chain():
-    J = 1.0
-    S_A = 3/2
-    S_B = 1
-    lattice = ChainLattice(2)
-
-    return Model(
-        lattice,
-        interactions=[
-            NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=J),
-        ],
-        classical_ground_state=np.array([[0, 0, S_A], [0, 0, -S_B]])
-    ), (J, S_A, S_B)
+from magpy.interactions import UniformMagneticField, NthNearestNeighborHeisenbergInteraction, DMInteraction
 
 
 def FM_Heisenberg_chain():
@@ -31,6 +16,22 @@ def FM_Heisenberg_chain():
         ],
         classical_ground_state=S*np.array([[0, 0, 1]])
     ), (J, S)
+
+
+def AFM_Heisenberg_chain(B = np.zeros(3)):
+    J = 1.0
+    S_A = 3/2
+    S_B = 1
+    lattice = ChainLattice(2)
+
+    return Model(
+        lattice,
+        interactions=[
+            NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=J),
+            UniformMagneticField(lattice, B),
+        ],
+        classical_ground_state=np.array([[0, 0, S_A], [0, 0, -S_B]])
+    ), (J, S_A, S_B)
 
 
 def FM_Heisenberg_with_DMI_honeycomb():
