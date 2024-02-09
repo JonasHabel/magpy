@@ -195,8 +195,8 @@ def get_eigensystem_momentum_space(
 
 @RestoreMomenta(
     momentum_arrays_arg_idx=1,
-    custom_restore_func=lambda result, momenta:
-        tuple(MSQ(momenta.restore(x), momenta) for x in result)
+    custom_restore_func=lambda result, momenta, strip:
+        tuple(MSQ(momenta.restore(x, strip=strip), momenta) for x in result)
 )
 @CollapseMomenta(
     targets=(Target(arg_idx=1, first_momentum_idx=0, is_tensor=False),)

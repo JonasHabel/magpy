@@ -158,6 +158,9 @@ def RestoreMomenta(
             momentum_arrays = custom_momentum_arrays_func(*args) \
                     if custom_momentum_arrays_func is not None \
                     else args[momentum_arrays_arg_idx]
+            
+            strip = kwargs.get("strip", False)
+            if strip: del kwargs["strip"]
 
             result = func(*args, **kwargs)
 
@@ -167,12 +170,12 @@ def RestoreMomenta(
                 return result
 
             if custom_restore_func is not None:
-                return custom_restore_func(result, momentum_arrays)
+                return custom_restore_func(result, momentum_arrays, strip)
 
             if output_is_tensor:
                 result = momentum_arrays.restore_tensor(result, output_first_momentum_idx, output_restore_deep)
             else:
-                result = momentum_arrays.restore(result, output_first_momentum_idx)
+                result = momentum_arrays.restore(result, output_first_momentum_idx, strip)
             
             return MSQ(result, momentum_arrays)
             
