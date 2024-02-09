@@ -25,7 +25,7 @@ def compute_one_magnon_self_energy(
         np.array([1-ph_idxs[1][0]])
 
     num_freqs = len(frequencies)
-    num_bands = linear_commutator_terms.shape[-1] // 2
+    num_bands = linear_commutator_terms.shape[-1]
     cubic_vert = cubic_verts[to_binary(ph_idxs_vert)]
     linear_comm_term = linear_commutator_terms[to_binary(ph_idxs_comm_term)]
     pos_energies_Gamma = energies_Gamma[::2]
