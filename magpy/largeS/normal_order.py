@@ -115,7 +115,7 @@ def normal_order_and_symmetrize_magnon_Hamiltonians(
 
 
 def compute_commutator_term_with_permutations(
-        model: Model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, 
+        model: Model, ks, eigvs, ks_BZ, eigvs_BZ, 
         interaction_Hamiltonian_real_space=None):
     order = len(eigvs)
     ANNIHILATOR = 0
@@ -139,10 +139,14 @@ def compute_commutator_term_with_permutations(
     commutator_term_shape = (np.math.factorial(order), *((H_dim,) * order))
     commutator_term = np.zeros(commutator_term_shape, dtype=np.complex128)
     
-    for k_BZ, eigv_BZ, eigv_minus_BZ in zip(ks_BZ, eigvs_BZ, eigvs_minus_BZ):
-        ks_conserved = np.array([-np.sum(ks, axis=0), *ks, -k_BZ, k_BZ]) \
-            if order >= 1 else np.array([-k_BZ, k_BZ])
+    for k_BZ, eigv_BZ in zip(ks_BZ, eigvs_BZ):
+        sigma_x_ph = np.kron(np.eye(H_dim // 2), np.array([[0, 1], [1, 0]]))
+        eigv_minus_BZ = sigma_x_ph @ eigv_BZ.conj() @ sigma_x_ph
+
+        ks_conserved = np.array([-np.sum(ks, axis=0), *ks, k_BZ, -k_BZ]) \
+            if order >= 1 else np.array([k_BZ, -k_BZ])
         eigvs_conserved = [*eigvs, eigv_minus_BZ, eigv_BZ]
+
         for nperm, (permutation, inv_permutation) in enumerate(permutations_and_inv_permutations):
             ks_permuted = permute(ks_conserved, permutation)
             eigvs_permuted = permute(eigvs_conserved, permutation, as_np_array=False)
@@ -185,11 +189,10 @@ def compute_commutator_term_with_permutations(
         Target(arg_idx=2, first_momentum_idx=0, is_tensor=False),
         Target(arg_idx=3, first_momentum_idx=0, is_tensor=True),
         Target(arg_idx=4, first_momentum_idx=0, is_tensor=True),
-        Target(arg_idx=5, first_momentum_idx=0, is_tensor=True),
     )
 )
 def compute_commutator_terms_with_permutations(
-        model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, 
+        model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, 
         interaction_Hamiltonian_real_space=None):
     assert len(ks_BZ.shape) == 2 # 1st index: pos in BZ; 2nd index: momentum component (kx/ky/kz/...)
     assert len(eigvs[0]) == np.prod([len(eigv) for eigv in eigvs[1:]])
@@ -213,7 +216,7 @@ def compute_commutator_terms_with_permutations(
         return compute_commutator_term_with_permutations(
             model,
             ks, get_quantities_at_multiidx(eigvs, eigv_multiidx),
-            ks_BZ, eigvs_BZ, eigvs_minus_BZ,
+            ks_BZ, eigvs_BZ,
             magnon_Hs_real_space)
     
     for k_multiidx, commutator_term in flat_iterator(
