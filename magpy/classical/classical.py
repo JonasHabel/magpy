@@ -1,7 +1,7 @@
 import numpy as np
-from .models import Model
-from .interactions import Interaction
-from . import util
+from magpy.models import Model
+from magpy.interactions import Interaction
+from magpy import util
 
 
 def compute_total_energy(model: Model, spin_config):

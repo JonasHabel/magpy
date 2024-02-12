@@ -1,5 +1,6 @@
 import numpy as np
-from magpy import classical, lattice, interactions, models
+from magpy import lattice, interactions, models
+from magpy.classical import classical
 
 
 def test_FM_Heisenberg_square_lattice_total_energy():

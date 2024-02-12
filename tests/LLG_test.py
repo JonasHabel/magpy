@@ -1,5 +1,6 @@
 import numpy as np
-from magpy import models, lattice, interactions, LLG
+from magpy import models, lattice, interactions
+from magpy.classical import LLG
 
 
 def test_quantum_dot():

@@ -8,5 +8,5 @@ setup(name='magpy',
       author='Jonas Habel',
       author_email='',
       license='',
-      packages=['magpy', 'magpy.plot', 'magpy.file_io', 'magpy.largeS', 'magpy.self_energies'],
+      packages=['magpy', 'magpy.plot', 'magpy.file_io', 'magpy.largeS', 'magpy.self_energies', 'magpy.classical'],
       zip_safe=False)

@@ -1,6 +1,6 @@
 import numpy as np
-from .models import *
-from .lattice import BravaisLattice
+from magpy.models import *
+from magpy.lattice import BravaisLattice
 from scipy.integrate import solve_ivp
 from numba import njit
 
