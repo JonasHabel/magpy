@@ -19,9 +19,9 @@ def assert_all_nosym_eigenspace_Hamiltonians_terms_equal(magnon_Hs_eigenspace, e
         assert np.allclose(magnon_H_eigenspace_nosym, expected_magnon_H_eigenspace_nosym)
 
 
-def assert_all_commutator_terms_equal(model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ, expected_commutator_terms):
+def assert_all_commutator_terms_equal(model, ks, eigvs, ks_BZ, eigvs_BZ, expected_commutator_terms):
     for order, expected_commutator_term in enumerate(expected_commutator_terms):
-        commutator_term = normal_order.compute_commutator_term_with_permutations(model, ks[:max(order-1, 0)], eigvs[order], ks_BZ, eigvs_BZ, eigvs_minus_BZ)
+        commutator_term = normal_order.compute_commutator_term_with_permutations(model, ks[:max(order-1, 0)], eigvs[order], ks_BZ, eigvs_BZ)
         assert np.allclose(commutator_term, expected_commutator_term)
 
 
@@ -81,7 +81,6 @@ def test_normal_order_FM_Heisenberg_chain():
     # COMMUTATOR TERMS
     ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
-    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(-ks_BZ), strip=True)
 
     np.random.seed(1)
     ks = np.random.rand(3, 1)
@@ -226,7 +225,7 @@ def test_normal_order_FM_Heisenberg_chain():
     assert_all_commutator_terms_equal(
         model,
         ks, [eigvs_0, eigvs_1, eigvs_2, ],
-        ks_BZ, eigvs_BZ.raw_quantity, eigvs_minus_BZ.raw_quantity,
+        ks_BZ, eigvs_BZ.raw_quantity,
         [
             expected_commutator_terms_0,
             expected_commutator_terms_1,
@@ -309,17 +308,33 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
 
 
 
-def test_commutator_terms():
+def test_commutator_terms_AFM_Heisenberg_chain_with_magnetic_field():
     model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain(B=np.array([0, 0.1, 0]))
     ks = Momenta()     # order 3
     _, eigvs = LSWT.get_eigensystems_momentum_space(model, Momenta(np.zeros((1, model.lattice.dim))))
     ks_BZ = Momenta.of_BZ(model.lattice, (10,))
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, ks_BZ, strip=True)
-    minus_ks_BZ = Momenta.of_BZ(model.lattice, (10,), trans=lambda x: -x)
-    _, eigvs_minus_BZ = LSWT.get_eigensystems_momentum_space(model, minus_ks_BZ, strip=True)
 
     comm_terms = normal_order.compute_commutator_terms_with_permutations(
-        model, ks, eigvs, ks_BZ, eigvs_BZ, eigvs_minus_BZ)
+        model, ks, eigvs, ks_BZ, eigvs_BZ)
+    assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
+
+    comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
+    assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands
+    assert np.allclose(comm_terms_nosym.raw_quantity[0], comm_terms_nosym.raw_quantity[1].conj())
+
+
+
+def test_commutator_terms_KH_model_2d():
+    model, (S, J, K, Gamma, Gamma_prime, J_3, B) = test_models.KH_model_2d()
+
+    ks = Momenta()     # order 3
+    eigws_Gamma, eigvs_Gamma = LSWT.get_eigensystems_momentum_space(model, Momenta(np.zeros((1, model.lattice.dim))))
+    ks_BZ = Momenta.of_BZ(model.lattice, (2, 1,))
+    eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, ks_BZ, strip=True)
+
+    comm_terms = normal_order.compute_commutator_terms_with_permutations(
+        model, ks, eigvs_Gamma, ks_BZ, eigvs_BZ)
     assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
