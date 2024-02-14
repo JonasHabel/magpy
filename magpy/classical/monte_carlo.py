@@ -14,17 +14,19 @@ def run_monte_carlo(model: Model, num_steps, init_spin_config, temperature):
     num_sublattices = model.lattice.num_sites_unit_cell
     num_spins_total = num_unit_cells * num_sublattices
 
-    assert init_spin_config[-2] == num_sublattices
-    assert init_spin_config[-1] == 3    # spin vectors should be 3-dimensional
+    assert init_spin_config.shape[-2] == num_sublattices
+    assert init_spin_config.shape[-1] == 3    # spin vectors should be 3-dimensional
 
     interactions_by_sublattice = \
         group_interactions_by_sublattice(model.interactions, num_sublattices)
     init_spin_config_flat = init_spin_config.reshape((num_spins_total, 3))
 
-    return run_monte_carlo_jit(
+    sampled_spin_configs_flat = run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
         init_spin_config_flat, temperature
     )
+
+    return sampled_spin_configs_flat.reshape((num_steps+1, *lattice_sizes, num_sublattices, 3))
 
 
 
@@ -148,8 +150,8 @@ def compute_contracted_interactions_for_spin(
     contracted_interactions_for_spin = np.zeros((num_interactions_for_spin, 3))
     
     for ninter, inter in enumerate(interactions_for_spin):
-        participating_spins_absolute_bravais_coords = np.array([
-            inter_site_relative_bravais_coords + spin_bravais_coords \
+        participating_spins_absolute_bravais_coords = np.array([    # enforce pbc
+            (inter_site_relative_bravais_coords + spin_bravais_coords) % np.array(lattice_sizes) \
             for inter_site_relative_bravais_coords in inter[0]
         ], dtype=np.int64)
         participating_spins_subl_idxs = inter[1]
