@@ -20,7 +20,7 @@ def __convert_to_flat_index(unit_cell_bravais_coord,
         __shift_bravais_coord_pbc(unit_cell_bravais_coord,
                                   inter_site_bravais_coord, sizes)
 
-    convert_to_flat_index(
+    return convert_to_flat_index(
         inter_site_absolute_bravais_coord, inter_site_subl_idx, 
         sizes, num_sites_unit_cell)
 
