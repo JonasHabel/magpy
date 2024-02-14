@@ -28,7 +28,7 @@ def run_monte_carlo(model: Model, num_steps, init_spin_config, temperature):
 
 
 def group_interactions_by_sublattice(interactions, num_sublattices):
-    interactions_by_sublattice = [[]] * num_sublattices
+    interactions_by_sublattice = [[] for _ in range(num_sublattices)]
 
     # helper function
     def get_quantity_for_all_sites_except(site_idx, get_quantity, inter):
@@ -44,14 +44,14 @@ def group_interactions_by_sublattice(interactions, num_sublattices):
                 site_idx, lambda other_site: other_site.bravais_coords, inter)
             other_sites_subl_idxs = get_quantity_for_all_sites_except(
                 site_idx, lambda other_site: other_site.subl_idx, inter)
-            int_tensor_transposed = inter.int_tensor.transpose([
+            int_tensor_transposed = inter.interaction_tensor.transpose([
                 site_idx, 
-                *range(site_idx-1), 
+                *range(site_idx), 
                 *range(site_idx+1, len(inter.sites))
             ])
             
             interactions_by_sublattice[site.subl_idx].append([
-                other_sites_bravais_coords,
+                other_sites_bravais_coords - site.bravais_coords,
                 other_sites_subl_idxs,
                 int_tensor_transposed,
             ])
@@ -98,9 +98,9 @@ def Metropolis_update(
         rand_bravais_coords, rand_subl_idx, 
         lattice_sizes, num_sublattices
     )
-    num_spins_total = np.prod(lattice_sizes) * num_sublattices
+    rand_spin = prev_spin_config_flat[rand_spin_idx_flat]
 
-    wiggled_spin = sample_sphere_uniform()
+    wiggled_spin = sample_sphere_uniform(radius=np.linalg.norm(rand_spin))
 
     # compute energy gain/loss caused by the wiggling
     contracted_interactions_for_spin = compute_contracted_interactions_for_spin(
@@ -120,7 +120,7 @@ def Metropolis_update(
 
     # decide whether to accept updated configuration with the wiggled spin
     next_spin_config_flat = prev_spin_config_flat.copy() # avoid side effects
-    accept_probability = np.min(1.0, np.exp(-energy_diff / temperature))
+    accept_probability = min(1.0, np.exp(-energy_diff / temperature))
     if np.random.rand() < accept_probability:
         next_spin_config_flat[rand_spin_idx_flat] = wiggled_spin
 
@@ -129,12 +129,12 @@ def Metropolis_update(
 
 
 #@njit
-def sample_sphere_uniform():
+def sample_sphere_uniform(radius):
     cos_theta = 2*np.random.rand() - 1
     sin_theta = np.sqrt(1 - cos_theta**2)   # >= 0 since theta \in [0, pi]
     phi = 2*np.pi*np.random.rand()
 
-    return np.array([sin_theta*np.cos(phi), sin_theta*np.sin(phi), cos_theta])
+    return radius * np.array([sin_theta*np.cos(phi), sin_theta*np.sin(phi), cos_theta])
 
 
 #@njit
@@ -150,7 +150,7 @@ def compute_contracted_interactions_for_spin(
         participating_spins_absolute_bravais_coords = np.array([
             inter_site_relative_bravais_coords + spin_bravais_coords \
             for inter_site_relative_bravais_coords in inter[0]
-        ])
+        ], dtype=np.int64)
         participating_spins_subl_idxs = inter[1]
         participating_spins = np.array([
             spin_config_flat[
