@@ -18,7 +18,7 @@ def FM_Heisenberg_chain():
     ), (J, S)
 
 
-def AFM_Heisenberg_chain(B = np.zeros(3)):
+def AFM_Heisenberg_chain(B=None):
     J = 1.0
     S_A = 3/2
     S_B = 1
@@ -28,7 +28,7 @@ def AFM_Heisenberg_chain(B = np.zeros(3)):
         lattice,
         interactions=[
             NthNearestNeighborHeisenbergInteraction(lattice, n=1, J=J),
-            UniformMagneticField(lattice, B),
+            *((UniformMagneticField(lattice, B),) if B is not None else ()),
         ],
         classical_ground_state=np.array([[0, 0, S_A], [0, 0, -S_B]])
     ), (J, S_A, S_B)
