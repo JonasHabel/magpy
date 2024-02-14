@@ -1,4 +1,5 @@
 import numpy as np
+from numba import njit
 from magpy.models import Model
 from .util import convert_to_flat_index, tensor_contract
 
@@ -128,7 +129,7 @@ def Metropolis_update(
     
 
 
-#@njit
+@njit
 def sample_sphere_uniform(radius):
     cos_theta = 2*np.random.rand() - 1
     sin_theta = np.sqrt(1 - cos_theta**2)   # >= 0 since theta \in [0, pi]
@@ -171,12 +172,12 @@ def compute_contracted_interactions_for_spin(
     return contracted_interactions_for_spin
 
 
-#@njit
+@njit
 def compute_energy_for_spin(spin, contracted_interactions_for_spin):
     energy_for_spin = 0.0
     
     for int_tensor in contracted_interactions_for_spin:
-        energy_contribution_by_inter = spin.dot(int_tensor)
+        energy_contribution_by_inter = spin.astype(int_tensor.dtype).dot(int_tensor)
         energy_for_spin += energy_contribution_by_inter
 
     return energy_for_spin
