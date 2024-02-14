@@ -4,7 +4,7 @@ from numba import njit
 
 
 
-#@njit
+@njit
 def convert_to_flat_index(bravais_coords, subl_idx,
                           lattice_sizes, num_sites_unit_cell):
     flat_idx = subl_idx
