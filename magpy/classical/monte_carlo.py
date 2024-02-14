@@ -67,7 +67,7 @@ def group_interactions_by_sublattice(interactions, num_sublattices):
 def run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
         init_spin_config_flat, temperature):
-    num_spins_total = np.prod(lattice_sizes) * num_sublattices
+    num_spins_total = int(np.prod(lattice_sizes)) * num_sublattices
     spin_configs_flat = np.zeros(
         (num_steps+1, num_spins_total, 3), 
         dtype=np.float64
@@ -97,7 +97,7 @@ def Metropolis_update(
         .astype(np.int64)
     rand_subl_idx = np.floor(num_sublattices * np.random.rand()) \
         .astype(np.int64)
-    rand_spin_idx_flat = convert_to_flat_index(
+    rand_spin_idx_flat = __convert_to_flat_index(
         rand_bravais_coords, rand_subl_idx, 
         lattice_sizes, num_sublattices
     )
@@ -157,7 +157,7 @@ def compute_contracted_interactions_for_spin(
         participating_spins_subl_idxs = inter[1]
         participating_spins = np.array([
             spin_config_flat[
-                convert_to_flat_index(
+                __convert_to_flat_index(
                     bravais_coords, subl_idx, lattice_sizes, num_sublattices)
             ] \
             for bravais_coords, subl_idx in zip(
@@ -167,8 +167,16 @@ def compute_contracted_interactions_for_spin(
         ])
         int_tensor = inter[2]
 
-        contracted_interactions_for_spin[ninter] += tensor_contract(
-            int_tensor, participating_spins
+        # contracted_interactions_for_spin[ninter] += tensor_contract(
+        #     int_tensor, participating_spins
+        # )
+        einsum_str = "".join([chr(n + 97) for n in range(len(int_tensor.shape))])
+        if len(participating_spins) > 0:
+            einsum_str += ","
+        einsum_str += ",".join([chr(n + 97) for n in range(len(int_tensor.shape) - len(participating_spins), len(int_tensor.shape))])
+        contracted_interactions_for_spin[ninter] += np.einsum(
+            einsum_str,
+            int_tensor, *participating_spins
         )
 
     return contracted_interactions_for_spin
@@ -188,3 +196,11 @@ def compute_energy_for_spin(spin, contracted_interactions_for_spin):
 
 
 
+def __convert_to_flat_index(
+        bravais_coords, subl_idx, lattice_sizes, num_sublattices):
+    if lattice_sizes == ():
+        return subl_idx
+    else:
+        return convert_to_flat_index(
+            bravais_coords, subl_idx, 
+            lattice_sizes, num_sublattices)
