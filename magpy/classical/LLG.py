@@ -3,6 +3,7 @@ from magpy.models import *
 from magpy.lattice import BravaisLattice
 from scipy.integrate import solve_ivp
 from numba import njit
+from .util import convert_to_flat_index
 
 
 @njit
@@ -19,12 +20,9 @@ def __convert_to_flat_index(unit_cell_bravais_coord,
         __shift_bravais_coord_pbc(unit_cell_bravais_coord,
                                   inter_site_bravais_coord, sizes)
 
-    flat_idx = inter_site_subl_idx
-    factor = num_sites_unit_cell
-    for i in range(len(inter_site_absolute_bravais_coord)-1, -1, -1):
-        flat_idx += factor * inter_site_absolute_bravais_coord[i]
-        factor *= sizes[i]
-    return flat_idx
+    convert_to_flat_index(
+        inter_site_absolute_bravais_coord, inter_site_subl_idx, 
+        sizes, num_sites_unit_cell)
 
 
 @njit
