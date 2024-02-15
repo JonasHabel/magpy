@@ -5,10 +5,25 @@ from .util import convert_to_flat_index, tensor_contract
 
 
 
+
+class sphere_samplers(object):
+    @njit
+    def uniform(old_spin=None):
+        cos_theta = 2*np.random.rand() - 1
+        sin_theta = np.sqrt(1 - cos_theta**2)   # >= 0 since theta \in [0, pi]
+        phi = 2*np.pi*np.random.rand()#
+
+        return np.array([
+            sin_theta*np.cos(phi), sin_theta*np.sin(phi), cos_theta
+        ])
+
+
 """
 init_spin_config: numpy array of shape (Nx, Ny, ..., #sublattices, 3)
 """
-def run_monte_carlo(model: Model, num_steps, init_spin_config, temperature):
+def run_monte_carlo(
+        model: Model, num_steps, init_spin_config, temperature, 
+        sphere_sampling_func=sphere_samplers.uniform):
     lattice_sizes = init_spin_config.shape[:-2]
     num_unit_cells = int(np.prod(lattice_sizes))
     num_sublattices = model.lattice.num_sites_unit_cell
@@ -21,12 +36,40 @@ def run_monte_carlo(model: Model, num_steps, init_spin_config, temperature):
         group_interactions_by_sublattice(model.interactions, num_sublattices)
     init_spin_config_flat = init_spin_config.reshape((num_spins_total, 3))
 
-    sampled_spin_configs_flat = run_monte_carlo_jit(
+    update_infos = run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
-        init_spin_config_flat, temperature
+        init_spin_config_flat, temperature, sphere_sampling_func
     )
 
-    return sampled_spin_configs_flat.reshape((num_steps+1, *lattice_sizes, num_sublattices, 3))
+    return update_infos
+
+
+
+def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
+    if num_steps is None:
+        num_steps = len(update_infos[0])    # maximum number of possible steps
+
+    current_spin_config = init_spin_config.copy()   # avoid side effects
+    if intermediate_steps:
+        intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
+        intermediate_spin_configs[0] = init_spin_config
+
+    for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
+        if not accept:
+            if intermediate_steps:
+                intermediate_spin_configs[n+1] = current_spin_config
+            continue
+        if n >= num_steps:
+            break
+
+        current_spin_config[(*bravais_coords, subl_idx)] = spin
+        if intermediate_steps:
+            intermediate_spin_configs[n+1] = current_spin_config
+
+    if intermediate_steps:
+        return intermediate_spin_configs
+    else:
+        return current_spin_config
 
 
 
@@ -47,6 +90,8 @@ def group_interactions_by_sublattice(interactions, num_sublattices):
                 site_idx, lambda other_site: other_site.bravais_coords, inter)
             other_sites_subl_idxs = get_quantity_for_all_sites_except(
                 site_idx, lambda other_site: other_site.subl_idx, inter)
+            # the transposition makes it easier to compute the 
+            # "contracted interactions" in the Metropolis update
             int_tensor_transposed = inter.interaction_tensor.transpose([
                 site_idx, 
                 *range(site_idx), 
@@ -66,21 +111,38 @@ def group_interactions_by_sublattice(interactions, num_sublattices):
 #@njit
 def run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
-        init_spin_config_flat, temperature):
-    num_spins_total = int(np.prod(lattice_sizes)) * num_sublattices
-    spin_configs_flat = np.zeros(
-        (num_steps+1, num_spins_total, 3), 
-        dtype=np.float64
+        init_spin_config_flat, temperature, sphere_sampling_func):
+    lattice_dim = len(lattice_sizes)
+    update_infos = (
+        np.zeros((num_steps,), dtype=np.bool),              # has the new spin been accepted?
+        np.zeros((num_steps, lattice_dim), dtype=np.int64), # Bravais coords
+        np.zeros((num_steps,), dtype=np.int64),             # sublattice idxs
+        np.zeros((num_steps, 3), dtype=np.float64),         # the new spin          
     )
-    spin_configs_flat[0] = init_spin_config_flat
+    current_spin_config_flat = init_spin_config_flat.copy() # avoid side effects
+    # Precompute the norms here already. Avoids recomputing them over and over
+    # again in every Metropolis update step
+    spin_norms_flat = np.linalg.norm(init_spin_config_flat, axis=-1)
 
-    for n in range(1, num_steps+1):
-        spin_configs_flat[n] = Metropolis_update(
-            spin_configs_flat[n-1], interactions_by_sublattice,
-            lattice_sizes, num_sublattices, temperature,
-        )
+    for n in range(num_steps):
+        accepted, new_spin_bravais_coords, new_spin_subl_idx, new_spin_idx_flat, new_spin = \
+            Metropolis_update(
+                current_spin_config_flat, interactions_by_sublattice, 
+                spin_norms_flat, lattice_sizes, num_sublattices, temperature, 
+                sphere_sampling_func,
+            )
+        update_infos[0][n] = accepted
+        update_infos[1][n] = new_spin_bravais_coords
+        update_infos[2][n] = new_spin_subl_idx
+        update_infos[3][n] = new_spin
 
-    return spin_configs_flat
+        # update current configuration accordingly
+        if accepted:
+            current_spin_config_flat[new_spin_idx_flat] = new_spin
+
+    return update_infos
+
+
 
 
 """
@@ -88,8 +150,9 @@ perform one local Metropolis update step
 """
 #@njit
 def Metropolis_update(
-        prev_spin_config_flat, interactions_by_sublattice, 
-        lattice_sizes, num_sublattices, temperature):
+        current_spin_config_flat, interactions_by_sublattice, spin_norms_flat,
+        lattice_sizes, num_sublattices, temperature,
+        sphere_sampling_func):
     
     # wiggle a random spin
     lattice_dim = len(lattice_sizes)
@@ -101,18 +164,19 @@ def Metropolis_update(
         rand_bravais_coords, rand_subl_idx, 
         lattice_sizes, num_sublattices
     )
-    rand_spin = prev_spin_config_flat[rand_spin_idx_flat]
+    rand_spin = current_spin_config_flat[rand_spin_idx_flat]
+    rand_spin_length = spin_norms_flat[rand_spin_idx_flat]
 
-    wiggled_spin = sample_sphere_uniform(radius=np.linalg.norm(rand_spin))
+    wiggled_spin = rand_spin_length * sphere_sampling_func(rand_spin)
 
     # compute energy gain/loss caused by the wiggling
     contracted_interactions_for_spin = compute_contracted_interactions_for_spin(
         rand_bravais_coords, rand_subl_idx, 
-        interactions_by_sublattice, prev_spin_config_flat, 
+        interactions_by_sublattice, current_spin_config_flat, 
         lattice_sizes, num_sublattices
     )
     energy_last_config = compute_energy_for_spin(
-        prev_spin_config_flat[rand_spin_idx_flat], 
+        current_spin_config_flat[rand_spin_idx_flat], 
         contracted_interactions_for_spin
     )
     energy_updated_config = compute_energy_for_spin(
@@ -122,22 +186,12 @@ def Metropolis_update(
     energy_diff = energy_updated_config - energy_last_config
 
     # decide whether to accept updated configuration with the wiggled spin
-    next_spin_config_flat = prev_spin_config_flat.copy() # avoid side effects
     accept_probability = min(1.0, np.exp(-energy_diff / temperature))
-    if np.random.rand() < accept_probability:
-        next_spin_config_flat[rand_spin_idx_flat] = wiggled_spin
+    accept = np.random.rand() < accept_probability
 
-    return next_spin_config_flat
+    return accept, rand_bravais_coords, rand_subl_idx, rand_spin_idx_flat, wiggled_spin
     
 
-
-@njit
-def sample_sphere_uniform(radius):
-    cos_theta = 2*np.random.rand() - 1
-    sin_theta = np.sqrt(1 - cos_theta**2)   # >= 0 since theta \in [0, pi]
-    phi = 2*np.pi*np.random.rand()
-
-    return radius * np.array([sin_theta*np.cos(phi), sin_theta*np.sin(phi), cos_theta])
 
 
 #@njit
