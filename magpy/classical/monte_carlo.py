@@ -1,7 +1,8 @@
 import numpy as np
 from numba import njit
+from numba.typed import List
 from magpy.models import Model
-from .util import convert_to_flat_index, tensor_contract
+from .util import convert_to_flat_index, tensor_contract_jit
 
 
 
@@ -24,7 +25,9 @@ init_spin_config: numpy array of shape (Nx, Ny, ..., #sublattices, 3)
 def run_monte_carlo(
         model: Model, num_steps, init_spin_config, temperature, 
         sphere_sampling_func=sphere_samplers.uniform):
-    lattice_sizes = init_spin_config.shape[:-2]
+    lattice_sizes = np.array(init_spin_config.shape[:-2])
+    if model.lattice.dim == 0: # workaround for numba, which cannot deal well with empty tuples
+        lattice_sizes = np.array([1])
     num_unit_cells = int(np.prod(lattice_sizes))
     num_sublattices = model.lattice.num_sites_unit_cell
     num_spins_total = num_unit_cells * num_sublattices
@@ -33,13 +36,16 @@ def run_monte_carlo(
     assert init_spin_config.shape[-1] == 3    # spin vectors should be 3-dimensional
 
     interactions_by_sublattice = \
-        group_interactions_by_sublattice(model.interactions, num_sublattices)
+        group_interactions_by_sublattice(model.interactions, model.lattice.dim, num_sublattices)
     init_spin_config_flat = init_spin_config.reshape((num_spins_total, 3))
 
     update_infos = run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
         init_spin_config_flat, temperature, sphere_sampling_func
     )
+
+    if model.lattice.dim == 0:
+        update_infos[1] = np.zeros((0, model.lattice.embedding_dim))    # reset Bravais coords after workaround for numba
 
     return update_infos
 
@@ -55,12 +61,12 @@ def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, inte
         intermediate_spin_configs[0] = init_spin_config
 
     for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
+        if n >= num_steps:
+            break
         if not accept:
             if intermediate_steps:
                 intermediate_spin_configs[n+1] = current_spin_config
             continue
-        if n >= num_steps:
-            break
 
         current_spin_config[(*bravais_coords, subl_idx)] = spin
         if intermediate_steps:
@@ -73,8 +79,10 @@ def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, inte
 
 
 
-def group_interactions_by_sublattice(interactions, num_sublattices):
-    interactions_by_sublattice = [[] for _ in range(num_sublattices)]
+MAGIC_NUMBER = 1.23456789e-30
+
+def group_interactions_by_sublattice(interactions, lattice_dim, num_sublattices):
+    interactions_by_sublattice = [List([]) for _ in range(num_sublattices)]
 
     # helper function
     def get_quantity_for_all_sites_except(site_idx, get_quantity, inter):
@@ -85,9 +93,11 @@ def group_interactions_by_sublattice(interactions, num_sublattices):
         ])
 
     for inter in interactions:
+        num_sites = len(inter.sites)
+        num_other_sites = num_sites - 1
         for site_idx, site in enumerate(inter.sites):
             other_sites_bravais_coords = get_quantity_for_all_sites_except(
-                site_idx, lambda other_site: other_site.bravais_coords, inter)
+                site_idx, lambda other_site: other_site.bravais_coords - site.bravais_coords, inter)
             other_sites_subl_idxs = get_quantity_for_all_sites_except(
                 site_idx, lambda other_site: other_site.subl_idx, inter)
             # the transposition makes it easier to compute the 
@@ -95,26 +105,39 @@ def group_interactions_by_sublattice(interactions, num_sublattices):
             int_tensor_transposed = inter.interaction_tensor.transpose([
                 site_idx, 
                 *range(site_idx), 
-                *range(site_idx+1, len(inter.sites))
+                *range(site_idx+1, num_sites)
             ])
             
-            interactions_by_sublattice[site.subl_idx].append([
-                other_sites_bravais_coords - site.bravais_coords,
-                other_sites_subl_idxs,
-                int_tensor_transposed,
-            ])
+            # need to compress the information into a 1d float numpy array (in order to have a homogeneous list).
+            # This array first contains all bravais coordinates of the participating spins chained together;
+            # next, all sublattice indices of the participating spins chained together;
+            # a separator number, the MAGIC_NUMBER (very hacky!);
+            # and finally, the interaction tensor as a flattened 1d array.
+            # This is super ugly but the only way I found that numba can deal with it
+            interaction_compressed = np.zeros((
+                lattice_dim*num_other_sites + num_other_sites + 1 + 3**num_sites
+            ), dtype=np.float)
+            interaction_compressed[:lattice_dim*num_other_sites] = \
+                other_sites_bravais_coords.reshape((lattice_dim*num_other_sites,))
+            interaction_compressed[lattice_dim*num_other_sites:(lattice_dim+1)*num_other_sites] = \
+                other_sites_subl_idxs
+              # separator between coordinates and interaction tensor; hacky hack!!
+            interaction_compressed[(lattice_dim+1)*num_other_sites] = MAGIC_NUMBER
+            interaction_compressed[(lattice_dim+1)*num_other_sites+1:] = \
+                int_tensor_transposed.reshape((3**num_sites,))
+            interactions_by_sublattice[site.subl_idx].append(interaction_compressed)
 
     return interactions_by_sublattice
 
 
 
-#@njit
+@njit
 def run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
         init_spin_config_flat, temperature, sphere_sampling_func):
     lattice_dim = len(lattice_sizes)
     update_infos = (
-        np.zeros((num_steps,), dtype=np.bool),              # has the new spin been accepted?
+        np.zeros((num_steps,), dtype=np.bool_),             # has the new spin been accepted?
         np.zeros((num_steps, lattice_dim), dtype=np.int64), # Bravais coords
         np.zeros((num_steps,), dtype=np.int64),             # sublattice idxs
         np.zeros((num_steps, 3), dtype=np.float64),         # the new spin          
@@ -122,7 +145,10 @@ def run_monte_carlo_jit(
     current_spin_config_flat = init_spin_config_flat.copy() # avoid side effects
     # Precompute the norms here already. Avoids recomputing them over and over
     # again in every Metropolis update step
-    spin_norms_flat = np.linalg.norm(init_spin_config_flat, axis=-1)
+    spin_norms_flat = np.zeros((len(init_spin_config_flat)))
+    for n in range(len(spin_norms_flat)):
+        spin_norms_flat[n] = np.linalg.norm(init_spin_config_flat[n])
+    # spin_norms_flat = np.linalg.norm(init_spin_config_flat, axis=-1)
 
     for n in range(num_steps):
         accepted, new_spin_bravais_coords, new_spin_subl_idx, new_spin_idx_flat, new_spin = \
@@ -148,7 +174,7 @@ def run_monte_carlo_jit(
 """
 perform one local Metropolis update step
 """
-#@njit
+@njit
 def Metropolis_update(
         current_spin_config_flat, interactions_by_sublattice, spin_norms_flat,
         lattice_sizes, num_sublattices, temperature,
@@ -158,9 +184,8 @@ def Metropolis_update(
     lattice_dim = len(lattice_sizes)
     rand_bravais_coords = np.floor(lattice_sizes * np.random.rand(lattice_dim))\
         .astype(np.int64)
-    rand_subl_idx = np.floor(num_sublattices * np.random.rand()) \
-        .astype(np.int64)
-    rand_spin_idx_flat = __convert_to_flat_index(
+    rand_subl_idx = int(np.floor(num_sublattices * np.random.rand()))
+    rand_spin_idx_flat = convert_to_flat_index(
         rand_bravais_coords, rand_subl_idx, 
         lattice_sizes, num_sublattices
     )
@@ -171,8 +196,8 @@ def Metropolis_update(
 
     # compute energy gain/loss caused by the wiggling
     contracted_interactions_for_spin = compute_contracted_interactions_for_spin(
-        rand_bravais_coords, rand_subl_idx, 
-        interactions_by_sublattice, current_spin_config_flat, 
+        rand_bravais_coords, 
+        interactions_by_sublattice[rand_subl_idx], current_spin_config_flat, 
         lattice_sizes, num_sublattices
     )
     energy_last_config = compute_energy_for_spin(
@@ -194,44 +219,48 @@ def Metropolis_update(
 
 
 
-#@njit
+@njit
 def compute_contracted_interactions_for_spin(
-        spin_bravais_coords, spin_subl_idx,
-        interactions_by_sublattice, spin_config_flat, 
+        spin_bravais_coords,
+        interactions_for_spin, spin_config_flat, 
         lattice_sizes, num_sublattices):
-    interactions_for_spin = interactions_by_sublattice[spin_subl_idx]
+    #interactions_for_spin = interactions_by_sublattice[spin_subl_idx]
+    lattice_dim = len(spin_bravais_coords)
     num_interactions_for_spin = len(interactions_for_spin)
     contracted_interactions_for_spin = np.zeros((num_interactions_for_spin, 3))
     
     for ninter, inter in enumerate(interactions_for_spin):
-        participating_spins_absolute_bravais_coords = np.array([    # enforce pbc
-            (inter_site_relative_bravais_coords + spin_bravais_coords) % np.array(lattice_sizes) \
-            for inter_site_relative_bravais_coords in inter[0]
-        ], dtype=np.int64)
-        participating_spins_subl_idxs = inter[1]
-        participating_spins = np.array([
-            spin_config_flat[
-                __convert_to_flat_index(
-                    bravais_coords, subl_idx, lattice_sizes, num_sublattices)
-            ] \
-            for bravais_coords, subl_idx in zip(
-                participating_spins_absolute_bravais_coords,
-                participating_spins_subl_idxs
-            )
-        ])
-        int_tensor = inter[2]
+        # unpack flattened data
+        num_participating_spins = np.where(inter == MAGIC_NUMBER)[0][0] // (lattice_dim + 1)
+        participating_spins_relative_bravais_coords = inter[:num_participating_spins*lattice_dim].reshape((num_participating_spins, lattice_dim))
+        participating_spins_subl_idxs = inter[num_participating_spins*lattice_dim:num_participating_spins*(lattice_dim+1)]
+        int_tensor_flat = inter[num_participating_spins*(lattice_dim+1)+1:]
 
-        # contracted_interactions_for_spin[ninter] += tensor_contract(
-        #     int_tensor, participating_spins
-        # )
-        einsum_str = "".join([chr(n + 97) for n in range(len(int_tensor.shape))])
-        if len(participating_spins) > 0:
-            einsum_str += ","
-        einsum_str += ",".join([chr(n + 97) for n in range(len(int_tensor.shape) - len(participating_spins), len(int_tensor.shape))])
-        contracted_interactions_for_spin[ninter] += np.einsum(
-            einsum_str,
-            int_tensor, *participating_spins
+        participating_spins = np.zeros((num_participating_spins, 3))
+        for n in range(num_participating_spins):
+            # enforce pbc
+            participating_spin_absolute_bravais_coords = \
+                (participating_spins_relative_bravais_coords[n] + spin_bravais_coords) % lattice_sizes
+            participating_spin_subl_idx = int(participating_spins_subl_idxs[n])
+            
+            participating_spins[n] = spin_config_flat[
+                convert_to_flat_index(
+                    participating_spin_absolute_bravais_coords.astype(np.int64),
+                    participating_spin_subl_idx, 
+                    lattice_sizes, num_sublattices)
+            ]
+
+        contracted_interactions_for_spin[ninter] += tensor_contract_jit(
+            int_tensor_flat, participating_spins, first_arg_is_flat=True
         )
+        # einsum_str = "".join([chr(n + 97) for n in range(len(int_tensor.shape))])
+        # if len(participating_spins) > 0:
+        #     einsum_str += ","
+        # einsum_str += ",".join([chr(n + 97) for n in range(len(int_tensor.shape) - len(participating_spins), len(int_tensor.shape))])
+        # contracted_interactions_for_spin[ninter] += np.einsum(
+        #     einsum_str,
+        #     int_tensor, *participating_spins
+        # )
 
     return contracted_interactions_for_spin
 
@@ -252,9 +281,9 @@ def compute_energy_for_spin(spin, contracted_interactions_for_spin):
 
 def __convert_to_flat_index(
         bravais_coords, subl_idx, lattice_sizes, num_sublattices):
-    if lattice_sizes == ():
-        return subl_idx
-    else:
-        return convert_to_flat_index(
-            bravais_coords, subl_idx, 
-            lattice_sizes, num_sublattices)
+    # if lattice_sizes == ():
+    #     return subl_idx
+    # else:
+    return convert_to_flat_index(
+        bravais_coords, subl_idx, 
+        lattice_sizes, num_sublattices)

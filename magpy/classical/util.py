@@ -6,14 +6,16 @@ from numba import njit
 
 @njit
 def convert_to_flat_index(bravais_coords, subl_idx,
-                          lattice_sizes, num_sites_unit_cell):
-    flat_idx = subl_idx
-    factor = num_sites_unit_cell
+                          lattice_sizes, num_sublattices):
+    flat_idx = int(subl_idx)
+    factor = num_sublattices
     bravais_coords = bravais_coords
+    
     for i in range(len(bravais_coords)-1, -1, -1):
         flat_idx += factor * bravais_coords[i]
         factor *= lattice_sizes[i]
-    return flat_idx
+        
+    return int(flat_idx)
 
 
 
@@ -36,3 +38,36 @@ def tensor_contract(A, b):
     partial_contraction = partial_contraction_flat.reshape(A.shape[1:])
 
     return tensor_contract(partial_contraction, b[:-1])
+
+
+@njit
+def tensor_contract_jit(A, b, first_arg_is_flat=False):
+    A_shape = len(b[0]) * np.ones(int(len(A) ** (1/len(b[0]))), dtype=np.int64) \
+        if first_arg_is_flat else np.array(A.shape)
+    num_idxs = len(A_shape)
+    num_contracted_idxs = len(b)
+    num_uncontracted_idxs = num_idxs - num_contracted_idxs
+    contracted_shape = A_shape[num_uncontracted_idxs:]
+    uncontracted_shape = A_shape[:num_uncontracted_idxs]
+    contracted_shape_flat = int(np.prod(contracted_shape))
+    uncontracted_shape_flat = int(np.prod(uncontracted_shape))
+    partial_modulos = np.array([
+        int(np.prod(A_shape[num_uncontracted_idxs:-n-1])) \
+        for n in range(num_contracted_idxs)
+    ])
+
+    A_flat = A.reshape((uncontracted_shape_flat, contracted_shape_flat))
+    result_flat = np.zeros(uncontracted_shape_flat, dtype=A.dtype)
+
+    for i in range(uncontracted_shape_flat):
+        for flat_idx in range(contracted_shape_flat):
+            result_at_flat_idx = A_flat[i, flat_idx]
+            b_idx = flat_idx
+            for n in range(len(b)):
+                quotient = b_idx // partial_modulos[n]
+                remainder = b_idx % partial_modulos[n]
+                result_at_flat_idx *= b[n, quotient]
+                b_idx = remainder
+            result_flat[i] += result_at_flat_idx
+
+    return result_flat
