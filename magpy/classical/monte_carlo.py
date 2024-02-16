@@ -127,7 +127,7 @@ def group_interactions_by_sublattice(interactions, lattice_dim, num_sublattices)
                 int_tensor_transposed.reshape((3**num_sites,))
             interactions_by_sublattice[site.subl_idx].append(interaction_compressed)
 
-    return interactions_by_sublattice
+    return List(interactions_by_sublattice)
 
 
 
