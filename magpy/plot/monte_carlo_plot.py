@@ -3,17 +3,17 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from magpy.classical.util import convert_to_flat_index
 
-def plot_monte_carlo_animation(update_infos, init_spin_config, lattice, params={}):
+def plot_monte_carlo_animation(update_infos, step_size, init_spin_config, lattice, params={}):
     fig, ax = plt.subplots()
     _, _, anim = plot_ax_monte_carlo_animation(
-        update_infos, init_spin_config, lattice, params, fig, ax
+        update_infos, step_size, init_spin_config, lattice, params, fig, ax
     )
     plt.show()
     return anim
 
 
 def plot_ax_monte_carlo_animation(
-        update_infos, init_spin_config, lattice, params={},
+        update_infos, step_size, init_spin_config, lattice, params={},
         fig=plt.gcf(), ax=plt.gca()):
     if lattice.dim >= 3:
         raise Exception("So far, only <3-dimensional lattices are supported.")
@@ -25,21 +25,22 @@ def plot_ax_monte_carlo_animation(
         .sample_full_lattice_in_canonical_coords(lattice_sizes) \
         .reshape((num_sites_total, lattice.sublattices.shape[-1]))
     accept, bravais_coords, subl_idxs, spins = update_infos
-    num_steps = len(accept)
+    num_steps = len(accept) // step_size
     init_spin_config = init_spin_config.reshape((num_sites_total, 3))
     spin_config = init_spin_config.copy() # avoid side effects
     
     
-    def animate(step, qr):
-        step_idx = step % num_steps
-        if not accept[step_idx]:
-            return qr
-
-        flat_idx = convert_to_flat_index(
-            bravais_coords[step_idx], subl_idxs[step_idx], 
-            lattice_sizes, lattice.num_sites_unit_cell
-        )
-        spin_config[flat_idx] = spins[step_idx]
+    def animate(animation_step, qr):
+        for n in range(step_size):
+            intermediate_step_idx = animation_step * step_size + n
+            if not accept[intermediate_step_idx]:
+                continue
+            flat_idx = convert_to_flat_index(
+                bravais_coords[intermediate_step_idx], 
+                subl_idxs[intermediate_step_idx], 
+                lattice_sizes, lattice.num_sites_unit_cell
+            )
+            spin_config[flat_idx] = spins[intermediate_step_idx]
 
         qr.set_UVC(spin_config[:, np.newaxis, 0],
                    spin_config[:, np.newaxis, 1],
