@@ -1,6 +1,6 @@
 import numpy as np
-from magpy import lattice, interactions, models
 from magpy.classical import monte_carlo, util
+from magpy.plot import monte_carlo_plot
 from . import test_models
 
 
@@ -10,9 +10,9 @@ def test_monte_carlo_FM_Heisenberg_chain():
 
     lattice_sizes = np.array([10])
 
-    evolved_spin_config = np.zeros((*lattice_sizes, model.lattice.num_sites_unit_cell, 3), dtype=float)
+    spin_config = np.zeros((*lattice_sizes, model.lattice.num_sites_unit_cell, 3), dtype=float)
     #spin_config[..., 2] = np.array([S])[np.newaxis, np.newaxis, np.newaxis]
-    evolved_spin_config[:, 0, :] = S * np.array([
+    spin_config[:, 0, :] = S * np.array([
         [np.cos(theta), 0, np.sin(theta)] for theta in np.linspace(0, 2*np.pi, lattice_sizes[0], endpoint=False)
     ])
 
@@ -36,29 +36,29 @@ def test_monte_carlo_FM_Heisenberg_chain():
 
     contracted_interactions_for_spin = monte_carlo.compute_contracted_interactions_for_spin(
         np.array([4]), interactions_by_sublattice[0], 
-        evolved_spin_config.reshape((lattice_sizes[0], 3)), 
+        spin_config.reshape((lattice_sizes[0], 3)), 
         lattice_sizes, model.lattice.num_sites_unit_cell)
     assert np.allclose(contracted_interactions_for_spin, np.array([
-        J*evolved_spin_config[5, 0], J*evolved_spin_config[3, 0]
+        J*spin_config[5, 0], J*spin_config[3, 0]
     ]))
 
     energy_for_spin_1 = monte_carlo.compute_energy_for_spin(
-        evolved_spin_config[4, 0], contracted_interactions_for_spin)
+        spin_config[4, 0], contracted_interactions_for_spin)
     assert np.allclose(energy_for_spin_1, 2*J * S**2 * np.cos(2*np.pi/10))
     energy_for_spin_2 = monte_carlo.compute_energy_for_spin(
         np.array([S, 0, 0]), contracted_interactions_for_spin)
     assert np.allclose(energy_for_spin_2, J * S**2 * (np.cos(2*np.pi*3/10) + np.cos(2*np.pi*5/10)))
 
     # to make sure the function runs without runtime errors
-    spin_config_flat = evolved_spin_config.reshape((lattice_sizes[0], 3))
+    spin_config_flat = spin_config.reshape((lattice_sizes[0], 3))
     monte_carlo.Metropolis_update(
         spin_config_flat, interactions_by_sublattice, 
         np.linalg.norm(spin_config_flat, axis=-1),
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
     
-    update_infos = monte_carlo.run_monte_carlo(model, 50, evolved_spin_config, 1.0*np.abs(J))
-    evolved_spin_config = monte_carlo.reconstruct_spin_config(update_infos, evolved_spin_config, num_steps=16, intermediate_steps=True)
+    update_infos = monte_carlo.run_monte_carlo(model, 50, spin_config, 1.0*np.abs(J))
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=16, intermediate_steps=True)
 
 
 
@@ -303,6 +303,10 @@ def test_monte_carlo_honeycomb_DMI():
         np.linalg.norm(spin_config_flat, axis=-1),
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
+    
+    update_infos = monte_carlo.run_monte_carlo(model, 50, spin_config, 1.0*np.abs(J))
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=16, intermediate_steps=True)
+    #monte_carlo_plot.plot_monte_carlo_animation(update_infos, spin_config, model.lattice)
 
 
 
