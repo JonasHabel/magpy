@@ -3,18 +3,21 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from magpy.classical.util import convert_to_flat_index
 
-def plot_monte_carlo_animation(update_infos, step_size, init_spin_config, lattice, params={}):
+def plot_monte_carlo_animation(
+        update_infos, step_size, init_spin_config, lattice,
+        params={}, anim_params={}):
     fig, ax = plt.subplots()
     _, _, anim = plot_ax_monte_carlo_animation(
-        update_infos, step_size, init_spin_config, lattice, params, fig, ax
+        update_infos, step_size, init_spin_config, lattice, 
+        params, anim_params, fig, ax
     )
     plt.show()
     return anim
 
 
 def plot_ax_monte_carlo_animation(
-        update_infos, step_size, init_spin_config, lattice, params={},
-        fig=plt.gcf(), ax=plt.gca()):
+        update_infos, step_size, init_spin_config, lattice, 
+        params={}, anim_params={}, fig=plt.gcf(), ax=plt.gca()):
     if lattice.dim >= 3:
         raise Exception("So far, only <3-dimensional lattices are supported.")
     
@@ -54,6 +57,6 @@ def plot_ax_monte_carlo_animation(
                    0.5*(init_spin_config[:, np.newaxis, 2] + 1), **params)
     
     anim = FuncAnimation(fig, animate, frames=num_steps, fargs=(qr,),
-                         interval=100, blit=False)
+                         **anim_params)
     
     return fig, ax, anim
