@@ -78,6 +78,33 @@ def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, inte
         return current_spin_config
 
 
+def get_accepted_updates(update_infos, with_acceptance_ratio=False):
+    accept, bravais_coords, subl_idxs, spins = update_infos
+    if any(map(lambda x: len(x) <= 0, update_infos)):
+        return update_infos
+    
+    lattice_dim = len(bravais_coords[0])
+    accepted_update_idxs = np.where(accept == True)[0]
+    num_accepted_updates = len(accepted_update_idxs)
+    accepted_update_infos = (
+        np.zeros((num_accepted_updates, lattice_dim), dtype=np.int64), # Bravais coords
+        np.zeros((num_accepted_updates,), dtype=np.int64),             # sublattice idxs
+        np.zeros((num_accepted_updates, 3), dtype=np.float64),         # the new spin        
+    )
+
+    for quantity_idx in range(3):
+        for n, accepted_update_idx in enumerate(accepted_update_idxs):
+            accepted_update_infos[quantity_idx, n] = \
+                update_infos[n+1, accepted_update_idx]
+            
+    if with_acceptance_ratio:
+        num_total_updates = len(accept)
+        acceptance_ratio = num_accepted_updates / num_total_updates
+        return accepted_update_infos, acceptance_ratio
+    else:
+        return accepted_update_infos
+
+
 
 MAGIC_NUMBER = 1.23456789e-30
 
