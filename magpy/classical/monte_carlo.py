@@ -94,8 +94,8 @@ def get_accepted_updates(update_infos, with_acceptance_ratio=False):
 
     for quantity_idx in range(3):
         for n, accepted_update_idx in enumerate(accepted_update_idxs):
-            accepted_update_infos[quantity_idx, n] = \
-                update_infos[n+1, accepted_update_idx]
+            accepted_update_infos[quantity_idx][n] = \
+                update_infos[quantity_idx+1][accepted_update_idx]
             
     if with_acceptance_ratio:
         num_total_updates = len(accept)

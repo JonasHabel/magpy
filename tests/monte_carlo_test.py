@@ -59,7 +59,12 @@ def test_monte_carlo_FM_Heisenberg_chain():
     
     update_infos = monte_carlo.run_monte_carlo(model, 50, spin_config, 1.0*np.abs(J))
     evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=16, intermediate_steps=True)
-
+    accepted_update_infos = monte_carlo.get_accepted_updates(update_infos)
+    assert len(accepted_update_infos[0].shape) == 2
+    assert accepted_update_infos[0].shape[1] == 1
+    assert len(accepted_update_infos[1].shape) == 1
+    assert len(accepted_update_infos[2].shape) == 2
+    assert accepted_update_infos[2].shape[1] == 3
 
 
 
