@@ -39,20 +39,22 @@ def run_monte_carlo(
         group_interactions_by_sublattice(model.interactions, model.lattice.dim, num_sublattices)
     init_spin_config_flat = init_spin_config.reshape((num_spins_total, 3))
 
-    update_infos = run_monte_carlo_jit(
+    update_infos, final_spin_config_flat = run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
         init_spin_config_flat, temperature, sphere_sampling_func
     )
 
+    final_spin_config = \
+        final_spin_config_flat.reshape((*lattice_sizes, num_sublattices, 3))
     if model.lattice.dim == 0:
         update_infos[1] = np.zeros((0, model.lattice.embedding_dim))    # reset Bravais coords after workaround for numba
 
-    return update_infos
+    return update_infos, final_spin_config
 
 
 
 def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
-    if num_steps is None:
+    if num_steps is None or num_steps > len(update_infos[0]):
         num_steps = len(update_infos[0])    # maximum number of possible steps
 
     current_spin_config = init_spin_config.copy()   # avoid side effects
@@ -193,7 +195,7 @@ def run_monte_carlo_jit(
         if accepted:
             current_spin_config_flat[new_spin_idx_flat] = new_spin
 
-    return update_infos
+    return update_infos, current_spin_config_flat
 
 
 

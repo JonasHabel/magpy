@@ -57,8 +57,10 @@ def test_monte_carlo_FM_Heisenberg_chain():
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
     
-    update_infos = monte_carlo.run_monte_carlo(model, 50, spin_config, 1.0*np.abs(J))
-    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=16, intermediate_steps=True)
+    update_infos, final_spin_config = monte_carlo.run_monte_carlo(model, 10, spin_config, 1.0*np.abs(J))
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=None, intermediate_steps=True)
+    assert np.allclose(final_spin_config, evolved_spin_configs[-1])
+
     accepted_update_infos = monte_carlo.get_accepted_updates(update_infos)
     assert len(accepted_update_infos[0].shape) == 2
     assert accepted_update_infos[0].shape[1] == 1
@@ -309,7 +311,7 @@ def test_monte_carlo_honeycomb_DMI():
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
     
-    update_infos = monte_carlo.run_monte_carlo(model, 50, spin_config, 1.0*np.abs(J))
+    update_infos, final_spin_config = monte_carlo.run_monte_carlo(model, 50, spin_config, 1.0*np.abs(J))
     evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=16, intermediate_steps=True)
     #monte_carlo_plot.plot_monte_carlo_animation(update_infos, spin_config, model.lattice)
 
