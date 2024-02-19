@@ -58,7 +58,7 @@ class FileIO:
                 quantity_name, parameters))
     
     def __get_file_name_params(meta_data, param_fields,
-                               excluded_param_fields=[]):
+                               excluded_param_fields=()):
         param_fields = param_fields if param_fields is not None \
             else meta_data.keys()
         return dict(
@@ -87,7 +87,7 @@ class FileIO:
     
     
     def load_data(self, quantity_name: str, meta_data: dict,
-                  param_fields=None, excluded_param_fields=[]):
+                  param_fields=None, excluded_param_fields=()):
         parameters = FileIO.__get_file_name_params(
             meta_data, param_fields, excluded_param_fields)
         file_name = self.__compose_file_path(quantity_name, parameters)
