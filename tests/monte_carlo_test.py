@@ -18,7 +18,8 @@ def test_monte_carlo_FM_Heisenberg_chain():
 
     interactions_by_sublattice = monte_carlo.group_interactions_by_sublattice(
         model.interactions, model.lattice.dim, model.lattice.num_sites_unit_cell)
-    assert len(interactions_by_sublattice) == model.lattice.num_sites_unit_cell
+    assert util.len_flat(*interactions_by_sublattice) == model.lattice.num_sites_unit_cell
+    
     bravais_coords_0 = interactions_by_sublattice[0][0][0:1].reshape((1, 1))
     subl_idxs_0 = interactions_by_sublattice[0][0][1:2]
     int_tensor_0 = interactions_by_sublattice[0][0][3:].reshape((3, 3))
@@ -321,6 +322,7 @@ def test_monte_carlo_honeycomb_DMI():
 def test_util():
     assert util.convert_to_flat_index(np.array([6, 4]), 1, (10, 5,), 3) == 6*5*3 + 4*3 + 1
 
+
     np.random.seed(1)
     A = np.random.rand(3, 3, 3, 3)
     b = np.random.rand(2, 3)
@@ -333,4 +335,51 @@ def test_util():
     A_dot_b = util.tensor_contract_jit(A, b).reshape(A.shape[:1])
 
     assert np.allclose(A_dot_b, np.einsum("ij,j", A, *b))
+
+
+    a, b, c, d, e, f, g, h = np.random.rand(8, 2)
+    nested_list = [[[a, b], [c, d, e]], [[f], [g, h]]]
+    flattened_list_depth_2, separator_idxs_depth_2 = util.deep_flatten_to_1d_array(nested_list, depth=2)
+    assert np.all(flattened_list_depth_2 == np.array(
+        [a, b, c, d, e, f, g, h]
+    ))
+    assert np.all(separator_idxs_depth_2 == np.array([
+        [0, 0, 2], [0, 1, 5], [1, 0, 6], [1, 1, 8]
+    ]))
+    assert util.len_flat(flattened_list_depth_2, separator_idxs_depth_2) == 2
+    sublist_0, sublist_sep_idxs_0 = util.get_from_flat(flattened_list_depth_2, separator_idxs_depth_2, 0)
+    assert np.allclose(sublist_0, np.array([a, b, c, d, e]))
+    assert np.allclose(sublist_sep_idxs_0, np.array([[0, 2], [1, 5]]))
+    sublist_1, sublist_sep_idxs_1 = util.get_from_flat(flattened_list_depth_2, separator_idxs_depth_2, 1)
+    assert np.allclose(sublist_1, np.array([f, g, h]))
+    assert np.allclose(sublist_sep_idxs_1, np.array([[0, 1], [1, 3]]))
+
+    flattened_list_depth_3, separator_idxs_depth_3 = util.deep_flatten_to_1d_list(nested_list, depth=3)
+    assert flattened_list_depth_3 == [*a, *b, *c, *d, *e, *f, *g, *h]
+    assert separator_idxs_depth_3 == [
+        [0, 0, 0, 2], [0, 0, 1, 4], 
+        [0, 1, 0, 6], [0, 1, 1, 8], [0, 1, 2, 10], 
+        [1, 0, 0, 12], 
+        [1, 1, 0, 14], [1, 1, 1, 16]]
+    
+    rand = np.random.rand(3, 3)
+    nested_list = [
+        [
+            [np.array([0, 0]), np.array([0]), np.eye(3).reshape(9)], 
+            [np.array([1, 0]), np.array([1]), rand.reshape(9)],
+        ], [
+            [np.array([-1, 0]), np.array([0]), np.diag([123, 456, 789]).reshape(9)],
+        ],
+    ]
+    flattened_list, separator_idxs = util.deep_flatten_to_1d_list(nested_list, depth=3)
+    assert np.allclose(np.array(flattened_list), np.array([
+        0, 0,  0,  1, 0, 0, 0, 1, 0, 0, 0, 1,   1, 0,  1,  *rand.reshape(9),
+        -1, 0,  0,  123, 0, 0, 0, 456, 0, 0, 0, 789,
+    ]))
+    assert np.all(np.array(separator_idxs) == np.array([
+        [0, 0, 0, 2], [0, 0, 1, 3], [0, 0, 2, 12],
+        [0, 1, 0, 14], [0, 1, 1, 15], [0, 1, 2, 24],
+        [1, 0, 0, 26], [1, 0, 1, 27], [1, 0, 2, 36],
+    ]))
+
     
