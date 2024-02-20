@@ -16,27 +16,25 @@ def test_monte_carlo_FM_Heisenberg_chain():
         [np.cos(theta), 0, np.sin(theta)] for theta in np.linspace(0, 2*np.pi, lattice_sizes[0], endpoint=False)
     ])
 
-    interactions_by_sublattice = monte_carlo.group_interactions_by_sublattice(
+    interactions_by_sublattice, sep_idxs = monte_carlo.group_interactions_by_sublattice(
         model.interactions, model.lattice.dim, model.lattice.num_sites_unit_cell)
-    assert util.len_flat(*interactions_by_sublattice) == model.lattice.num_sites_unit_cell
+    assert util.len_flat(interactions_by_sublattice, sep_idxs) == model.lattice.num_sites_unit_cell
     
-    bravais_coords_0 = interactions_by_sublattice[0][0][0:1].reshape((1, 1))
-    subl_idxs_0 = interactions_by_sublattice[0][0][1:2]
-    int_tensor_0 = interactions_by_sublattice[0][0][3:].reshape((3, 3))
+    bravais_coords_0 = interactions_by_sublattice[0:1].reshape((1, 1))
+    subl_idxs_0 = interactions_by_sublattice[1:2]
+    int_tensor_0 = interactions_by_sublattice[2:11].reshape((3, 3))
     assert np.allclose(bravais_coords_0, np.array([[1]]))
     assert np.allclose(subl_idxs_0, np.array([0]))
     assert np.allclose(int_tensor_0, J*np.eye(3))
-    assert np.allclose(interactions_by_sublattice[0][0][2], monte_carlo.MAGIC_NUMBER)
-    bravais_coords_1 = interactions_by_sublattice[0][1][0:1].reshape((1, 1))
-    subl_idxs_1 = interactions_by_sublattice[0][1][1:2]
-    int_tensor_1 = interactions_by_sublattice[0][1][3:].reshape((3, 3))
+    bravais_coords_1 = interactions_by_sublattice[11:12].reshape((1, 1))
+    subl_idxs_1 = interactions_by_sublattice[12:13]
+    int_tensor_1 = interactions_by_sublattice[13:22].reshape((3, 3))
     assert np.allclose(bravais_coords_1, np.array([[-1]]))
     assert np.allclose(subl_idxs_1, np.array([0]))
     assert np.allclose(int_tensor_1, J*np.eye(3))
-    assert np.allclose(interactions_by_sublattice[0][1][2], monte_carlo.MAGIC_NUMBER)
-
+    
     contracted_interactions_for_spin = monte_carlo.compute_contracted_interactions_for_spin(
-        np.array([4]), interactions_by_sublattice[0], 
+        np.array([4]), util.get_from_flat(interactions_by_sublattice, sep_idxs, 0), 
         spin_config.reshape((lattice_sizes[0], 3)), 
         lattice_sizes, model.lattice.num_sites_unit_cell)
     assert np.allclose(contracted_interactions_for_spin, np.array([
@@ -53,7 +51,7 @@ def test_monte_carlo_FM_Heisenberg_chain():
     # to make sure the function runs without runtime errors
     spin_config_flat = spin_config.reshape((lattice_sizes[0], 3))
     monte_carlo.Metropolis_update(
-        spin_config_flat, interactions_by_sublattice, 
+        spin_config_flat, (interactions_by_sublattice, sep_idxs), 
         np.linalg.norm(spin_config_flat, axis=-1),
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
@@ -84,49 +82,49 @@ def test_monte_carlo_AFM_Heisenberg_chain():
     ])
     spin_config[:, 1 , 2] = np.array([S_B])[np.newaxis, np.newaxis, np.newaxis]
 
-    interactions_by_sublattice = monte_carlo.group_interactions_by_sublattice(
+    interactions_by_sublattice, sep_idxs = monte_carlo.group_interactions_by_sublattice(
         model.interactions, model.lattice.dim, model.lattice.num_sites_unit_cell)
-    assert len(interactions_by_sublattice) == model.lattice.num_sites_unit_cell
-    bravais_coords_A0 = interactions_by_sublattice[0][0][0:1].reshape((1, 1))
-    subl_idxs_A0 = interactions_by_sublattice[0][0][1:2]
-    int_tensor_A0 = interactions_by_sublattice[0][0][3:].reshape((3, 3))
+    assert util.len_flat(interactions_by_sublattice, sep_idxs) == model.lattice.num_sites_unit_cell
+    bravais_coords_A0 = interactions_by_sublattice[0:1].reshape((1, 1))
+    subl_idxs_A0 = interactions_by_sublattice[1:2]
+    int_tensor_A0 = interactions_by_sublattice[2:11].reshape((3, 3))
     assert np.allclose(bravais_coords_A0, np.array([[0]]))
     assert np.allclose(subl_idxs_A0, np.array([1]))
     assert np.allclose(int_tensor_A0, J*np.eye(3))
-    bravais_coords_A1 = interactions_by_sublattice[0][1][0:1].reshape((1, 1))
-    subl_idxs_A1 = interactions_by_sublattice[0][1][1:2]
-    int_tensor_A1 = interactions_by_sublattice[0][1][3:].reshape((3, 3))
+    bravais_coords_A1 = interactions_by_sublattice[11:12].reshape((1, 1))
+    subl_idxs_A1 = interactions_by_sublattice[12:13]
+    int_tensor_A1 = interactions_by_sublattice[13:22].reshape((3, 3))
     assert np.allclose(bravais_coords_A1, np.array([[-1]]))
     assert np.allclose(subl_idxs_A1, np.array([1]))
     assert np.allclose(int_tensor_A1, J*np.eye(3))
-    bravais_coords_A2 = interactions_by_sublattice[0][2][0:0].reshape((0, 1))
-    subl_idxs_A2 = interactions_by_sublattice[0][2][0:0]
-    int_tensor_A2 = interactions_by_sublattice[0][2][1:].reshape((3,))
+    bravais_coords_A2 = interactions_by_sublattice[22:22].reshape((0, 1))
+    subl_idxs_A2 = interactions_by_sublattice[22:22]
+    int_tensor_A2 = interactions_by_sublattice[22:25].reshape((3,))
     assert np.allclose(bravais_coords_A2, np.array([]))
     assert np.allclose(subl_idxs_A2, np.array([]))
     assert np.allclose(int_tensor_A2, -B)
     #
-    bravais_coords_B0 = interactions_by_sublattice[1][0][0:1].reshape((1, 1))
-    subl_idxs_B0 = interactions_by_sublattice[1][0][1:2]
-    int_tensor_B0 = interactions_by_sublattice[1][0][3:].reshape((3, 3))
+    bravais_coords_B0 = interactions_by_sublattice[25:26].reshape((1, 1))
+    subl_idxs_B0 = interactions_by_sublattice[26:27]
+    int_tensor_B0 = interactions_by_sublattice[27:36].reshape((3, 3))
     assert np.allclose(bravais_coords_B0, np.array([[0]]))
     assert np.allclose(subl_idxs_B0, np.array([0]))
     assert np.allclose(int_tensor_B0, J*np.eye(3))
-    bravais_coords_B1 = interactions_by_sublattice[1][1][0:1].reshape((1, 1))
-    subl_idxs_B1 = interactions_by_sublattice[1][1][1:2]
-    int_tensor_B1 = interactions_by_sublattice[1][1][3:].reshape((3, 3))
+    bravais_coords_B1 = interactions_by_sublattice[36:37].reshape((1, 1))
+    subl_idxs_B1 = interactions_by_sublattice[37:38]
+    int_tensor_B1 = interactions_by_sublattice[38:47].reshape((3, 3))
     assert np.allclose(bravais_coords_B1, np.array([[1]]))
     assert np.allclose(subl_idxs_B1, np.array([0]))
     assert np.allclose(int_tensor_B1, J*np.eye(3))
-    bravais_coords_B2 = interactions_by_sublattice[1][2][0:0].reshape((0, 1))
-    subl_idxs_B2 = interactions_by_sublattice[1][2][0:0]
-    int_tensor_B2 = interactions_by_sublattice[1][2][1:].reshape((3,))
+    bravais_coords_B2 = interactions_by_sublattice[47:47].reshape((0, 1))
+    subl_idxs_B2 = interactions_by_sublattice[47:47]
+    int_tensor_B2 = interactions_by_sublattice[47:50].reshape((3,))
     assert np.allclose(bravais_coords_B2, np.array([]))
     assert np.allclose(subl_idxs_B2, np.array([]))
     assert np.allclose(int_tensor_B2, -B)
 
     contracted_interactions_for_spin = monte_carlo.compute_contracted_interactions_for_spin(
-        np.array([4]), interactions_by_sublattice[1], 
+        np.array([4]), util.get_from_flat(interactions_by_sublattice, sep_idxs, 1), 
         spin_config.reshape((2*lattice_sizes[0], 3)), 
         lattice_sizes, model.lattice.num_sites_unit_cell)
     assert np.allclose(contracted_interactions_for_spin, np.array([
@@ -143,7 +141,7 @@ def test_monte_carlo_AFM_Heisenberg_chain():
     # to make sure the function runs without runtime errors
     spin_config_flat = spin_config.reshape((2*lattice_sizes[0], 3))
     monte_carlo.Metropolis_update(
-        spin_config_flat, interactions_by_sublattice, 
+        spin_config_flat, (interactions_by_sublattice, sep_idxs), 
         np.linalg.norm(spin_config_flat, axis=-1),
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
@@ -161,125 +159,125 @@ def test_monte_carlo_honeycomb_DMI():
     spin_config[:, :, 0, :] = S_A * np.random.rand(*lattice_sizes, 3)
     spin_config[:, :, 1, :] = S_B * np.random.rand(*lattice_sizes, 3)
 
-    interactions_by_sublattice = monte_carlo.group_interactions_by_sublattice(
+    interactions_by_sublattice, sep_idxs = monte_carlo.group_interactions_by_sublattice(
         model.interactions, model.lattice.dim, model.lattice.num_sites_unit_cell)
-    assert len(interactions_by_sublattice) == model.lattice.num_sites_unit_cell
+    assert util.len_flat(interactions_by_sublattice, sep_idxs) == model.lattice.num_sites_unit_cell
     # Heisenberg
-    bravais_coords_A0 = interactions_by_sublattice[0][0][0:2].reshape((1, 2))
-    subl_idxs_A0 = interactions_by_sublattice[0][0][2:3]
-    int_tensor_A0 = interactions_by_sublattice[0][0][4:].reshape((3, 3))
+    bravais_coords_A0 = interactions_by_sublattice[0:2].reshape((1, 2))
+    subl_idxs_A0 = interactions_by_sublattice[2:3]
+    int_tensor_A0 = interactions_by_sublattice[3:12].reshape((3, 3))
     assert np.allclose(bravais_coords_A0, np.array([[0, 0]]))
     assert np.allclose(subl_idxs_A0, np.array([1]))
     assert np.allclose(int_tensor_A0, J*np.eye(3))
-    bravais_coords_A1 = interactions_by_sublattice[0][1][0:2].reshape((1, 2))
-    subl_idxs_A1 = interactions_by_sublattice[0][1][2:3]
-    int_tensor_A1 = interactions_by_sublattice[0][1][4:].reshape((3, 3))
+    bravais_coords_A1 = interactions_by_sublattice[12:14].reshape((1, 2))
+    subl_idxs_A1 = interactions_by_sublattice[14:15]
+    int_tensor_A1 = interactions_by_sublattice[15:24].reshape((3, 3))
     assert np.allclose(bravais_coords_A1, np.array([[0, 1]]))
     assert np.allclose(subl_idxs_A1, np.array([1]))
     assert np.allclose(int_tensor_A1, J*np.eye(3))
-    bravais_coords_A2 = interactions_by_sublattice[0][2][0:2].reshape((1, 2))
-    subl_idxs_A2 = interactions_by_sublattice[0][2][2:3]
-    int_tensor_A2 = interactions_by_sublattice[0][2][4:].reshape((3, 3))
+    bravais_coords_A2 = interactions_by_sublattice[24:26].reshape((1, 2))
+    subl_idxs_A2 = interactions_by_sublattice[26:27]
+    int_tensor_A2 = interactions_by_sublattice[27:36].reshape((3, 3))
     assert np.allclose(bravais_coords_A2, np.array([[1, 0]]))
     assert np.allclose(subl_idxs_A2, np.array([1]))
     assert np.allclose(int_tensor_A2, J*np.eye(3))
     # DMI
-    bravais_coords_A3 = interactions_by_sublattice[0][3][0:2].reshape((1, 2))
-    subl_idxs_A3 = interactions_by_sublattice[0][3][2:3]
-    int_tensor_A3 = interactions_by_sublattice[0][3][4:].reshape((3, 3))
+    bravais_coords_A3 = interactions_by_sublattice[36:38].reshape((1, 2))
+    subl_idxs_A3 = interactions_by_sublattice[38:39]
+    int_tensor_A3 = interactions_by_sublattice[39:48].reshape((3, 3))
     assert np.allclose(bravais_coords_A3, np.array([[1, -1]]))
     assert np.allclose(subl_idxs_A3, np.array([0]))
     assert np.allclose(int_tensor_A3, D*np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 0]]))
-    bravais_coords_A4 = interactions_by_sublattice[0][4][0:2].reshape((1, 2))
-    subl_idxs_A4 = interactions_by_sublattice[0][4][2:3]
-    int_tensor_A4 = interactions_by_sublattice[0][4][4:].reshape((3, 3))
+    bravais_coords_A4 = interactions_by_sublattice[48:50].reshape((1, 2))
+    subl_idxs_A4 = interactions_by_sublattice[50:51]
+    int_tensor_A4 = interactions_by_sublattice[51:60].reshape((3, 3))
     assert np.allclose(bravais_coords_A4, np.array([[-1, 1]]))
     assert np.allclose(subl_idxs_A4, np.array([0]))
     assert np.allclose(int_tensor_A4, D*np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]]))
-    bravais_coords_A5 = interactions_by_sublattice[0][5][0:2].reshape((1, 2))
-    subl_idxs_A5 = interactions_by_sublattice[0][5][2:3]
-    int_tensor_A5 = interactions_by_sublattice[0][5][4:].reshape((3, 3))
+    bravais_coords_A5 = interactions_by_sublattice[60:62].reshape((1, 2))
+    subl_idxs_A5 = interactions_by_sublattice[62:63]
+    int_tensor_A5 = interactions_by_sublattice[63:72].reshape((3, 3))
     assert np.allclose(bravais_coords_A5, np.array([[-1, 0]]))
     assert np.allclose(subl_idxs_A5, np.array([0]))
     assert np.allclose(int_tensor_A5, D*np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 0]]))
-    bravais_coords_A6 = interactions_by_sublattice[0][6][0:2].reshape((1, 2))
-    subl_idxs_A6 = interactions_by_sublattice[0][6][2:3]
-    int_tensor_A6 = interactions_by_sublattice[0][6][4:].reshape((3, 3))
+    bravais_coords_A6 = interactions_by_sublattice[72:74].reshape((1, 2))
+    subl_idxs_A6 = interactions_by_sublattice[74:75]
+    int_tensor_A6 = interactions_by_sublattice[75:84].reshape((3, 3))
     assert np.allclose(bravais_coords_A6, np.array([[1, 0]]))
     assert np.allclose(subl_idxs_A6, np.array([0]))
     assert np.allclose(int_tensor_A6, D*np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]]))
-    bravais_coords_A7 = interactions_by_sublattice[0][7][0:2].reshape((1, 2))
-    subl_idxs_A7 = interactions_by_sublattice[0][7][2:3]
-    int_tensor_A7 = interactions_by_sublattice[0][7][4:].reshape((3, 3))
+    bravais_coords_A7 = interactions_by_sublattice[84:86].reshape((1, 2))
+    subl_idxs_A7 = interactions_by_sublattice[86:87]
+    int_tensor_A7 = interactions_by_sublattice[87:96].reshape((3, 3))
     assert np.allclose(bravais_coords_A7, np.array([[0, 1]]))
     assert np.allclose(subl_idxs_A7, np.array([0]))
     assert np.allclose(int_tensor_A7, D*np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 0]]))
-    bravais_coords_A8 = interactions_by_sublattice[0][8][0:2].reshape((1, 2))
-    subl_idxs_A8 = interactions_by_sublattice[0][8][2:3]
-    int_tensor_A8 = interactions_by_sublattice[0][8][4:].reshape((3, 3))
+    bravais_coords_A8 = interactions_by_sublattice[96:98].reshape((1, 2))
+    subl_idxs_A8 = interactions_by_sublattice[98:99]
+    int_tensor_A8 = interactions_by_sublattice[99:108].reshape((3, 3))
     assert np.allclose(bravais_coords_A8, np.array([[0, -1]]))
     assert np.allclose(subl_idxs_A8, np.array([0]))
     assert np.allclose(int_tensor_A8, D*np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]]))
     #
     # Heisenberg
-    bravais_coords_B0 = interactions_by_sublattice[1][0][0:2].reshape((1, 2))
-    subl_idxs_B0 = interactions_by_sublattice[1][0][2:3]
-    int_tensor_B0 = interactions_by_sublattice[1][0][4:].reshape((3, 3))
+    bravais_coords_B0 = interactions_by_sublattice[108:110].reshape((1, 2))
+    subl_idxs_B0 = interactions_by_sublattice[110:111]
+    int_tensor_B0 = interactions_by_sublattice[111:120].reshape((3, 3))
     assert np.allclose(bravais_coords_B0, np.array([[0, 0]]))
     assert np.allclose(subl_idxs_B0, np.array([0]))
     assert np.allclose(int_tensor_B0, J*np.eye(3))
-    bravais_coords_B1 = interactions_by_sublattice[1][1][0:2].reshape((1, 2))
-    subl_idxs_B1 = interactions_by_sublattice[1][1][2:3]
-    int_tensor_B1 = interactions_by_sublattice[1][1][4:].reshape((3, 3))
+    bravais_coords_B1 = interactions_by_sublattice[120:122].reshape((1, 2))
+    subl_idxs_B1 = interactions_by_sublattice[122:123]
+    int_tensor_B1 = interactions_by_sublattice[123:132].reshape((3, 3))
     assert np.allclose(bravais_coords_B1, np.array([[0, -1]]))
     assert np.allclose(subl_idxs_B1, np.array([0]))
     assert np.allclose(int_tensor_B1, J*np.eye(3))
-    bravais_coords_B2 = interactions_by_sublattice[1][2][0:2].reshape((1, 2))
-    subl_idxs_B2 = interactions_by_sublattice[1][2][2:3]
-    int_tensor_B2 = interactions_by_sublattice[1][2][4:].reshape((3, 3))
+    bravais_coords_B2 = interactions_by_sublattice[132:134].reshape((1, 2))
+    subl_idxs_B2 = interactions_by_sublattice[134:135]
+    int_tensor_B2 = interactions_by_sublattice[135:144].reshape((3, 3))
     assert np.allclose(bravais_coords_B2, np.array([[-1, 0]]))
     assert np.allclose(subl_idxs_B2, np.array([0]))
     assert np.allclose(int_tensor_B2, J*np.eye(3))
     # DMI
-    bravais_coords_B3 = interactions_by_sublattice[1][3][0:2].reshape((1, 2))
-    subl_idxs_B3 = interactions_by_sublattice[1][3][2:3]
-    int_tensor_B3 = interactions_by_sublattice[1][3][4:].reshape((3, 3))
+    bravais_coords_B3 = interactions_by_sublattice[144:146].reshape((1, 2))
+    subl_idxs_B3 = interactions_by_sublattice[146:147]
+    int_tensor_B3 = interactions_by_sublattice[147:156].reshape((3, 3))
     assert np.allclose(bravais_coords_B3, np.array([[1, -1]]))
     assert np.allclose(subl_idxs_B3, np.array([1]))
     assert np.allclose(int_tensor_B3, -D*np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 0]]))
-    bravais_coords_B4 = interactions_by_sublattice[1][4][0:2].reshape((1, 2))
-    subl_idxs_B4 = interactions_by_sublattice[1][4][2:3]
-    int_tensor_B4 = interactions_by_sublattice[1][4][4:].reshape((3, 3))
+    bravais_coords_B4 = interactions_by_sublattice[156:158].reshape((1, 2))
+    subl_idxs_B4 = interactions_by_sublattice[158:159]
+    int_tensor_B4 = interactions_by_sublattice[159:168].reshape((3, 3))
     assert np.allclose(bravais_coords_B4, np.array([[-1, 1]]))
     assert np.allclose(subl_idxs_B4, np.array([1]))
     assert np.allclose(int_tensor_B4, -D*np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]]))
-    bravais_coords_B5 = interactions_by_sublattice[1][5][0:2].reshape((1, 2))
-    subl_idxs_B5 = interactions_by_sublattice[1][5][2:3]
-    int_tensor_B5 = interactions_by_sublattice[1][5][4:].reshape((3, 3))
+    bravais_coords_B5 = interactions_by_sublattice[168:170].reshape((1, 2))
+    subl_idxs_B5 = interactions_by_sublattice[170:171]
+    int_tensor_B5 = interactions_by_sublattice[171:180].reshape((3, 3))
     assert np.allclose(bravais_coords_B5, np.array([[-1, 0]]))
     assert np.allclose(subl_idxs_B5, np.array([1]))
     assert np.allclose(int_tensor_B5, -D*np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 0]]))
-    bravais_coords_B6 = interactions_by_sublattice[1][6][0:2].reshape((1, 2))
-    subl_idxs_B6 = interactions_by_sublattice[1][6][2:3]
-    int_tensor_B6 = interactions_by_sublattice[1][6][4:].reshape((3, 3))
+    bravais_coords_B6 = interactions_by_sublattice[180:182].reshape((1, 2))
+    subl_idxs_B6 = interactions_by_sublattice[182:183]
+    int_tensor_B6 = interactions_by_sublattice[183:192].reshape((3, 3))
     assert np.allclose(bravais_coords_B6, np.array([[1, 0]]))
     assert np.allclose(subl_idxs_B6, np.array([1]))
     assert np.allclose(int_tensor_B6, -D*np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]]))
-    bravais_coords_B7 = interactions_by_sublattice[1][7][0:2].reshape((1, 2))
-    subl_idxs_B7 = interactions_by_sublattice[1][7][2:3]
-    int_tensor_B7 = interactions_by_sublattice[1][7][4:].reshape((3, 3))
+    bravais_coords_B7 = interactions_by_sublattice[192:194].reshape((1, 2))
+    subl_idxs_B7 = interactions_by_sublattice[194:195]
+    int_tensor_B7 = interactions_by_sublattice[195:204].reshape((3, 3))
     assert np.allclose(bravais_coords_B7, np.array([[0, 1]]))
     assert np.allclose(subl_idxs_B7, np.array([1]))
     assert np.allclose(int_tensor_B7, -D*np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 0]]))
-    bravais_coords_B8 = interactions_by_sublattice[1][8][0:2].reshape((1, 2))
-    subl_idxs_B8 = interactions_by_sublattice[1][8][2:3]
-    int_tensor_B8 = interactions_by_sublattice[1][8][4:].reshape((3, 3))
+    bravais_coords_B8 = interactions_by_sublattice[204:206].reshape((1, 2))
+    subl_idxs_B8 = interactions_by_sublattice[206:207]
+    int_tensor_B8 = interactions_by_sublattice[207:216].reshape((3, 3))
     assert np.allclose(bravais_coords_B8, np.array([[0, -1]]))
     assert np.allclose(subl_idxs_B8, np.array([1]))
     assert np.allclose(int_tensor_B8, -D*np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]]))
 
     contracted_interactions_for_spin = monte_carlo.compute_contracted_interactions_for_spin(
-        np.array([4, 2]), interactions_by_sublattice[1], 
+        np.array([4, 2]), util.get_from_flat(interactions_by_sublattice, sep_idxs, 1), 
         spin_config.reshape((2*np.prod(lattice_sizes), 3)), 
         lattice_sizes, model.lattice.num_sites_unit_cell)
     assert np.allclose(contracted_interactions_for_spin, np.array([
@@ -307,7 +305,7 @@ def test_monte_carlo_honeycomb_DMI():
     # to make sure the function runs without runtime errors
     spin_config_flat = spin_config.reshape((2*np.prod(lattice_sizes), 3))
     monte_carlo.Metropolis_update(
-        spin_config_flat, interactions_by_sublattice, 
+        spin_config_flat, (interactions_by_sublattice, sep_idxs), 
         np.linalg.norm(spin_config_flat, axis=-1),
         lattice_sizes, model.lattice.num_sites_unit_cell, 1.0*np.abs(J),
         monte_carlo.sphere_samplers.uniform)
