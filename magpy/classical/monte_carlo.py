@@ -3,6 +3,7 @@ from numba import njit
 from numba.typed import List
 from magpy.models import Model
 from .util import *
+from . import nested_list
 
 
 
@@ -164,7 +165,7 @@ def group_interactions_by_sublattice(interactions, lattice_dim, num_sublattices)
                 int_tensor_transposed.reshape(3**num_sites),
             ])
 
-    return deep_flatten_to_1d_array(interactions_by_sublattice, depth=3)
+    return nested_list.new(interactions_by_sublattice, depth=3)
 
 
 
@@ -231,8 +232,8 @@ def Metropolis_update(
 
     wiggled_spin = rand_spin_length * sphere_sampling_func(rand_spin)
 
-    interactions_for_spin = get_from_flat(
-        *interactions_by_sublattice, rand_subl_idx
+    interactions_for_spin = nested_list.get(
+        interactions_by_sublattice, rand_subl_idx
     )
 
     # compute energy gain/loss caused by the wiggling
@@ -268,15 +269,15 @@ def compute_contracted_interactions_for_spin(
         spin_config_flat, 
         lattice_sizes, num_sublattices):
     lattice_dim = len(spin_bravais_coords)
-    num_interactions_for_spin = len_flat(*interactions_for_spin)
+    num_interactions_for_spin = nested_list.len(interactions_for_spin)
     contracted_interactions_for_spin = np.zeros((num_interactions_for_spin, 3))
     
     for ninter in range(num_interactions_for_spin):
-        inter = get_from_flat(*interactions_for_spin, ninter)
+        inter = nested_list.get(interactions_for_spin, ninter)
         # unpack flattened data
-        participating_spins_relative_bravais_coords_flat, _ = get_from_flat(*inter, 0)
-        participating_spins_subl_idxs, _ = get_from_flat(*inter, 1)
-        int_tensor_flat, _ = get_from_flat(*inter, 2)
+        participating_spins_relative_bravais_coords_flat, _ = nested_list.get(inter, 0)
+        participating_spins_subl_idxs, _ = nested_list.get(inter, 1)
+        int_tensor_flat, _ = nested_list.get(inter, 2)
 
         num_participating_spins = len(participating_spins_subl_idxs)
         participating_spins_relative_bravais_coords = \
