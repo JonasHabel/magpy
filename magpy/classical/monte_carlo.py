@@ -274,9 +274,9 @@ def compute_contracted_interactions_for_spin(
     for ninter in range(num_interactions_for_spin):
         inter = get_from_flat(*interactions_for_spin, ninter)
         # unpack flattened data
-        participating_spins_relative_bravais_coords_flat = get_from_flat(*inter, 0)
-        participating_spins_subl_idxs = get_from_flat(*inter, 1)
-        int_tensor_flat = get_from_flat(*inter, 2)
+        participating_spins_relative_bravais_coords_flat, _ = get_from_flat(*inter, 0)
+        participating_spins_subl_idxs, _ = get_from_flat(*inter, 1)
+        int_tensor_flat, _ = get_from_flat(*inter, 2)
 
         num_participating_spins = len(participating_spins_subl_idxs)
         participating_spins_relative_bravais_coords = \
