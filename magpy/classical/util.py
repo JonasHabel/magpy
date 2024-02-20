@@ -71,5 +71,3 @@ def tensor_contract_jit(A, b, first_arg_is_flat=False):
             result_flat[i] += result_at_flat_idx
 
     return result_flat
-
-

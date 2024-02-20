@@ -2,8 +2,7 @@ import numpy as np
 from numba import njit
 from numba.typed import List
 from magpy.models import Model
-from .util import *
-from . import nested_list
+from .util import convert_to_flat_index, tensor_contract_jit
 
 
 
@@ -112,11 +111,7 @@ def get_accepted_updates(update_infos, with_acceptance_ratio=False):
 MAGIC_NUMBER = 1.23456789e-30
 
 def group_interactions_by_sublattice(interactions, lattice_dim, num_sublattices):
-    # list of list of list of numpy array
-    # 1st dimension -> sublattice
-    # 2nd dimension -> # of interaction
-    # 3rd dimension -> bravais coords, subl idx, int tensor
-    interactions_by_sublattice = [[] for _ in range(num_sublattices)]
+    interactions_by_sublattice = [List([]) for _ in range(num_sublattices)]
 
     # helper function
     def get_quantity_for_all_sites_except(site_idx, get_quantity, inter):
@@ -148,24 +143,20 @@ def group_interactions_by_sublattice(interactions, lattice_dim, num_sublattices)
             # a separator number, the MAGIC_NUMBER (very hacky!);
             # and finally, the interaction tensor as a flattened 1d array.
             # This is super ugly but the only way I found that numba can deal with it
-            # interaction_compressed = np.zeros((
-            #     lattice_dim*num_other_sites + num_other_sites + 1 + 3**num_sites
-            # ), dtype=np.float)
-            # interaction_compressed[:lattice_dim*num_other_sites] = \
-            #     other_sites_bravais_coords.reshape((lattice_dim*num_other_sites,))
-            # interaction_compressed[lattice_dim*num_other_sites:(lattice_dim+1)*num_other_sites] = \
-            #     other_sites_subl_idxs
-            #   # separator between coordinates and interaction tensor; hacky hack!!
-            # interaction_compressed[(lattice_dim+1)*num_other_sites] = MAGIC_NUMBER
-            # interaction_compressed[(lattice_dim+1)*num_other_sites+1:] = \
-            #     int_tensor_transposed.reshape((3**num_sites,))
-            interactions_by_sublattice[site.subl_idx].append([
-                other_sites_bravais_coords.reshape(lattice_dim*num_other_sites),
-                other_sites_subl_idxs,
-                int_tensor_transposed.reshape(3**num_sites),
-            ])
+            interaction_compressed = np.zeros((
+                lattice_dim*num_other_sites + num_other_sites + 1 + 3**num_sites
+            ), dtype=np.float)
+            interaction_compressed[:lattice_dim*num_other_sites] = \
+                other_sites_bravais_coords.reshape((lattice_dim*num_other_sites,))
+            interaction_compressed[lattice_dim*num_other_sites:(lattice_dim+1)*num_other_sites] = \
+                other_sites_subl_idxs
+              # separator between coordinates and interaction tensor; hacky hack!!
+            interaction_compressed[(lattice_dim+1)*num_other_sites] = MAGIC_NUMBER
+            interaction_compressed[(lattice_dim+1)*num_other_sites+1:] = \
+                int_tensor_transposed.reshape((3**num_sites,))
+            interactions_by_sublattice[site.subl_idx].append(interaction_compressed)
 
-    return nested_list.new(interactions_by_sublattice, depth=3)
+    return List(interactions_by_sublattice)
 
 
 
@@ -214,7 +205,7 @@ perform one local Metropolis update step
 """
 @njit
 def Metropolis_update(
-        current_spin_config_flat, interactions_by_sublattice, spin_norms_flat, 
+        current_spin_config_flat, interactions_by_sublattice, spin_norms_flat,
         lattice_sizes, num_sublattices, temperature,
         sphere_sampling_func):
     
@@ -232,15 +223,10 @@ def Metropolis_update(
 
     wiggled_spin = rand_spin_length * sphere_sampling_func(rand_spin)
 
-    interactions_for_spin = nested_list.get(
-        interactions_by_sublattice, rand_subl_idx
-    )
-
     # compute energy gain/loss caused by the wiggling
     contracted_interactions_for_spin = compute_contracted_interactions_for_spin(
         rand_bravais_coords, 
-        interactions_for_spin, 
-        current_spin_config_flat, 
+        interactions_by_sublattice[rand_subl_idx], current_spin_config_flat, 
         lattice_sizes, num_sublattices
     )
     energy_last_config = compute_energy_for_spin(
@@ -265,24 +251,19 @@ def Metropolis_update(
 @njit
 def compute_contracted_interactions_for_spin(
         spin_bravais_coords,
-        interactions_for_spin,
-        spin_config_flat, 
+        interactions_for_spin, spin_config_flat, 
         lattice_sizes, num_sublattices):
+    #interactions_for_spin = interactions_by_sublattice[spin_subl_idx]
     lattice_dim = len(spin_bravais_coords)
-    num_interactions_for_spin = nested_list.len(interactions_for_spin)
+    num_interactions_for_spin = len(interactions_for_spin)
     contracted_interactions_for_spin = np.zeros((num_interactions_for_spin, 3))
     
-    for ninter in range(num_interactions_for_spin):
-        inter = nested_list.get(interactions_for_spin, ninter)
+    for ninter, inter in enumerate(interactions_for_spin):
         # unpack flattened data
-        participating_spins_relative_bravais_coords_flat, _ = nested_list.get(inter, 0)
-        participating_spins_subl_idxs, _ = nested_list.get(inter, 1)
-        int_tensor_flat, _ = nested_list.get(inter, 2)
-
-        num_participating_spins = len(participating_spins_subl_idxs)
-        participating_spins_relative_bravais_coords = \
-            participating_spins_relative_bravais_coords_flat \
-            .reshape((num_participating_spins, lattice_dim))
+        num_participating_spins = np.where(inter == MAGIC_NUMBER)[0][0] // (lattice_dim + 1)
+        participating_spins_relative_bravais_coords = inter[:num_participating_spins*lattice_dim].reshape((num_participating_spins, lattice_dim))
+        participating_spins_subl_idxs = inter[num_participating_spins*lattice_dim:num_participating_spins*(lattice_dim+1)]
+        int_tensor_flat = inter[num_participating_spins*(lattice_dim+1)+1:]
 
         participating_spins = np.zeros((num_participating_spins, 3))
         for n in range(num_participating_spins):
