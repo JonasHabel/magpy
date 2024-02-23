@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb,braket,bbm}
+\usepackage[margin=2.5cm]{geometry}
+
+\begin{document}
+\noindent
+Fourier transform of magnon operators:
+\begin{align}
+	a_{is} = \frac{1}{\sqrt N} \sum_{k} e^{ikr_i} a_{ks}
+\end{align}
+BdG eigenmodes:
+\begin{align}
+	\begin{pmatrix}
+		a_{kA} \\ a_{-kA}^\dagger \\ a_{kB} \\ a_{-kB}^\dagger \\ \dots
+	\end{pmatrix} = \mathcal U(k) \begin{pmatrix}
+		\alpha_{k1} \\ \alpha_{-k1}^\dagger \\ \alpha_{k2} \\ \alpha_{-k2}^\dagger \\ \dots
+	\end{pmatrix}
+\end{align}
+BdG vacuum ansatz:
+\begin{gather}
+	\ket{\mathrm{GS}} = \prod_{k\ge 0} \ket{\mathrm{GS}_k} \\
+	\ket{\mathrm{GS}_k} = v_0 \ket 0 + \sum_{ss'} v_{1,ss'} a_{ks}^\dagger a_{-ks'}^\dagger + \dots = \sum_{N\ge 0} \sum_{\{s_m,s'_m\}} v_{N,\{s_m,s'_m\}} \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger) \ket 0 
+	%\prod_{k\ge 0, s} \exp\left(\mathcal V_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \ket 0
+\end{gather}
+Plug in (wlog $q\ge 0$):
+\begin{align*}
+	0 \overset ! = \alpha_{kn} \ket{\mathrm{GS}_k} &= \sum_{N\ge 0} \sum_{\{s_m,s'_m\}} v_{N,\{s_m,s'_m\}} \sum_t \left(\mathcal U^{-1}_{2n,2t}(k) a_{kt} + \mathcal U^{-1}_{2n,2t+1}(k) a_{-kt}^\dagger \right) \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger) \ket 0 \\
+%
+	&= \sum_{N\ge 0} \sum_{\{s_m,s'_m\}} v_{N,\{s_m,s'_m\}} \sum_t \left\{ \mathcal U^{-1}_{2n,2t+1}(k) \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger) a_{-kt}^\dagger + \mathcal U^{-1}_{2n,2t}(k) \left[a_{kt}, \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger)\right] \right\} \ket 0
+%	0 \overset ! = \alpha_{qn} \ket{\mathrm{GS}} &= \alpha_{qn} \prod_{k\ge 0, s} \exp\left(v_s(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \ket 0 \\
+%%
+%	&= \prod_{ks\neq qt} \exp\left(v_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \alpha_{qn} \exp\left(v_{s}(q) a_{-qs}^\dagger a_{qs}^\dagger\right) \ket 0 \\
+%%
+%	&= \sum_t \prod_{ks\neq qt} \exp\left(v_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \left(\mathcal U^{-1}_{2n,2t}(q) a_{qt} + \mathcal U_{2n,2t+1}^{-1}(q) a_{-qt}^\dagger \right) \exp\left(v_{s}(q) a_{-qs}^\dagger a_{qs}^\dagger\right) \ket 0 \\
+%%
+%	&= \sum_t \left\{ \prod_{ks\neq qt} \exp\left(v_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \right\} \Bigg\{ \exp\left(v_{s}(q) a_{-qs}^\dagger a_{qs}^\dagger\right) \left(\mathcal U^{-1}_{2n,2t}(q) a_{qt} + \mathcal U_{2n,2t+1}^{-1}(q) a_{-qt}^\dagger \right) \ket 0 \\
+%	&\hspace{5cm} + \left[\sum_t \left(\mathcal U^{-1}_{2n,2t}(q) a_{qt} + \mathcal U_{2n,2t+1}^{-1}(q) a_{-qt}^\dagger \right), \exp\left(v_{t}(q) a_{-qt}^\dagger a_{qt}^\dagger\right) \right] \ket 0 \Bigg\} \\
+%%
+%	&= \sum_t \left\{ \prod_{ks\neq qt} \exp\left(v_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \right\} \Bigg\{ \exp\left(v_{t}(q) a_{-qt}^\dagger a_{qt}^\dagger\right) \mathcal U_{2n,2t+1}^{-1}(q) a_{-qt}^\dagger \ket 0 \\
+%	&\hspace{5cm} + \mathcal U^{-1}_{2n,2t}(q) \left[a_{qt}, \exp\left(v_{t}(q) a_{-qt}^\dagger a_{qt}^\dagger\right) \right] \ket 0 \Bigg\} \\
+%%
+%	&= \left\{ \prod_{ks} \exp\left(v_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \right\} \sum_t \Bigg\{ \mathcal U_{2n,2t+1}^{-1}(q) + \mathcal U_{2n,2t}^{-1}(q) v_{t}(q) \Bigg\} a_{-qt}^\dagger \ket 0 \qquad \forall n
+\end{align*}
+We need
+\begin{align}
+	v_t(q) = -\frac{\mathcal U_{2n,2t+1}^{-1}}{}
+\end{align}
+Create single magnon excitation at position $(i, s)$:
+\begin{align}
+	a_{is}^\dagger = \frac{1}{\sqrt N} \sum_{k} e^{-ikr_i} a_{ks}
+\end{align}
+
+\end{document}
