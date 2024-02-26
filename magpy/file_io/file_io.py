@@ -33,14 +33,26 @@ class DefaultFileNamingConvention(FileNamingConvention):
     def key_to_string(self, key):
         return key.replace(self.key_val_separator, "-") \
                   .replace(self.entry_separator, "-")
+    
+    def create_key_val_pair_string(self, k, v):
+        return self.key_to_string(k) + self.key_val_separator \
+                + self.quantity_to_string(v)
 
     def create_file_name(self, quantity_name, parameters: dict):
         if not parameters:
             return quantity_name
         
         return quantity_name + self.entry_separator + self.entry_separator.join([
-            self.key_to_string(k) + self.key_val_separator \
-                + self.quantity_to_string(v) \
+            self.create_key_val_pair_string(k, v) \
+            for k, v in parameters.items()
+        ])
+    
+    def create_glob(self, quantity_name, parameters: dict):
+        if not parameters:
+            return quantity_name
+        
+        return quantity_name + self.entry_separator + self.entry_separator.join([
+            k if k in ["*"] else self.create_key_val_pair_string(k, v) \
             for k, v in parameters.items()
         ])
 
