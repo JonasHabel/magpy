@@ -118,7 +118,7 @@ class BravaisLattice:
              + self.sublattices[edge.subl_idxs[1]]
 
     def sample_Bravais_lattice_in_Bravais_coords(self, sizes):
-        num_unit_cells = np.prod(sizes)
+        num_unit_cells = int(np.prod(sizes))
         grid_bravais_coords = np.array(np.meshgrid(*[
             np.arange(size) for size in sizes
         ])).reshape((self.dim, num_unit_cells)).T

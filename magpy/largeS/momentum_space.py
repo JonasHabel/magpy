@@ -13,10 +13,10 @@ def compute_magnon_Hamiltonian(model: Model, ks,
     if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
     
-    if model.lattice.dim >= 1 and model.lattice.dim != ks.shape[-1]:
+    if model.lattice.embedding_dim >= 1 and model.lattice.embedding_dim != ks.shape[-1]:
         raise Exception(f"dimension of each momentum vector " \
                       + f"{ks.shape[-1]} must equal the " \
-                      + f"lattice dimension {model.lattice.dim}")
+                      + f"embedding dimension {model.lattice.embedding_dim}")
     
     order = ks.shape[0]
 
