@@ -1,4 +1,5 @@
 import numpy as np
+from magpy.lattice import BravaisLattice
 from magpy.models import Model
 from magpy.interactions import Interaction
 from magpy import util
@@ -50,3 +51,52 @@ def compute_total_energy(model: Model, spin_config):
     return total_energy
 
 
+
+def compute_spin_gradient(lattice: BravaisLattice, spin_config):
+    assert spin_config.shape[-1] == 3
+
+    lattice_dims = spin_config.shape[:-2]
+    bravais_coords = \
+        lattice.sample_Bravais_lattice_in_Bravais_coords(lattice_dims)
+    
+    spin_gradient = np.zeros((2, *spin_config.shape))
+
+    for edge in lattice.edges:
+        edge_vector = lattice.get_canonical_coords_for_edge(edge)
+        edge_length_sq = np.sum(edge_vector**2)
+
+        for bravais_coord in bravais_coords:
+            bravais_coord_pbc = \
+                bravais_coord % np.array(lattice_dims)
+            other_bravais_coord_pbc = \
+                (bravais_coord + edge.bravais_coords) % np.array(lattice_dims)
+            spin1 = spin_config[(
+                *bravais_coord_pbc, 
+                edge.subl_idxs[0]
+            )]
+            spin2 = spin_config[(
+                *other_bravais_coord_pbc, 
+                edge.subl_idxs[1]
+            )]
+            spin_derivative = (spin2 - spin1) / edge_length_sq
+            spin_gradient[(slice(None), *bravais_coord_pbc, edge.subl_idxs[0])] += \
+                np.outer(edge_vector, spin_derivative)
+            spin_gradient[(slice(None), *other_bravais_coord_pbc, edge.subl_idxs[1])] += \
+                np.outer(edge_vector, spin_derivative)
+
+    # TODO normalization
+
+    return spin_gradient
+
+
+
+def compute_skyrmion_density(lattice: BravaisLattice, spin_config):
+    assert lattice.dim == 2
+
+    spin_gradient = compute_spin_gradient(lattice, spin_config)
+    skyrmion_density = np.einsum(
+        "...a,...a",
+        spin_config,
+        np.cross(spin_gradient[0], spin_gradient[1]))
+
+    return skyrmion_density
