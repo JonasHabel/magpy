@@ -17,16 +17,43 @@ BdG eigenmodes:
 	\end{pmatrix}
 \end{align}
 BdG vacuum ansatz:
-\begin{gather}
-	\ket{\mathrm{GS}} = \prod_{k\ge 0} \ket{\mathrm{GS}_k} \\
-	\ket{\mathrm{GS}_k} = v_0 \ket 0 + \sum_{ss'} v_{1,ss'} a_{ks}^\dagger a_{-ks'}^\dagger + \dots = \sum_{N\ge 0} \sum_{\{s_m,s'_m\}} v_{N,\{s_m,s'_m\}} \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger) \ket 0 
-	%\prod_{k\ge 0, s} \exp\left(\mathcal V_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \ket 0
-\end{gather}
-Plug in (wlog $q\ge 0$):
-\begin{align*}
-	0 \overset ! = \alpha_{kn} \ket{\mathrm{GS}_k} &= \sum_{N\ge 0} \sum_{\{s_m,s'_m\}} v_{N,\{s_m,s'_m\}} \sum_t \left(\mathcal U^{-1}_{2n,2t}(k) a_{kt} + \mathcal U^{-1}_{2n,2t+1}(k) a_{-kt}^\dagger \right) \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger) \ket 0 \\
+\begin{align}
+	\ket{\mathrm{GS}} &= \prod_{k\ge 0} \ket{\mathrm{GS}_k} \\
 %
-	&= \sum_{N\ge 0} \sum_{\{s_m,s'_m\}} v_{N,\{s_m,s'_m\}} \sum_t \left\{ \mathcal U^{-1}_{2n,2t+1}(k) \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger) a_{-kt}^\dagger + \mathcal U^{-1}_{2n,2t}(k) \left[a_{kt}, \prod_{m=1}^N (a_{ks_m}^\dagger a_{-ks'_m}^\dagger)\right] \right\} \ket 0
+	\ket{\mathrm{GS}_k} &= \exp\left( -\sum_{ss'} \mathcal S_{ss'}(k) a_{ks}^\dagger a_{-ks'}^\dagger \right)	\ket 0
+%	\ket{\mathrm{GS}_k} &= \prod_n \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2n,2s'+1}(-k) \mathcal U_{2n,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2n,2s+1}(-k) \mathcal U^{-1}_{2n,2s}(k)} \right) \ket 0 \\
+%%
+%	&\propto \prod_n \left[ \sum_{s} \mathcal U^{-1}_{2n,2s+1}(-k) \mathcal U^{-1}_{2n,2s}(k) + \sum_{ss'} \mathcal U^{-1}_{2n,2s'+1}(-k) \mathcal U_{2n,2s+1}(k)\,  a_{-ks}^\dagger a_{ks'}^\dagger + \dots \right] \ket 0 \\
+%%
+%	&\propto \prod_n \sum_{ss'} \left[ \mathcal U^{-1}_{2n,2s+1}(-k) \mathcal U^{-1}_{2n,2s'}(k) \delta_{ss'} + \mathcal U^{-1}_{2n,2s'+1}(-k) \mathcal U_{2n,2s+1}(k)\,  a_{-ks}^\dagger a_{ks'}^\dagger + \dots \right] \ket 0 \\
+%%
+%	&\propto \prod_n \sum_{ss'} \left[ \mathcal U^{-1}_{2n,2s}(k) a_{ks} + \mathcal U^{-1}_{2n,2s+1}(k)\, a_{-ks}^\dagger \right] \mathcal U^{-1}_{2n,2s'+1}(-k) a_{ks'}^\dagger \ket 0 + \dots \\
+%%
+%	&\propto \prod_n \alpha_{kn} \alpha_{-kn} \ket 0 + \dots
+	%\prod_{k\ge 0, s} \exp\left(\mathcal V_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \ket 0
+\end{align}
+With a symmetric matrix $\mathcal S$.
+Plug in (wlog $k\ge 0$):
+\begin{align*}
+	0 \overset ! = \alpha_{kn} \ket{\mathrm{GS}_k} &= \sum_t \left( \mathcal U^{-1}_{2n,2t} a_{kt} + \mathcal U^{-1}_{2n,2t+1} a_{-kt}^\dagger \right) \exp\left( -\sum_{ss'} \mathcal S_{ss'}(k) a_{ks}^\dagger a_{-ks'}^\dagger \right)	\ket 0 \\
+%
+	&= \sum_t \left\{ \exp\left( -\sum_{ss'} \mathcal S_{ss'}(k) a_{ks}^\dagger a_{-ks'}^\dagger \right) \mathcal U^{-1}_{2n,2t+1} a_{-kt}^\dagger + \mathcal U^{-1}_{2n,2t} \left[ a_{kt}, \exp\left( -\sum_{ss'} \mathcal S_{ss'}(k) a_{ks}^\dagger a_{-ks'}^\dagger \right) \right] \right\} \ket 0 \\
+%
+	&= \sum_t \exp\left( -\sum_{ss'} \mathcal S_{ss'}(k) a_{ks}^\dagger a_{-ks'}^\dagger \right) \left\{ \mathcal U^{-1}_{2n,2t+1} a_{-kt}^\dagger - \mathcal U^{-1}_{2n,2t} \sum_s \mathcal S_{ts}(k) a_{-ks}^\dagger \right\} \ket 0 \qquad \forall n
+%\prod_m \sum_t \left( \mathcal U^{-1}_{2n,2t}(k) a_{kt} + \mathcal U^{-1}_{2n,2t+1}(k) a_{-kt}^\dagger \right) \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) \ket 0 \\
+%%
+%	&= \prod_m \sum_t \Bigg\{ \mathcal U^{-1}_{2n,2t+1}(k) \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) a_{-kt}^\dagger \\
+%	&\hspace{1.4cm} + \mathcal U^{-1}_{2n,2t}(k) \left[ a_{kt}, \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) \right] \Bigg\} \ket 0 \\
+%%
+%	&= \prod_m \sum_t \Bigg\{ \mathcal U^{-1}_{2n,2t+1}(k) \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) a_{-kt}^\dagger \\
+%	&\hspace{1.4cm} + \mathcal U^{-1}_{2n,2t}(k) \left[ a_{kt}, \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) \right] \Bigg\} \ket 0 \\
+%%
+%	&= \prod_m \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) \sum_t \Bigg\{ \mathcal U^{-1}_{2n,2t+1}(k)  a_{-kt}^\dagger \\
+%	&\hspace{1.4cm} + \mathcal U^{-1}_{2n,2t}(k) \frac{\sum_{s} \mathcal U^{-1}_{2m,2t+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \Bigg\} \ket 0
+%\end{align*}
+%\begin{align*}
+%	&\propto \prod_m \exp\left( \frac{\sum_{ss'} \mathcal U^{-1}_{2m,2s'+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger a_{ks'}^\dagger}{\sum_{s} \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k)} \right) \sum_{st} \Bigg\{ \mathcal U^{-1}_{2n,2t+1}(k) \mathcal U^{-1}_{2m,2s+1}(-k) \mathcal U^{-1}_{2m,2s}(k) a_{-kt}^\dagger \\
+%	&\hspace{1.4cm} + \mathcal U^{-1}_{2n,2t}(k) \mathcal U^{-1}_{2m,2t+1}(-k) \mathcal U^{-1}_{2m,2s+1}(k)\, a_{-ks}^\dagger \Bigg\} \ket 0 
 %	0 \overset ! = \alpha_{qn} \ket{\mathrm{GS}} &= \alpha_{qn} \prod_{k\ge 0, s} \exp\left(v_s(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \ket 0 \\
 %%
 %	&= \prod_{ks\neq qt} \exp\left(v_{s}(k) a_{-ks}^\dagger a_{ks}^\dagger\right) \alpha_{qn} \exp\left(v_{s}(q) a_{-qs}^\dagger a_{qs}^\dagger\right) \ket 0 \\
@@ -43,11 +70,35 @@ Plug in (wlog $q\ge 0$):
 \end{align*}
 We need
 \begin{align}
-	v_t(q) = -\frac{\mathcal U_{2n,2t+1}^{-1}}{}
+	\mathcal S &= \left(\mathcal U_{2n,2t}^{-1}\right)^{-1} \left(\mathcal U_{2n,2t+1}\right)
 \end{align}
 Create single magnon excitation at position $(i, s)$:
 \begin{align}
-	a_{is}^\dagger = \frac{1}{\sqrt N} \sum_{k} e^{-ikr_i} a_{ks}
+	a_{is}^\dagger \ket{\mathrm{GS}} &= \frac{1}{\sqrt N} \sum_{kn} e^{ikr_i} (\mathcal U_{2s+1,2n}(-k) \alpha_{-kn} + \mathcal U_{2s+1,2n+1}(-k) \alpha_{kn}^\dagger) \ket{\mathrm{GS}} \\
+%
+	&= \frac{1}{\sqrt N} \sum_{kn} e^{ikr_i} \mathcal U_{2s+1,2n+1}(-k) \alpha_{kn}^\dagger \ket{\mathrm{GS}}
 \end{align}
+Hamiltonian: $\hat H = \sum_{qm} \epsilon_{qm} \alpha_{qm}^\dagger \alpha_{qm}$.
+Time evolution of wave packet:
+\begin{align}
+	\sum_{is} \psi_s(r_i) a_{is}^\dagger \ket{\mathrm{GS}} &= e^{-i\hat H t} \frac{1}{\sqrt N} \sum_{is} \sum_{kn} \psi_s(r_i) e^{ikr_i} \mathcal U_{2s+1,2n+1}(-k) \alpha_{kn}^\dagger \ket{\mathrm{GS}} \\
+%
+	&= \frac{1}{\sqrt N} \sum_{qm} \sum_{is} \sum_{kn}\psi_s(r_i) e^{ikr_i - i\epsilon_{qm} t} \mathcal U_{2s+1,2n+1}(-k) \alpha_{qm}^\dagger \alpha_{qm} \alpha_{kn}^\dagger \ket{\mathrm{GS}} \\
+%
+	&= \frac{1}{\sqrt N} \sum_{is} \psi_s(r_i) \sum_{kn} e^{ikr_i - i\epsilon_{kn} t} \mathcal U_{2s+1,2n+1}(-k) \alpha_{kn}^\dagger \ket{\mathrm{GS}} \\
+%
+	&\equiv \sum_{js'} \underbrace{ \frac{1}{N} \sum_{is} \psi_s(r_i) \sum_{kn} e^{ik(r_i - r_j) - i\epsilon_{kn} t} \mathcal U_{2s+1,2n+1}(-k) \mathcal U_{2n+1,2s'+1}^{-1}(-k) }_{\equiv \psi_{s'}(r_j, t)} a_{js'}^\dagger \ket{\mathrm{GS}} \\
+%
+	&= \sum_{js'} \psi_{s'}(r_j, t) a_{js'}^\dagger \ket{\mathrm{GS}}
+\end{align}
+Alternative using infinitesimal time slices:
+\begin{align}
+	\sum_{is} \psi_s(r_i, t + \delta t) a_{is}^\dagger \ket{\mathrm{GS}} &= e^{-i\hat H \delta t} \sum_{is} \psi_s(r_i, t) a_{is}^\dagger \ket{\mathrm{GS}} \\
+%
+	&= \sum_{is} \psi_s(r_i, t) (\mathbbm 1 - i\hat H \delta t) a_{is}^\dagger \ket{\mathrm{GS}} \\
+%
+	&= \sum_{is} \psi_s(r_i, t) a_{is}^\dagger \ket{\mathrm{GS}} - i\delta t\sum_{is} \psi_s(r_i, t) \sum_j h_{ij} 
+\end{align}
+TODO: issue with non-conserving terms
 
 \end{document}
