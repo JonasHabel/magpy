@@ -189,7 +189,10 @@ class BravaisLattice:
     def compute_neighbors(self, sublattice_index, n_max):
         if n_max == 0:
             return [{
-                BravaisLattice.Edge(np.zeros(self.dim), [sublattice_index]*2),
+                BravaisLattice.Edge(
+                    np.zeros(self.dim, dtype=int), 
+                    [sublattice_index]*2
+                ),
             }]
 
         flipped_edges = [BravaisLattice.Edge(
@@ -797,9 +800,9 @@ class SquareLattice(BravaisLattice):
             ]),
             edges=[
                 #horizontal bond
-                BravaisLattice.Edge(np.array([1, 0]), np.zeros(2)),
+                BravaisLattice.Edge(np.array([1, 0]), np.zeros(2, dtype=int)),
                 #vertical bond
-                BravaisLattice.Edge(np.array([0, 1]), np.zeros(2)),
+                BravaisLattice.Edge(np.array([0, 1]), np.zeros(2, dtype=int)),
             ],
             reciprocal_high_symmetry_points={
                 "Gamma": np.array([0, 0]),
@@ -910,7 +913,7 @@ class DotLattice(BravaisLattice):
             bravais_vecs=np.zeros((0, 1)),
             sublattices=np.array([
                 np.linspace(0, 1, num_sites_unit_cell)
-            ]).T,
+            ], dtype=int).T,
             edges=edges,
             reciprocal_high_symmetry_points={
                 "Gamma": np.array([]),
