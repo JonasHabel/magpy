@@ -54,71 +54,107 @@ def compute_total_energy(model: Model, spin_config):
 
 
 
-def compute_spin_gradient(lattice: BravaisLattice, spin_config):
+def compute_spin_gradient(lattice: BravaisLattice, spin_config, flat=False):
     assert spin_config.shape[-1] == 3
 
-    @njit
-    def compute_spin_gradient_for_edge(
-            spin_gradient_out_flat, spin_config_flat, 
-            edge_bravais_coords, edge_vector, edge_subl_idxs, 
-            bravais_coords_lattice, lattice_sizes, num_sublattices):
-        edge_length_sq = np.sum(edge_vector**2)
-        for bravais_coord in bravais_coords_lattice:
-            spin1_bravais_coord_pbc = \
-                bravais_coord % lattice_sizes
-            spin2_bravais_coord_pbc = \
-                (bravais_coord + edge_bravais_coords) % lattice_sizes
-            
-            spin1_flat_idx = convert_to_flat_index(
-                spin1_bravais_coord_pbc, edge_subl_idxs[0], 
-                lattice_sizes, num_sublattices)
-            spin2_flat_idx = convert_to_flat_index(
-                spin2_bravais_coord_pbc, edge_subl_idxs[1], 
-                lattice_sizes, num_sublattices)
-            spin1 = spin_config_flat[spin1_flat_idx]
-            spin2 = spin_config_flat[spin2_flat_idx]
-            spin_derivative = (spin2 - spin1) / edge_length_sq
-
-            spin_gradient_out_flat[:, spin1_flat_idx] += \
-                np.outer(edge_vector, spin_derivative)
-            spin_gradient_out_flat[:, spin2_flat_idx] += \
-                np.outer(edge_vector, spin_derivative)
-            
-            
-    lattice_sizes = spin_config.shape[:-2]
+    lattice_sizes = np.array(spin_config.shape[:-2])
     num_unit_cells = int(np.prod(lattice_sizes))
-    num_sublattices = lattice.num_sites_unit_cell
+    num_sublattices = spin_config.shape[-2]
     num_sites_total = num_unit_cells * num_sublattices
-    
-    spin_config_flat = spin_config.reshape((num_sites_total, 3))
+
     bravais_coords_lattice = \
         lattice.sample_Bravais_lattice_in_Bravais_coords(lattice_sizes)
-    
-    spin_gradient_flat = np.zeros((2, *spin_config_flat.shape))
+    spin_gradient_flat = np.zeros((2, num_sites_total, 3))
 
-    for edge in lattice.edges:
-        edge_vector = lattice.get_canonical_coords_for_edge(edge)
-        compute_spin_gradient_for_edge(
-            spin_gradient_flat, spin_config_flat, 
-            edge.bravais_coords, edge_vector, edge.subl_idxs, 
-            bravais_coords_lattice, np.array(lattice_sizes), num_sublattices)
-        
+    edges_bravais_coords = np.array([
+        edge.bravais_coords for edge in lattice.edges
+    ])
+    edges_vectors = np.array([
+        lattice.get_canonical_coords_for_edge(edge) for edge in lattice.edges
+    ])
+    edges_subl_idxs = np.array([
+        edge.subl_idxs for edge in lattice.edges
+    ])
 
-    # TODO normalization
+    compute_spin_gradient_jit(
+        spin_gradient_flat, spin_config,
+        edges_bravais_coords, edges_vectors, edges_subl_idxs,
+        bravais_coords_lattice)
         
+    if flat:
+        return spin_gradient_flat
+
     spin_gradient = spin_gradient_flat.reshape((2, *spin_config.shape))
-
     return spin_gradient
 
 
+@njit
+def compute_spin_gradient_jit(
+        spin_gradient_out_flat, spin_config,
+        edges_bravais_coords, edges_vectors, edges_subl_idxs,
+        bravais_coords_lattice):
+    lattice_sizes = np.array(spin_config.shape[:-2])
+    num_unit_cells = int(np.prod(lattice_sizes))
+    num_sublattices = spin_config.shape[-2]
+    num_sites_total = num_unit_cells * num_sublattices
+    
+    spin_config_flat = spin_config.reshape((num_sites_total, 3))
 
-def compute_skyrmion_density(lattice: BravaisLattice, spin_config):
+    for edge_bravais_coords, edge_vector, edge_subl_idxs in zip(
+            edges_bravais_coords, edges_vectors, edges_subl_idxs):
+        compute_spin_gradient_for_edge_jit(
+            spin_gradient_out_flat, spin_config_flat, 
+            edge_bravais_coords, edge_vector, edge_subl_idxs, 
+            bravais_coords_lattice, lattice_sizes, num_sublattices)
+
+    # TODO normalization
+
+
+@njit
+def compute_spin_gradient_for_edge_jit(
+        spin_gradient_out_flat, spin_config_flat, 
+        edge_bravais_coords, edge_vector, edge_subl_idxs, 
+        bravais_coords_lattice, lattice_sizes, num_sublattices):
+    edge_length_sq = np.sum(edge_vector**2)
+    for bravais_coord in bravais_coords_lattice:
+        spin1_bravais_coord_pbc = \
+            bravais_coord % lattice_sizes
+        spin2_bravais_coord_pbc = \
+            (bravais_coord + edge_bravais_coords) % lattice_sizes
+        
+        spin1_flat_idx = convert_to_flat_index(
+            spin1_bravais_coord_pbc, edge_subl_idxs[0], 
+            lattice_sizes, num_sublattices)
+        spin2_flat_idx = convert_to_flat_index(
+            spin2_bravais_coord_pbc, edge_subl_idxs[1], 
+            lattice_sizes, num_sublattices)
+        spin1 = spin_config_flat[spin1_flat_idx]
+        spin2 = spin_config_flat[spin2_flat_idx]
+        spin_derivative = (spin2 - spin1) / edge_length_sq
+
+        spin_gradient_out_flat[:, spin1_flat_idx] += \
+            np.outer(edge_vector, spin_derivative)
+        spin_gradient_out_flat[:, spin2_flat_idx] += \
+            np.outer(edge_vector, spin_derivative)
+        
+
+
+
+def compute_skyrmion_density(lattice: BravaisLattice, spin_config, flat=False):
     assert lattice.dim == 2
 
-    spin_gradient = compute_spin_gradient(lattice, spin_config)
-    skyrmion_density = np.einsum(
-        "...a,...a",
-        spin_config,
-        np.cross(spin_gradient[0], spin_gradient[1]))
+    num_sites_total = int(np.prod(spin_config.shape[:-1]))
+    spin_config_flat = spin_config.reshape((num_sites_total, 3))
+    spin_gradient_flat = compute_spin_gradient(lattice, spin_config, flat=True)
 
+    skyrmion_density_flat = np.einsum(
+        "ia,ia->i",
+        spin_config_flat,
+        np.cross(spin_gradient_flat[0], spin_gradient_flat[1]))
+    
+    if flat:
+        return skyrmion_density_flat
+
+    skyrmion_density = skyrmion_density_flat.reshape(spin_config.shape[:-1])
     return skyrmion_density
+
