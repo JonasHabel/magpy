@@ -124,6 +124,33 @@ def test_square_lattice_skyrmion_density():
             ] for y in range(dimensions[1])
         ] for x in range(dimensions[0])
     ])
+
+    spin_gradient_helix = classical.compute_spin_gradient(latt, spin_config_helix)
+    expected_spin_gradient_helix = np.array([
+        [   # gradient in x-direction
+            [
+                [
+                    [
+                        np.sin(2*np.pi*(x+y+1)/20)*np.cos(2*np.pi*(x-y+1)/20) - np.sin(2*np.pi*(x+y-1)/20)*np.cos(2*np.pi*(x-y-1)/20),
+                        np.sin(2*np.pi*(x+y+1)/20)*np.sin(2*np.pi*(x-y+1)/20) - np.sin(2*np.pi*(x+y-1)/20)*np.sin(2*np.pi*(x-y-1)/20),
+                        np.cos(2*np.pi*(x-y+1)/20) - np.cos(2*np.pi*(x-y-1)/20),
+                    ]
+                ] for y in range(dimensions[1])
+            ] for x in range(dimensions[0])
+        ], [    # gradient in y-direction
+            [
+                [
+                    [
+                        np.sin(2*np.pi*(x+y+1)/20)*np.cos(2*np.pi*(x-y-1)/20) - np.sin(2*np.pi*(x+y-1)/20)*np.cos(2*np.pi*(x-y+1)/20),
+                        np.sin(2*np.pi*(x+y+1)/20)*np.sin(2*np.pi*(x-y-1)/20) - np.sin(2*np.pi*(x+y-1)/20)*np.sin(2*np.pi*(x-y+1)/20),
+                        np.cos(2*np.pi*(x-y-1)/20) - np.cos(2*np.pi*(x-y+1)/20),
+                    ]
+                ] for y in range(dimensions[1])
+            ] for x in range(dimensions[0])
+        ],
+    ])
+    assert np.allclose(expected_spin_gradient_helix, spin_gradient_helix)
+
     skyrmion_density_helix = classical.compute_skyrmion_density(latt, spin_config_helix)
     # import matplotlib.pyplot as plt
     # plt.quiver(
@@ -132,15 +159,13 @@ def test_square_lattice_skyrmion_density():
     # plt.show()
     # plt.imshow(skyrmion_density_helix)
     # plt.show()
-
-    quit()
     
     expected_skyrmion_density_helix = np.array([
         [
             [
-                np.sin(2*np.pi*(x+y)/20) * np.cos(2*np.pi*(x-y)/20) * () + \
-                np.sin(2*np.pi*(x+y)/20) * np.sin(2*np.pi*(x-y)/20) * () + \
-                np.cos(2*np.pi*(x-y)/20) * ()
+                np.sin(2*np.pi*(x+y)/20) * np.cos(2*np.pi*(x-y)/20) * (spin_gradient_helix[0, x, y, 0, 1] * spin_gradient_helix[1, x, y, 0, 2] - spin_gradient_helix[0, x, y, 0, 2] * spin_gradient_helix[1, x, y, 0, 1]) + \
+                np.sin(2*np.pi*(x+y)/20) * np.sin(2*np.pi*(x-y)/20) * (spin_gradient_helix[0, x, y, 0, 2] * spin_gradient_helix[1, x, y, 0, 0] - spin_gradient_helix[0, x, y, 0, 0] * spin_gradient_helix[1, x, y, 0, 2]) + \
+                np.cos(2*np.pi*(x-y)/20) * (spin_gradient_helix[0, x, y, 0, 0] * spin_gradient_helix[1, x, y, 0, 1] - spin_gradient_helix[0, x, y, 0, 1] * spin_gradient_helix[1, x, y, 0, 0])
             ] for y in range(dimensions[1])
         ] for x in range(dimensions[0])
     ])
