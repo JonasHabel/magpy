@@ -696,15 +696,16 @@ def test_1D_BdG_chain_with_cubic_interaction():
         symmetrized_vertices_aac_minusk,
         expected_symmetrized_vertices_aac_minusk.reshape(num_ks, 1, 1, 1))
         
-    # check p,pp,p self-energies
+    # check p,pp,p bubble self-energies
     freqs = np.linspace(0, 5, 5, endpoint=False)
     particle_hole_states = [["p"], ["p", "p"], ["p"]]
     
     reg = 0.05
-    eigws_se, _ = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ))
+    eigws_se, eigvs_se = LSWT.get_eigensystems_momentum_space(mod, Momenta(-k-momenta_BZ, momenta_BZ))
     eigws_minus_k_minus_BZ = eigws_se.raw_quantity[0]
     eigws_BZ = eigws_se.raw_quantity[1]
-    self_energies_old = bubble.compute_one_magnon_self_energy(
+    eigvs_BZ = eigvs_se.raw_quantity[1]
+    self_energies_bubble_pp = bubble.compute_one_magnon_self_energy(
         freqs, eigws_BZ, eigws_minus_k_minus_BZ,
         cubic_verts_eigenspace_nosym.raw_quantity,
         0, particle_hole_states, reg)
@@ -715,7 +716,23 @@ def test_1D_BdG_chain_with_cubic_interaction():
             for p_idx, p in enumerate(momenta_BZ)
         ], dtype=complex)) for freq in freqs
     ], dtype=complex).reshape(len(freqs), 1, 1)
-    assert np.allclose(self_energies_old, expected_self_energies)
+    assert np.allclose(self_energies_bubble_pp, expected_self_energies)
+
+    # check tadpole self-energies
+    eigw_Gamma, eigv_Gamma = eigws_BZ[0], eigvs_BZ[0]
+    cubic_verts_k0k = cubic_verts_eigenspace_nosym.raw_quantity[:, 0]
+    linear_comm_terms = normal_order.compute_commutator_terms_with_permutations(
+        mod, [], [np.array([eigv_Gamma])], momenta_BZ, eigvs_BZ,
+        interaction_Hamiltonian_real_space=cubic_verts_real_space)
+    linear_comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms)
+    self_energies_tadpole_p = tadpole.compute_one_magnon_self_energy(
+        freqs, eigw_Gamma, cubic_verts_k0k, linear_comm_terms_nosym[:, 0],
+          (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
+    self_energies_tadpole_h = tadpole.compute_one_magnon_self_energy(
+        freqs, eigw_Gamma, cubic_verts_k0k, linear_comm_terms_nosym[:, 0],
+          (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
+    pass
+
         
 
 
@@ -766,6 +783,12 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
     se_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, 0, ["p", "pp", "p"], reg)
+
+
+    sigma_y = np.kron(np.eye(2), np.array([[0, -1j], [1j, 0]]))
+    U_k = eigvs.raw_quantity[2]
+    U_minusk = eigvs.raw_quantity[0][0, 0]
+
     
     pass
 

@@ -150,6 +150,7 @@ def compute_commutator_term_with_permutations(
         for nperm, (permutation, inv_permutation) in enumerate(permutations_and_inv_permutations):
             ks_permuted = permute(ks_conserved, permutation)
             eigvs_permuted = permute(eigvs_conserved, permutation, as_np_array=False)
+            # TODO speed up using precomputed interaction_Hamiltonian_real_space
             commutator_term_loop_contrib_mom_space = \
                 momentum_space.compute_magnon_Hamiltonian(
                     model, ks_permuted, interaction_Hamiltonian_real_space)
@@ -169,7 +170,7 @@ def compute_commutator_term_with_permutations(
             # woco = without commuted operators
             permutation_woco = tuple(x for x in permutation if x < order)
             nperm_woco = permutations_woco.index(permutation_woco)
-            commutator_term[nperm_woco] += np.trace(  # trace over sublattice indices
+            commutator_term[nperm_woco] += np.trace(  # trace over band indices
                 commutator_term_loop_contrib_eigenspace[commuted_operators_ph_idx],
                 axis1=commuted_operator_idx_1, axis2=commuted_operator_idx_2
             )
