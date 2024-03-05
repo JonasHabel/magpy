@@ -25,7 +25,7 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
         LSWT_Hamiltonian_real_space, model, order=2)
 
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
-    magnon_H_k, magnon_H_minusk = \
+    magnon_H_minusk, magnon_H_k = \
         momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
             model, ks=np.array([k]), 
             interaction_Hamiltonian_real_space=LSWT_Hamiltonian_real_space)
