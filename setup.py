@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(name='magpy',
@@ -8,5 +8,5 @@ setup(name='magpy',
       author='Jonas Habel',
       author_email='',
       license='',
-      packages=['magpy', 'magpy.plot', 'magpy.file_io', 'magpy.largeS', 'magpy.self_energies', 'magpy.classical'],
+      packages=['magpy', 'magpy.classical', 'magpy.file_io', 'magpy.interaction_vertices', 'magpy.largeS', 'magpy.plot', 'magpy.self_energies'],
       zip_safe=False)
