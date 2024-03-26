@@ -2,18 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def set_momentum_path_x_ticks(ax, momentum_path, high_sym_point_label_map={},
+def set_momentum_path_x_ticks(ax, momentum_path, krange=None, high_sym_point_label_map={},
                               vertical_lines_params=None):
+    if krange is None:
+        krange = 0, len(momentum_path.ks)
+    
     ax.set_xticks([
         k_idx for k_idx in momentum_path.high_sym_point_idxs \
-            if 0 <= k_idx < len(momentum_path.ks)
+            if krange[0] <= k_idx < krange[1]
     ])
     high_sym_point_labels = [
         high_sym_point_label_map.get(label, label) \
         for k_idx, label in zip(
             momentum_path.high_sym_point_idxs,
             momentum_path.high_sym_point_labels) \
-        if 0 <= k_idx < len(momentum_path.ks)
+        if krange[0] <= k_idx < krange[1]
     ]
     ax.set_xticklabels(high_sym_point_labels)
 
@@ -21,9 +24,12 @@ def set_momentum_path_x_ticks(ax, momentum_path, high_sym_point_label_map={},
         set_momentum_path_vertical_lines(ax, momentum_path,
                                          params=vertical_lines_params)
 
-def set_momentum_path_vertical_lines(ax, momentum_path, params={}):
+def set_momentum_path_vertical_lines(ax, momentum_path, krange=None, params={}):
+    if krange is None:
+        krange = 0, len(momentum_path.ks)
+
     for k_idx in momentum_path.high_sym_point_idxs:
-        if 0 <= k_idx < len(momentum_path.ks):
+        if krange[0] <= k_idx < krange[1]:
             ax.vlines(k_idx, *ax.get_ylim(), **params)
 
 
