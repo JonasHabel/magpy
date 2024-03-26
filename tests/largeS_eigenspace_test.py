@@ -213,3 +213,83 @@ def test_eigenspace_Hamiltonian_honeycomb_DMI():
         #expected_magnon_H_4(*ks),
     ], symmetrize_LSWT=False)
 
+
+
+
+
+
+
+def test_eigenspace_Hamiltonian_KH_model_2d():
+    model, (S, J, K, Gamma, Gamma_prime, J_3, B) = test_models.KH_model_2d()
+
+    # nns = np.array([
+    #     [0, 0], [-np.sqrt(3)/2, 3/2], [np.sqrt(3)/2, 3/2],
+    # ])
+    # nnns = np.array([
+    #     [-np.sqrt(3), 0], [np.sqrt(3)/2, -3/2], [np.sqrt(3)/2, 3/2],
+    # ])
+
+    np.random.seed(1)
+    ks = np.random.rand(4, 2)
+
+    # # order S^2
+    # magnon_H_mom_space_0 = momentum_space.compute_magnon_Hamiltonian(model, ks[:0])
+    # eigws_0, eigvs_0 = np.zeros((0, 4)), np.zeros((0, 4, 4))
+    # expected_magnon_H_0 = np.array(3*J*S_A*S_B, dtype=np.complex128)
+
+    # # order S^(3/2)
+    # magnon_H_mom_space_1 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:0])
+    # eigws_1, eigvs_1 = get_eigensystems(model, np.zeros((0, 2)))
+    # expected_magnon_H_1 = np.zeros((4,))
+
+    # order S^1
+    magnon_H_mom_space_2 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:1])
+    eigws_2, eigvs_2 = get_eigensystems(model, ks[:1])
+    #eigvs_2[0, :, 0] *= np.exp(1j*np.pi/2)
+    eigws_Gamma, eigvs_Gamma = get_eigensystems(model, np.zeros((0, 2)))
+    sigma_x = np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))
+    sigma_y = np.kron(np.eye(2), np.array([[0, -1j], [1j, 0]]))
+    sigma_z = np.kron(np.eye(2), np.array([[1, 0], [0, -1]]))
+    magnon_H_eigenspace = eigenspace.compute_magnon_Hamiltonian(eigvs_2, magnon_H_mom_space_2)
+    
+    from magpy.largeS import real_space, normal_order
+    cubic_verts_real_space = \
+        real_space.compute_magnon_Hamiltonian(model, 3)
+    cubic_verts_mom_space = \
+        momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
+            model, np.array([np.zeros(2), ks[0]]), cubic_verts_real_space)
+    cubic_verts_eigenspace = \
+        eigenspace.compute_magnon_Hamiltonian_with_permutations(
+            np.array([eigvs_2[0], eigvs_Gamma[0], eigvs_2[1]]), cubic_verts_mom_space)
+    cubic_verts_eigenspace_nosym = \
+        normal_order.normal_order_and_symmetrize_magnon_Hamiltonian(
+            cubic_verts_eigenspace)
+
+    momenta_BZ = Momenta.of_BZ(model.lattice, (1, 1), trans=lambda k_BZ: np.random.rand(1, 1, 2))#np.array([[k_BZ[0][0] + 0.5*(model.lattice.reciprocal_lattice.reciprocal_vecs[0] + model.lattice.reciprocal_lattice.reciprocal_vecs[1])]]))
+    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, momenta_BZ)
+    comm_term = \
+        normal_order.compute_commutator_term_with_permutations(
+            model, np.zeros((0, 2)), eigvs_Gamma, momenta_BZ.k_arrays[0].reshape((1, 2)), eigvs_BZ.raw_quantity[0].reshape((1, 4, 4)), cubic_verts_real_space)
+    
+    assert np.allclose(
+        cubic_verts_eigenspace_nosym[0b000], 
+        np.transpose(cubic_verts_eigenspace_nosym[0b111].conj(), axes=[2, 1, 0]))
+
+    # order S^(1/2)
+    
+
+    # order S^0
+
+    # assert_all_eigenspace_Hamiltonians_equal(ks, [eigvs_0, eigvs_1, eigvs_2, ], [
+    #     magnon_H_mom_space_0, 
+    #     magnon_H_mom_space_1,
+    #     magnon_H_mom_space_2,
+    #     #magnon_H_mom_space_3,
+    #     #magnon_H_mom_space_4,
+    # ], [
+    #     expected_magnon_H_0, 
+    #     expected_magnon_H_1, 
+    #     expected_magnon_H_2,
+    #     #expected_magnon_H_3, 
+    #     #expected_magnon_H_4(*ks),
+    # ], symmetrize_LSWT=False)
