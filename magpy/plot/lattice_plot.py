@@ -8,17 +8,17 @@ def plot_lattice(lattice: BravaisLattice, sizes):
         ax = fig.add_subplot(projection='3d')
     else:
         ax = fig.add_subplot()
-    __plot_lattice_internal(ax, lattice, sizes)
+    plot_ax_lattice(lattice, sizes, ax)
     plt.show()
 
 
-def __plot_lattice_internal(ax, lattice: BravaisLattice, sizes):
+def plot_ax_lattice(lattice: BravaisLattice, sizes, ax):
     dim = lattice.dim
     if dim >= 4:
         raise Exception("plot_lattice for lattice dimensions >= 4 not " \
                       + "implemented yet")
     if dim == 0:
-        __plot_unit_cell_internal(ax, np.zeros(0), lattice, None)
+        plot_ax_unit_cell(ax, np.zeros(0), lattice, None)
         return
     
     sizes = np.array(sizes)
@@ -27,19 +27,21 @@ def __plot_lattice_internal(ax, lattice: BravaisLattice, sizes):
     ])).reshape((dim, np.prod(sizes))).T
 
     for unit_cell_bravais_coords in grid:
-        __plot_unit_cell_internal(ax, unit_cell_bravais_coords, lattice, sizes)
+        plot_ax_unit_cell(unit_cell_bravais_coords, lattice, ax, sizes)
+
+    return ax
 
 
 
 def plot_unit_cell(lattice: BravaisLattice):
     fig, ax = plt.subplots()
-    __plot_unit_cell_internal(ax, np.zeros(lattice.dim),
-                              lattice, sizes=np.ones(lattice.dim))
+    plot_ax_unit_cell(np.zeros(lattice.dim),
+                      lattice, ax, sizes=np.ones(lattice.dim))
     plt.show()
 
 
-def __plot_unit_cell_internal(ax, unit_cell_bravais_coords,
-                              lattice: BravaisLattice, sizes=None):
+def plot_ax_unit_cell(unit_cell_bravais_coords, 
+                      lattice: BravaisLattice, ax, sizes=None):
     unit_cell_bravais_pos = lattice.bravais_vecs.T @ unit_cell_bravais_coords
     MAX_SUPPORTED_DIM = 3
     for edge in lattice.edges:
@@ -72,3 +74,4 @@ def __plot_unit_cell_internal(ax, unit_cell_bravais_coords,
         else:
             raise Exception()
         
+    return ax
