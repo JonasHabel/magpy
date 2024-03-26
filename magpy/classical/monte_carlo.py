@@ -36,8 +36,11 @@ def run_monte_carlo(
     assert init_spin_config.shape[-1] == 3    # spin vectors should be 3-dimensional
 
     interactions_by_sublattice = \
-        group_interactions_by_sublattice(model.interactions, model.lattice.dim, num_sublattices)
-    init_spin_config_flat = init_spin_config.reshape((num_spins_total, 3))
+        group_interactions_by_sublattice(
+            model.interactions, model.lattice.dim, num_sublattices)
+    init_spin_config_flat = init_spin_config \
+        .reshape((num_spins_total, 3)) \
+        .astype(np.float64)
 
     update_infos, final_spin_config_flat = run_monte_carlo_jit(
         interactions_by_sublattice, lattice_sizes, num_sublattices, num_steps, 
@@ -299,7 +302,9 @@ def compute_energy_for_spin(spin, contracted_interactions_for_spin):
     energy_for_spin = 0.0
     
     for int_tensor in contracted_interactions_for_spin:
-        energy_contribution_by_inter = spin.astype(int_tensor.dtype).dot(int_tensor)
+        energy_contribution_by_inter = \
+            spin.astype(int_tensor.dtype)\
+                .dot(np.ascontiguousarray(int_tensor))
         energy_for_spin += energy_contribution_by_inter
 
     return energy_for_spin
