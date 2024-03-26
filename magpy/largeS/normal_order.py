@@ -145,7 +145,7 @@ def compute_commutator_term_with_permutations(
 
         ks_conserved = np.array([-np.sum(ks, axis=0), *ks, k_BZ, -k_BZ]) \
             if order >= 1 else np.array([k_BZ, -k_BZ])
-        eigvs_conserved = [*eigvs, eigv_minus_BZ, eigv_BZ]
+        eigvs_conserved = [*eigvs, eigv_BZ, eigv_minus_BZ]
 
         for nperm, (permutation, inv_permutation) in enumerate(permutations_and_inv_permutations):
             ks_permuted = permute(ks_conserved, permutation)
