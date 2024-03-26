@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.quiver import Quiver
+from magpy.plot import plot_util
 import numpy as np
 
 def plot_LLG_animation(times, spin_configs, lattice, params={}):
@@ -23,19 +25,18 @@ def plot_ax_LLG_animation(times, spin_configs, lattice, params={},
     num_times = len(times)
     spin_configs = spin_configs.reshape(
         (num_sites_total, 3, num_times))
+    # normalize wrt largest spin quantum number
+    S_max = np.amax(np.linalg.norm(spin_configs[:, :, 0], axis=1))
+    has_cmap = "cmap" in params
+    cmap = plt.get_cmap(params["cmap"]) if has_cmap else None
     
-    
-    def animate(step, qr):
-        qr.set_UVC(spin_configs[:,np.newaxis, 0, step % num_times],
-                   spin_configs[:,np.newaxis, 1, step % num_times],
-                   0.5*(spin_configs[:, np.newaxis, 2, step % num_times] + 1))
+    def animate(step, qr: Quiver):
+        plot_util.update_quiver(
+            qr, spin_configs[:, :, step % num_times], S_max, cmap)
         return qr
         
-    qr = ax.quiver(lattice_sites_pos[:, np.newaxis, 0],
-                   lattice_sites_pos[:, np.newaxis, 1],
-                   spin_configs[:, np.newaxis, 0, 0],
-                   spin_configs[:, np.newaxis, 1, 0],
-                   0.5*(spin_configs[:, np.newaxis, 2, 0] + 1), **params)
+    qr = plot_util.quiver(
+        ax, lattice_sites_pos, spin_configs[:, :, 0], S_max, cmap, params)
     
     anim = FuncAnimation(fig, animate, frames=num_times, fargs=(qr,),
                          interval=100, blit=False)

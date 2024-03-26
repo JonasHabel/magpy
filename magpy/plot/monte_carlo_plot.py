@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from magpy.classical.util import convert_to_flat_index
+from magpy.plot import plot_util
 
 def plot_monte_carlo_animation(
         update_infos, step_size, init_spin_config, lattice,
@@ -31,7 +32,11 @@ def plot_ax_monte_carlo_animation(
     num_steps = len(accept) // step_size
     init_spin_config = init_spin_config.reshape((num_sites_total, 3))
     spin_config = init_spin_config.copy() # avoid side effects
-    
+
+    # normalize wrt largest spin quantum number
+    S_max = np.amax(np.linalg.norm(spin_config, axis=1))
+    has_cmap = "cmap" in params
+    cmap = plt.get_cmap(params["cmap"]) if has_cmap else None
     
     def animate(animation_step, qr):
         for n in range(step_size):
@@ -44,17 +49,13 @@ def plot_ax_monte_carlo_animation(
                 lattice_sizes, lattice.num_sites_unit_cell
             )
             spin_config[flat_idx] = spins[intermediate_step_idx]
+            
+        plot_util.update_quiver(qr, spin_config, S_max, cmap)
 
-        qr.set_UVC(spin_config[:, np.newaxis, 0],
-                   spin_config[:, np.newaxis, 1],
-                   0.5*(spin_config[:, np.newaxis, 2] + 1))
         return qr
         
-    qr = ax.quiver(lattice_sites_pos[:, np.newaxis, 0],
-                   lattice_sites_pos[:, np.newaxis, 1],
-                   init_spin_config[:, np.newaxis, 0],
-                   init_spin_config[:, np.newaxis, 1],
-                   0.5*(init_spin_config[:, np.newaxis, 2] + 1), **params)
+    qr = plot_util.quiver(
+        ax, lattice_sites_pos, spin_config, S_max, cmap, params)
     
     anim = FuncAnimation(fig, animate, frames=num_steps, fargs=(qr,),
                          **anim_params)
