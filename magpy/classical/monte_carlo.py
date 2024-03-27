@@ -148,7 +148,7 @@ def group_interactions_by_sublattice(interactions, lattice_dim, num_sublattices)
             # This is super ugly but the only way I found that numba can deal with it
             interaction_compressed = np.zeros((
                 lattice_dim*num_other_sites + num_other_sites + 1 + 3**num_sites
-            ), dtype=np.float)
+            ), dtype=np.float64)
             interaction_compressed[:lattice_dim*num_other_sites] = \
                 other_sites_bravais_coords.reshape((lattice_dim*num_other_sites,))
             interaction_compressed[lattice_dim*num_other_sites:(lattice_dim+1)*num_other_sites] = \
