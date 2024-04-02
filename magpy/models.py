@@ -448,7 +448,7 @@ def transform(model: Model, bravais_trans, new_classical_ground_state=None):
         new_edges += get_all_translated_edges_in_enlarged_coord_system(old_edge)
 
     new_hisym_points = dict(
-        (k, trans_active @ v) \
+        (k, trans_active.T @ v) \
         for k, v in old_lattice.reciprocal_lattice.high_symmetry_points.items()
     )
 
