@@ -27,7 +27,7 @@ momenta: (2, #, #) numpy array
 def plot_energies_3D(momenta, energies, band_idxs=None, params={}):
     fig = plt.gcf()
     ax = fig.add_subplot(projection="3d")
-    plot_ax_energies_3D(momenta, energies, band_idxs, fig, ax)
+    plot_ax_energies_3D(momenta, energies, band_idxs, params, fig, ax)
     plt.show()
 
 
