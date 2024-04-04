@@ -310,8 +310,12 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
 
 def test_commutator_terms_AFM_Heisenberg_chain_with_magnetic_field():
     model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain(B=np.array([0, 0.1, 0]))
+
     ks = Momenta()     # order 3
     _, eigvs = LSWT.get_eigensystems_momentum_space(model, Momenta(np.zeros((1, model.lattice.dim))))
+    # artificially tweak the gauge...
+    eigvs.raw_quantity[0][0, :, 3] *= 1j
+
     ks_BZ = Momenta.of_BZ(model.lattice, (10,))
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, ks_BZ, strip=True)
 
@@ -320,8 +324,11 @@ def test_commutator_terms_AFM_Heisenberg_chain_with_magnetic_field():
     assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
+
+    sigma_x = np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))
+    gauge_phase = np.diag(sigma_x @ np.linalg.inv(eigvs.raw_quantity[0][0]).conj() @ sigma_x @ eigvs.raw_quantity[0][0])[::2]
     assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands
-    assert np.allclose(comm_terms_nosym.raw_quantity[0], comm_terms_nosym.raw_quantity[1].conj())
+    assert np.allclose(comm_terms_nosym.raw_quantity[0][0], gauge_phase * comm_terms_nosym.raw_quantity[1][0].conj())
 
 
 
