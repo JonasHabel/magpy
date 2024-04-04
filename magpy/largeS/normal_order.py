@@ -139,8 +139,9 @@ def compute_commutator_term_with_permutations(
     commutator_term_shape = (np.math.factorial(order), *((H_dim,) * order))
     commutator_term = np.zeros(commutator_term_shape, dtype=np.complex128)
     
+    sigma_x_ph = np.kron(np.eye(H_dim // 2), np.array([[0, 1], [1, 0]]))
+    
     for k_BZ, eigv_BZ in zip(ks_BZ, eigvs_BZ):
-        sigma_x_ph = np.kron(np.eye(H_dim // 2), np.array([[0, 1], [1, 0]]))
         eigv_minus_BZ = sigma_x_ph @ eigv_BZ.conj() @ sigma_x_ph
 
         ks_conserved = np.array([-np.sum(ks, axis=0), *ks, k_BZ, -k_BZ]) \
