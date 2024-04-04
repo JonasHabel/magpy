@@ -247,6 +247,7 @@ def test_eigenspace_Hamiltonian_KH_model_2d():
     eigws_2, eigvs_2 = get_eigensystems(model, ks[:1])
     #eigvs_2[0, :, 0] *= np.exp(1j*np.pi/2)
     eigws_Gamma, eigvs_Gamma = get_eigensystems(model, np.zeros((0, 2)))
+    eigvs_Gamma[0, :, 1] *= 1.0j
     sigma_x = np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))
     sigma_y = np.kron(np.eye(2), np.array([[0, -1j], [1j, 0]]))
     sigma_z = np.kron(np.eye(2), np.array([[1, 0], [0, -1]]))
@@ -264,6 +265,18 @@ def test_eigenspace_Hamiltonian_KH_model_2d():
     cubic_verts_eigenspace_nosym = \
         normal_order.normal_order_and_symmetrize_magnon_Hamiltonian(
             cubic_verts_eigenspace)
+    
+    gauge_phase_k = np.diag(sigma_x @ np.linalg.inv(eigvs_2[1]).conj() @ sigma_x @ eigvs_2[0])[::2]
+    gauge_phase_Gamma = np.diag(sigma_x @ np.linalg.inv(eigvs_Gamma[0]).conj() @ sigma_x @ eigvs_Gamma[0])[::2]
+    gauge_phase_minusk = np.diag(sigma_x @ np.linalg.inv(eigvs_2[0]).conj() @ sigma_x @ eigvs_2[1])[::2]
+    assert np.allclose(
+        cubic_verts_eigenspace_nosym[0b000], 
+        np.einsum(
+            "i,j,k,ijk->ijk",
+            gauge_phase_k, gauge_phase_Gamma, gauge_phase_minusk,
+            np.transpose(cubic_verts_eigenspace_nosym[0b111].conj(), axes=[2, 1, 0])),  # the hermitian conjugate
+        )
+    
 
     momenta_BZ = Momenta.of_BZ(model.lattice, (1, 1), trans=lambda k_BZ: np.random.rand(1, 1, 2))#np.array([[k_BZ[0][0] + 0.5*(model.lattice.reciprocal_lattice.reciprocal_vecs[0] + model.lattice.reciprocal_lattice.reciprocal_vecs[1])]]))
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, momenta_BZ)
@@ -271,9 +284,7 @@ def test_eigenspace_Hamiltonian_KH_model_2d():
         normal_order.compute_commutator_term_with_permutations(
             model, np.zeros((0, 2)), eigvs_Gamma, momenta_BZ.k_arrays[0].reshape((1, 2)), eigvs_BZ.raw_quantity[0].reshape((1, 4, 4)), cubic_verts_real_space)
     
-    assert np.allclose(
-        cubic_verts_eigenspace_nosym[0b000], 
-        np.transpose(cubic_verts_eigenspace_nosym[0b111].conj(), axes=[2, 1, 0]))
+    pass
 
     # order S^(1/2)
     
