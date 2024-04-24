@@ -56,7 +56,31 @@ def run_monte_carlo(
 
 
 
-def reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps=None):
+def GeneratorOrNumpyArray(function):
+    def decorated_function(update_infos, init_spin_config, *args, num_steps=None, intermediate_steps=False, **kwargs):
+        if kwargs.get("as_generator", False):
+            del kwargs["as_generator"]
+            return function(update_infos, init_spin_config, *args, num_steps=num_steps, **kwargs)
+        
+        if num_steps is None or num_steps > len(update_infos[0]):
+            num_steps = len(update_infos[0])    # maximum number of possible steps
+
+        for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, num_steps=num_steps, **kwargs)):
+            if intermediate_steps:
+                if n == 0:
+                    intermediate_values = np.zeros((num_steps+1, *intermediate_value.shape))
+                intermediate_values[n] = intermediate_value
+
+        if intermediate_steps:
+            return intermediate_values
+        else:
+            return intermediate_value
+        
+    return decorated_function
+
+
+@GeneratorOrNumpyArray
+def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None):
     current_spin_config = init_spin_config.copy()   # avoid side effects
     yield current_spin_config
 
@@ -68,25 +92,36 @@ def reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_ste
             current_spin_config[(*bravais_coords, subl_idx)] = spin
 
         yield current_spin_config
+
+
+@GeneratorOrNumpyArray
+def evaluate_quantity(quantity, update_infos, init_spin_config, num_steps=None):
+    for spin_config in reconstruct_spin_config(update_infos, init_spin_config, num_steps, as_generator=True):
+        yield quantity(spin_config)
     
 
 
-def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
-    if num_steps is None or num_steps > len(update_infos[0]):
-        num_steps = len(update_infos[0])    # maximum number of possible steps
+# def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
+#     if num_steps is None or num_steps > len(update_infos[0]):
+#         num_steps = len(update_infos[0])    # maximum number of possible steps
 
-    if intermediate_steps:
-        intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
+#     if intermediate_steps:
+#         intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
 
-    for n, spin_config in enumerate(reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps)):
-        if intermediate_steps:
-            intermediate_spin_configs[n] = spin_config
+#     for n, spin_config in enumerate(reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps)):
+#         if intermediate_steps:
+#             intermediate_spin_configs[n] = spin_config
 
-    if intermediate_steps:
-        return intermediate_spin_configs
-    else:
-        return spin_config
+#     if intermediate_steps:
+#         return intermediate_spin_configs
+#     else:
+#         return spin_config
 
+
+# def evaluate_quantity(quantity, update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
+#     if num_steps is None or num_steps > len(update_infos[0]):
+#         num_steps = len(update_infos[0])    # maximum number of possible steps
+    
 
 
 def accumulate(accumulator, init_cumulant, update_infos, init_spin_config, first_step=0, num_steps=None):
@@ -95,7 +130,7 @@ def accumulate(accumulator, init_cumulant, update_infos, init_spin_config, first
 
     cumulant = init_cumulant
 
-    for n, spin_config in enumerate(reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps)):
+    for n, spin_config in enumerate(reconstruct_spin_config(update_infos, init_spin_config, num_steps, as_generator=True)):
         if n == first_step:
             cumulant = accumulator(cumulant, spin_config, n)
         elif n >= num_steps:
