@@ -68,12 +68,10 @@ def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, inte
     for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
         if n >= num_steps:
             break
-        if not accept:
-            if intermediate_steps:
-                intermediate_spin_configs[n+1] = current_spin_config
-            continue
 
-        current_spin_config[(*bravais_coords, subl_idx)] = spin
+        if accept:
+            current_spin_config[(*bravais_coords, subl_idx)] = spin
+
         if intermediate_steps:
             intermediate_spin_configs[n+1] = current_spin_config
 
