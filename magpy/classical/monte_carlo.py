@@ -56,29 +56,36 @@ def run_monte_carlo(
 
 
 
-def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
-    if num_steps is None or num_steps > len(update_infos[0]):
-        num_steps = len(update_infos[0])    # maximum number of possible steps
-
+def reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps=None):
     current_spin_config = init_spin_config.copy()   # avoid side effects
-    if intermediate_steps:
-        intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
-        intermediate_spin_configs[0] = init_spin_config
+    yield current_spin_config
 
     for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
-        if n >= num_steps:
+        if num_steps is not None and n >= num_steps:
             break
 
         if accept:
             current_spin_config[(*bravais_coords, subl_idx)] = spin
 
+        yield current_spin_config
+    
+
+
+def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
+    if num_steps is None or num_steps > len(update_infos[0]):
+        num_steps = len(update_infos[0])    # maximum number of possible steps
+
+    if intermediate_steps:
+        intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
+
+    for n, spin_config in enumerate(reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps)):
         if intermediate_steps:
-            intermediate_spin_configs[n+1] = current_spin_config
+            intermediate_spin_configs[n] = spin_config
 
     if intermediate_steps:
         return intermediate_spin_configs
     else:
-        return current_spin_config
+        return spin_config
 
 
 def get_accepted_updates(update_infos, with_acceptance_ratio=False):
