@@ -84,7 +84,7 @@ def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_st
     current_spin_config = init_spin_config.copy()   # avoid side effects
     yield current_spin_config
 
-    final_step = (first_step + num_steps) if num_steps is not None else -1
+    final_step = (first_step + num_steps) if num_steps is not None else len(update_infos[0]) + 1
 
     for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
         if n >= final_step:
@@ -98,7 +98,9 @@ def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_st
 
 @GeneratorOrNumpyArray
 def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, num_steps=None):
-    for spin_config in reconstruct_spin_config(update_infos, init_spin_config, first_step, num_steps, as_generator=True):
+    for spin_config in reconstruct_spin_config(
+            update_infos, init_spin_config, 
+            first_step=first_step, num_steps=num_steps, as_generator=True):
         yield quantity(spin_config)
     
 
@@ -126,32 +128,34 @@ def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, nu
     
 
 
-def accumulate(accumulator, init_cumulant, update_infos, init_spin_config, first_step=0, num_steps=None):
+# def accumulate(accumulator, init_cumulant, update_infos, init_spin_config, first_step=0, num_steps=None):
+#     if num_steps is None or num_steps > len(update_infos[0]):
+#         num_steps = len(update_infos[0])    # maximum number of possible steps
+
+#     cumulant = init_cumulant
+
+#     for n, spin_config in enumerate(reconstruct_spin_config(update_infos, init_spin_config, num_steps, as_generator=True)):
+#         if n == first_step:
+#             cumulant = accumulator(cumulant, spin_config, n)
+#         elif n >= num_steps:
+#             break
+
+#     return cumulant
+
+
+def average(update_infos, init_spin_config, quantity, first_step=0, num_steps=None):
     if num_steps is None or num_steps > len(update_infos[0]):
         num_steps = len(update_infos[0])    # maximum number of possible steps
 
-    cumulant = init_cumulant
+    average = 0
 
-    for n, spin_config in enumerate(reconstruct_spin_config(update_infos, init_spin_config, num_steps, as_generator=True)):
-        if n == first_step:
-            cumulant = accumulator(cumulant, spin_config, n)
-        elif n >= num_steps:
-            break
+    for intermediate_value in evaluate_quantity(
+            update_infos, init_spin_config, quantity,
+            first_step=first_step, num_steps=num_steps, intermediate_steps=True):
+        average = intermediate_value + average
 
-    return cumulant
+    return average / num_steps
 
-
-def average(quantity, update_infos, init_spin_config, first_step=0, num_steps=None):
-    if num_steps is None or num_steps > len(update_infos[0]):
-        num_steps = len(update_infos[0])    # maximum number of possible steps
-
-    def accumulator(cumulant, spin_config, n):
-        return quantity(spin_config) + cumulant
-
-    return accumulate(
-        accumulator, 0,
-        update_infos, init_spin_config, first_step, num_steps,
-    ) / num_steps
 
 
 def get_accepted_updates(update_infos, with_acceptance_ratio=False):
