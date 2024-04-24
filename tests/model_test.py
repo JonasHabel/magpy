@@ -467,6 +467,50 @@ def test_FM_Heisenberg_transform():
 
 
 
+def test_FM_Heisenberg_square_lattice_transform_and_band_structure():
+    latt = lattice.SquareLattice()
+    mod = models.Model(
+        latt,
+        [interactions.NthNearestNeighborHeisenbergInteraction(latt, n=1, J=-1)],
+        classical_ground_state=np.array([[0, 0, 1]])
+    )
+
+    momentum_path = mod.lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
+        ["Gamma", "X", "M", "Gamma"], 100)
+    momenta = Momenta.of_BZ(mod.lattice, (20, 20))
+    eigw, _ = LSWT.get_eigensystems_momentum_space(mod, momenta)
+    
+    from magpy.plot import LSWT_plot
+    # LSWT_plot.plot_energies_3D(np.transpose(momenta.k_arrays[0], axes=(2, 0, 1)), eigw.raw_quantity[0])
+
+
+    trans_1 = np.diag([2, 1])
+    mod_1 = models.transform(mod, trans_1)
+
+    momentum_path_1 = mod_1.lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
+        ["Gamma", "X", "M", "Gamma"], 100, {
+            "Gamma": np.array([0, 0]),
+            "X": np.array([1, 0]),
+            "M": np.array([1, 0.5]),
+        })
+    eigw_1, _ = LSWT.get_eigensystems_momentum_space(mod_1, Momenta.of(momentum_path_1))
+    # LSWT_plot.plot_energies_along_momentum_path(momentum_path_1, eigw_1.raw_quantity[0])
+    momentum_path_1a = mod_1.lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
+        ["X", "Gamma", "Y", "X"], 100, {
+            "Gamma": np.array([0, 0]),
+            "Y": np.array([0, 0.5]),
+            "X": np.array([1, 0]),
+        })
+    eigw_1a, _ = LSWT.get_eigensystems_momentum_space(mod_1, Momenta.of(momentum_path_1a))
+    # LSWT_plot.plot_energies_along_momentum_path(momentum_path_1, eigw_1a.raw_quantity[0])
+
+    assert np.allclose(eigw_1.raw_quantity[0], eigw_1a.raw_quantity[0])
+    # momenta_1 = Momenta.of_BZ(mod_1.lattice, (20, 20))
+    # eigw_1, _ = LSWT.get_eigensystems_momentum_space(mod_1, momenta_1)
+    # LSWT_plot.plot_energies_3D(np.transpose(momenta_1.k_arrays[0], axes=(2, 0, 1)), eigw_1.raw_quantity[0])
+    
+
+
 
 def test_FM_Heisenberg_square_lattice_delete_dimensions():
     latt = lattice.SquareLattice()
