@@ -88,6 +88,35 @@ def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, inte
         return spin_config
 
 
+
+def accumulate(accumulator, init_cumulant, update_infos, init_spin_config, first_step=0, num_steps=None):
+    if num_steps is None or num_steps > len(update_infos[0]):
+        num_steps = len(update_infos[0])    # maximum number of possible steps
+
+    cumulant = init_cumulant
+
+    for n, spin_config in enumerate(reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps)):
+        if n == first_step:
+            cumulant = accumulator(cumulant, spin_config, n)
+        elif n >= num_steps:
+            break
+
+    return cumulant
+
+
+def average(quantity, update_infos, init_spin_config, first_step=0, num_steps=None):
+    if num_steps is None or num_steps > len(update_infos[0]):
+        num_steps = len(update_infos[0])    # maximum number of possible steps
+
+    def accumulator(cumulant, spin_config, n):
+        return quantity(spin_config) + cumulant
+
+    return accumulate(
+        accumulator, 0,
+        update_infos, init_spin_config, first_step, num_steps,
+    ) / num_steps
+
+
 def get_accepted_updates(update_infos, with_acceptance_ratio=False):
     accept, bravais_coords, subl_idxs, spins = update_infos
     if any(map(lambda x: len(x) <= 0, update_infos)):
