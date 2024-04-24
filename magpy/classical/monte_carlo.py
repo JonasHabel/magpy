@@ -57,15 +57,15 @@ def run_monte_carlo(
 
 
 def GeneratorOrNumpyArray(function):
-    def decorated_function(update_infos, init_spin_config, *args, num_steps=None, intermediate_steps=False, **kwargs):
+    def decorated_function(update_infos, init_spin_config, *args, first_step=0, num_steps=None, intermediate_steps=False, **kwargs):
         if kwargs.get("as_generator", False):
             del kwargs["as_generator"]
-            return function(update_infos, init_spin_config, *args, num_steps=num_steps, **kwargs)
+            return function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, **kwargs)
         
         if num_steps is None or num_steps > len(update_infos[0]):
             num_steps = len(update_infos[0])    # maximum number of possible steps
 
-        for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, num_steps=num_steps, **kwargs)):
+        for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, **kwargs)):
             if intermediate_steps:
                 if n == 0:
                     intermediate_values = np.zeros((num_steps+1, *intermediate_value.shape))
@@ -80,12 +80,14 @@ def GeneratorOrNumpyArray(function):
 
 
 @GeneratorOrNumpyArray
-def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None):
+def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_steps=None):
     current_spin_config = init_spin_config.copy()   # avoid side effects
     yield current_spin_config
 
+    final_step = (first_step + num_steps) if num_steps is not None else -1
+
     for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
-        if num_steps is not None and n >= num_steps:
+        if n >= final_step:
             break
 
         if accept:
@@ -95,8 +97,8 @@ def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None):
 
 
 @GeneratorOrNumpyArray
-def evaluate_quantity(quantity, update_infos, init_spin_config, num_steps=None):
-    for spin_config in reconstruct_spin_config(update_infos, init_spin_config, num_steps, as_generator=True):
+def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, num_steps=None):
+    for spin_config in reconstruct_spin_config(update_infos, init_spin_config, first_step, num_steps, as_generator=True):
         yield quantity(spin_config)
     
 
