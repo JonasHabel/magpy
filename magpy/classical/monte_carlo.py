@@ -110,43 +110,6 @@ def compute_observable(update_infos, init_spin_config, observable, first_step=0,
     
 
 
-# def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
-#     if num_steps is None or num_steps > len(update_infos[0]):
-#         num_steps = len(update_infos[0])    # maximum number of possible steps
-
-#     if intermediate_steps:
-#         intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
-
-#     for n, spin_config in enumerate(reconstruct_spin_config_sequentially(update_infos, init_spin_config, num_steps)):
-#         if intermediate_steps:
-#             intermediate_spin_configs[n] = spin_config
-
-#     if intermediate_steps:
-#         return intermediate_spin_configs
-#     else:
-#         return spin_config
-
-
-# def evaluate_observable(observable, update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
-#     if num_steps is None or num_steps > len(update_infos[0]):
-#         num_steps = len(update_infos[0])    # maximum number of possible steps
-    
-
-
-# def accumulate(accumulator, init_cumulant, update_infos, init_spin_config, first_step=0, num_steps=None):
-#     if num_steps is None or num_steps > len(update_infos[0]):
-#         num_steps = len(update_infos[0])    # maximum number of possible steps
-
-#     cumulant = init_cumulant
-
-#     for n, spin_config in enumerate(reconstruct_spin_config(update_infos, init_spin_config, num_steps, as_generator=True)):
-#         if n == first_step:
-#             cumulant = accumulator(cumulant, spin_config, n)
-#         elif n >= num_steps:
-#             break
-
-#     return cumulant
-
 
 def average(update_infos, init_spin_config, observable, first_step=0, num_steps=None):
     if num_steps is None or num_steps > len(update_infos[0]):
