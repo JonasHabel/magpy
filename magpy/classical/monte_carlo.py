@@ -56,31 +56,75 @@ def run_monte_carlo(
 
 
 
-def reconstruct_spin_config(update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
+def GeneratorOrNumpyArray(function):
+    def decorated_function(update_infos, init_spin_config, *args, first_step=0, num_steps=None, intermediate_steps=False, **kwargs):
+        if kwargs.get("as_generator", False):
+            del kwargs["as_generator"]
+            return function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, **kwargs)
+        
+        if num_steps is None or num_steps > len(update_infos[0]):
+            num_steps = len(update_infos[0])    # maximum number of possible steps
+
+        for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, with_accept=False, **kwargs)):
+            if intermediate_steps:
+                if n == 0:
+                    intermediate_values = np.zeros((num_steps+1, *intermediate_value.shape))
+                intermediate_values[n] = intermediate_value
+
+        if intermediate_steps:
+            return intermediate_values
+        else:
+            return intermediate_value
+        
+    return decorated_function
+
+
+@GeneratorOrNumpyArray
+def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_steps=None, with_accept=False):
+    current_spin_config = init_spin_config.copy()   # avoid side effects
+    yield (current_spin_config, True) if with_accept else current_spin_config
+
+    final_step = (first_step + num_steps) if num_steps is not None else len(update_infos[0]) + 1
+
+    for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
+        if n >= final_step:
+            break
+
+        if accept:
+            current_spin_config[(*bravais_coords, subl_idx)] = spin
+
+        yield (current_spin_config, accept) if with_accept else current_spin_config
+
+
+@GeneratorOrNumpyArray
+def compute_observable(update_infos, init_spin_config, observable, first_step=0, num_steps=None, with_accept=False):
+    current_observable = 0
+    for spin_config, accept in reconstruct_spin_config(
+            update_infos, init_spin_config, 
+            first_step=first_step, num_steps=num_steps, as_generator=True,
+            with_accept=True):
+        if accept:
+            current_observable = observable(spin_config)
+        
+        yield (current_observable, accept) if with_accept else current_observable
+    
+
+
+
+def average(update_infos, init_spin_config, observable, first_step=0, num_steps=None):
     if num_steps is None or num_steps > len(update_infos[0]):
         num_steps = len(update_infos[0])    # maximum number of possible steps
 
-    current_spin_config = init_spin_config.copy()   # avoid side effects
-    if intermediate_steps:
-        intermediate_spin_configs = np.zeros((num_steps+1, *init_spin_config.shape))
-        intermediate_spin_configs[0] = init_spin_config
+    average = 0
 
-    for n, (accept, bravais_coords, subl_idx, spin) in enumerate(zip(*update_infos)):
-        if n >= num_steps:
-            break
-        if not accept:
-            if intermediate_steps:
-                intermediate_spin_configs[n+1] = current_spin_config
-            continue
+    for intermediate_value in compute_observable(
+            update_infos, init_spin_config, observable,
+            first_step=first_step, num_steps=num_steps, intermediate_steps=True,
+            as_generator=True):
+        average = intermediate_value + average
 
-        current_spin_config[(*bravais_coords, subl_idx)] = spin
-        if intermediate_steps:
-            intermediate_spin_configs[n+1] = current_spin_config
+    return average / num_steps
 
-    if intermediate_steps:
-        return intermediate_spin_configs
-    else:
-        return current_spin_config
 
 
 def get_accepted_updates(update_infos, with_acceptance_ratio=False):

@@ -61,6 +61,12 @@ def test_monte_carlo_FM_Heisenberg_chain():
     evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=None, intermediate_steps=True)
     assert np.allclose(final_spin_config, evolved_spin_configs[-1])
 
+    for intermediate_spin_config in monte_carlo.reconstruct_spin_config(update_infos, spin_config, as_generator=True):
+        pass
+    assert np.allclose(intermediate_spin_config, final_spin_config)
+
+    monte_carlo.average(update_infos, spin_config, np.sum)
+
     accepted_update_infos = monte_carlo.get_accepted_updates(update_infos)
     assert len(accepted_update_infos[0].shape) == 2
     assert accepted_update_infos[0].shape[1] == 1
