@@ -97,16 +97,16 @@ def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_st
 
 
 @GeneratorOrNumpyArray
-def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, num_steps=None, with_accept=False):
-    current_quantity = 0
+def compute_observable(update_infos, init_spin_config, observable, first_step=0, num_steps=None, with_accept=False):
+    current_observable = 0
     for spin_config, accept in reconstruct_spin_config(
             update_infos, init_spin_config, 
             first_step=first_step, num_steps=num_steps, as_generator=True,
             with_accept=True):
         if accept:
-            current_quantity = quantity(spin_config)
+            current_observable = observable(spin_config)
         
-        yield (current_quantity, accept) if with_accept else current_quantity
+        yield (current_observable, accept) if with_accept else current_observable
     
 
 
@@ -127,7 +127,7 @@ def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, nu
 #         return spin_config
 
 
-# def evaluate_quantity(quantity, update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
+# def evaluate_observable(observable, update_infos, init_spin_config, num_steps=None, intermediate_steps=False):
 #     if num_steps is None or num_steps > len(update_infos[0]):
 #         num_steps = len(update_infos[0])    # maximum number of possible steps
     
@@ -148,14 +148,14 @@ def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, nu
 #     return cumulant
 
 
-def average(update_infos, init_spin_config, quantity, first_step=0, num_steps=None):
+def average(update_infos, init_spin_config, observable, first_step=0, num_steps=None):
     if num_steps is None or num_steps > len(update_infos[0]):
         num_steps = len(update_infos[0])    # maximum number of possible steps
 
     average = 0
 
-    for intermediate_value in evaluate_quantity(
-            update_infos, init_spin_config, quantity,
+    for intermediate_value in compute_observable(
+            update_infos, init_spin_config, observable,
             first_step=first_step, num_steps=num_steps, intermediate_steps=True,
             as_generator=True):
         average = intermediate_value + average
