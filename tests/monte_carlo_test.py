@@ -58,8 +58,17 @@ def test_monte_carlo_FM_Heisenberg_chain():
         monte_carlo.sphere_samplers.uniform)
     
     update_infos, final_spin_config = monte_carlo.run_monte_carlo(model, 10, spin_config, 1.0*np.abs(J))
-    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, num_steps=None, intermediate_steps=True)
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, first_step=2, num_steps=8, intermediate_steps=True)
     assert np.allclose(final_spin_config, evolved_spin_configs[-1])
+    assert len(evolved_spin_configs) == 8
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, first_step=0, num_steps=None, intermediate_steps=True)
+    assert np.allclose(final_spin_config, evolved_spin_configs[-1])
+    assert len(evolved_spin_configs) == 10
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, first_step=-1, num_steps=None, intermediate_steps=True)
+    assert np.allclose(final_spin_config, evolved_spin_configs[-1])
+    assert len(evolved_spin_configs) == 11
+    evolved_spin_configs = monte_carlo.reconstruct_spin_config(update_infos, spin_config, first_step=-1, num_steps=5, intermediate_steps=True)
+    assert len(evolved_spin_configs) == 6
 
     for intermediate_spin_config in monte_carlo.reconstruct_spin_config(update_infos, spin_config, as_generator=True):
         pass

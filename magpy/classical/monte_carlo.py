@@ -68,7 +68,9 @@ def GeneratorOrNumpyArray(function):
         for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, with_accept=False, **kwargs)):
             if intermediate_steps:
                 if n == 0:
-                    intermediate_values = np.zeros((num_steps+1, *intermediate_value.shape))
+                    intermediate_values = np.zeros((
+                        (num_steps+1) if first_step < 0 else num_steps,
+                        *intermediate_value.shape))
                 intermediate_values[n] = intermediate_value
 
         if intermediate_steps:
@@ -80,9 +82,11 @@ def GeneratorOrNumpyArray(function):
 
 
 @GeneratorOrNumpyArray
-def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_steps=None, with_accept=False):
+def reconstruct_spin_config(update_infos, init_spin_config, first_step=-1, num_steps=None, with_accept=False):
     current_spin_config = init_spin_config.copy()   # avoid side effects
-    yield (current_spin_config, True) if with_accept else current_spin_config
+    if first_step < 0:
+        yield (current_spin_config, True) if with_accept else current_spin_config
+        first_step = 0
 
     final_step = (first_step + num_steps) if num_steps is not None else len(update_infos[0]) + 1
 
@@ -93,7 +97,8 @@ def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_st
         if accept:
             current_spin_config[(*bravais_coords, subl_idx)] = spin
 
-        yield (current_spin_config, accept) if with_accept else current_spin_config
+        if n >= first_step:
+            yield (current_spin_config, accept) if with_accept else current_spin_config
 
 
 @GeneratorOrNumpyArray
