@@ -65,7 +65,7 @@ def GeneratorOrNumpyArray(function):
         if num_steps is None or num_steps > len(update_infos[0]):
             num_steps = len(update_infos[0])    # maximum number of possible steps
 
-        for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, **kwargs)):
+        for n, intermediate_value in enumerate(function(update_infos, init_spin_config, *args, first_step=first_step, num_steps=num_steps, with_accept=False, **kwargs)):
             if intermediate_steps:
                 if n == 0:
                     intermediate_values = np.zeros((num_steps+1, *intermediate_value.shape))
@@ -80,9 +80,9 @@ def GeneratorOrNumpyArray(function):
 
 
 @GeneratorOrNumpyArray
-def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_steps=None):
+def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_steps=None, with_accept=False):
     current_spin_config = init_spin_config.copy()   # avoid side effects
-    yield current_spin_config
+    yield (current_spin_config, True) if with_accept else current_spin_config
 
     final_step = (first_step + num_steps) if num_steps is not None else len(update_infos[0]) + 1
 
@@ -93,15 +93,20 @@ def reconstruct_spin_config(update_infos, init_spin_config, first_step=0, num_st
         if accept:
             current_spin_config[(*bravais_coords, subl_idx)] = spin
 
-        yield current_spin_config
+        yield (current_spin_config, accept) if with_accept else current_spin_config
 
 
 @GeneratorOrNumpyArray
-def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, num_steps=None):
-    for spin_config in reconstruct_spin_config(
+def evaluate_quantity(update_infos, init_spin_config, quantity, first_step=0, num_steps=None, with_accept=False):
+    current_quantity = 0
+    for spin_config, accept in reconstruct_spin_config(
             update_infos, init_spin_config, 
-            first_step=first_step, num_steps=num_steps, as_generator=True):
-        yield quantity(spin_config)
+            first_step=first_step, num_steps=num_steps, as_generator=True,
+            with_accept=True):
+        if accept:
+            current_quantity = quantity(spin_config)
+        
+        yield (current_quantity, accept) if with_accept else current_quantity
     
 
 
@@ -151,7 +156,8 @@ def average(update_infos, init_spin_config, quantity, first_step=0, num_steps=No
 
     for intermediate_value in evaluate_quantity(
             update_infos, init_spin_config, quantity,
-            first_step=first_step, num_steps=num_steps, intermediate_steps=True):
+            first_step=first_step, num_steps=num_steps, intermediate_steps=True,
+            as_generator=True):
         average = intermediate_value + average
 
     return average / num_steps
