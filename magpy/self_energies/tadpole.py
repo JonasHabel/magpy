@@ -39,13 +39,18 @@ def compute_one_magnon_self_energy(
     HOLE, PARTICLE = 0, 1
     sigma_x = PAULI_MATRICES[0]
     def conjugate_if(eigvs, condition):
+        num_bands = eigvs.shape[-1] // 2
+        assert 2*num_bands == eigvs.shape[-2]
+        identity = np.eye(num_bands)
+        sigma_x = np.kron(identity, PAULI_MATRICES[0])
+
         return sigma_x @ eigvs.conj() @ sigma_x if condition() else eigvs
     
     eigvs_in = conjugate_if(eigvs_k, lambda: ph_idxs[0][0] == PARTICLE)
     eigvs_out = conjugate_if(eigvs_k, lambda: ph_idxs[2][0] == HOLE)
-    gauge_phase_in = compute_gauge_phase(eigvs_in, eigvs_verts[0])[::ph_idxs[0][0]]
-    gauge_phase_internal = compute_gauge_phase(eigvs_verts[1], eigvs_commutator_terms[0])[::ph_idxs[1][0]]
-    gauge_phase_out = compute_gauge_phase(eigvs_verts[2], eigvs_out)[::ph_idxs[2][0]]
+    gauge_phase_in = compute_gauge_phase(eigvs_in, eigvs_verts[0])[ph_idxs[0][0]::2]
+    gauge_phase_internal = compute_gauge_phase(eigvs_verts[1], eigvs_commutator_terms)[ph_idxs[1][0]::2]
+    gauge_phase_out = compute_gauge_phase(eigvs_verts[2], eigvs_out)[ph_idxs[2][0]::2]
 
     # EVALUATE DIAGRAM
     self_energy = np.zeros((num_freqs, num_bands, num_bands),
@@ -66,7 +71,14 @@ def compute_one_magnon_self_energy(
 
 
 def compute_gauge_phase(eigvs_1, eigvs_2):
-    sigma_x, sigma_z = PAULI_MATRICES[0], PAULI_MATRICES[2]
+    num_bands = eigvs_1.shape[-1] // 2
+    assert 2*num_bands == eigvs_1.shape[-2]
+    assert 2*num_bands == eigvs_2.shape[-1]
+    assert 2*num_bands == eigvs_2.shape[-2]
+
+    identity = np.eye(num_bands)
+    sigma_x = np.kron(identity, PAULI_MATRICES[0])
+    sigma_z = np.kron(identity, PAULI_MATRICES[2])
     eigvs_1_inv = sigma_z @ eigvs_1.T.conj() @ sigma_z
 
     return np.diag(eigvs_1_inv @ sigma_x @ eigvs_2.conj() @ sigma_x)

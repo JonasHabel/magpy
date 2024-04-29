@@ -251,11 +251,12 @@ def test_1D_BdG_chain_with_cubic_interaction():
         eigvs[(-k_idx-p_idx) % num_ks] \
         for p_idx in range(num_ks)
     ])
+    eigvs_cubic_vert = [eigvs_minus_k_minus_BZ, eigvs, eigvs[k_idx]]
     cubic_verts_eigenspace = \
         eigenspace.compute_magnon_Hamiltonians_with_permutations(
             mod, 
             MSQ(
-                [eigvs_minus_k_minus_BZ, eigvs, eigvs[k_idx]], 
+                eigvs_cubic_vert, 
                 Momenta(-k-momenta_BZ, momenta_BZ, k)
             ),
             cubic_verts_mom_space
@@ -726,11 +727,15 @@ def test_1D_BdG_chain_with_cubic_interaction():
         interaction_Hamiltonian_real_space=cubic_verts_real_space)
     linear_comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms)
     self_energies_tadpole_p = tadpole.compute_one_magnon_self_energy(
-        freqs, eigw_Gamma, cubic_verts_k0k, linear_comm_terms_nosym[:, 0],
-          (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
+        freqs, eigw_Gamma, eigvs[k_idx], cubic_verts_k0k,
+        [eigvs_cubic_vert[0][0], eigvs_cubic_vert[1][0], eigvs_cubic_vert[2]],
+        linear_comm_terms_nosym[:, 0], eigv_Gamma,
+        (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
     self_energies_tadpole_h = tadpole.compute_one_magnon_self_energy(
-        freqs, eigw_Gamma, cubic_verts_k0k, linear_comm_terms_nosym[:, 0],
-          (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
+        freqs, eigw_Gamma, eigvs[k_idx], cubic_verts_k0k, 
+        [eigvs_cubic_vert[0][0], eigvs_cubic_vert[1][0], eigvs_cubic_vert[2]],
+        linear_comm_terms_nosym[:, 0], eigv_Gamma,
+        (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
     pass
 
         
@@ -796,9 +801,17 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
 
 
 def test_tadpole():
+    np.random.seed(2)
     freqs = np.linspace(0, 1, 120)
     eigw_Gamma = np.random.rand(12)
+    eigv_k = np.random.rand(12, 12)
     cubic_verts = np.random.rand(8, 6, 6, 6)
+    eigvs_verts = np.random.rand(3, 12, 12)
     linear_commutator_terms = np.random.rand(2, 6)
-    
-    tadpole.compute_one_magnon_self_energy(freqs, eigw_Gamma, cubic_verts, linear_commutator_terms, (20, 20, 20), 0, ["p", "p", "p"], reg=0.05)
+    eigv_commutator_term = np.random.rand(12, 12)
+
+    tadpole.compute_one_magnon_self_energy(
+        freqs, eigw_Gamma, eigv_k, cubic_verts, eigvs_verts,
+        linear_commutator_terms, eigv_commutator_term,
+        (20, 20, 20), 0, ["p", "p", "p"], reg=0.05
+    )
