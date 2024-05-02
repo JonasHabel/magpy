@@ -79,7 +79,7 @@ def test_normal_order_FM_Heisenberg_chain():
     model, (J, S) = test_models.FM_Heisenberg_chain()
 
     # COMMUTATOR TERMS
-    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
+    ks_BZ = np.linspace(1, 1, 1).reshape(1, 1)    # not really the BZ, just a mock
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
 
     np.random.seed(1)
@@ -115,6 +115,25 @@ def test_normal_order_FM_Heisenberg_chain():
     eigws_4, eigvs_4 = get_eigensystems(model, ks[:3])
     magnon_H_mom_space_4 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(model, ks[:3])
     magnon_H_eigenspace_4 = eigenspace.compute_magnon_Hamiltonian_with_permutations(eigvs_4, magnon_H_mom_space_4)
+    sum_of_cosines = np.cos(ks[0,0]+ks[1,0]+ks[2,0]) + np.cos(ks[0,0]) + np.cos(ks[1,0]) + np.cos(ks[2,0])
+    expected_magnon_H_eigenspace_nosym_4_explicit = J/24 * np.array([
+        0,                                                                            # a_{-k-p-q}, a_{q} a_{p} a_{k}
+        0,                                                                            # a_{-k-p-q}, a_{q} a_{p} a_{k}^†
+        0,                                                                            # a_{-k-p-q} a_{q} a_{p}^† a_{k}
+        6 * (2*np.cos(ks[0,0]+ks[1,0]) + 2*np.cos(ks[0,0]+ks[2,0]) - sum_of_cosines), # a_{-k-p-q} a_{q} a_{p}^† a_{k}^†
+        0,                                                                            # a_{-k-p-q} a_{q}^† a_{p} a_{k}
+        6 * (2*np.cos(ks[1,0]+ks[2,0]) + 2*np.cos(ks[0,0]+ks[1,0]) - sum_of_cosines), # a_{-k-p-q} a_{q}^† a_{p} a_{k}^†
+        6 * (2*np.cos(ks[1,0]+ks[2,0]) + 2*np.cos(ks[0,0]+ks[2,0]) - sum_of_cosines), # a_{-k-p-q} a_{q}^† a_{p}^† a_{k}
+        0,                                                                            # a_{-k-p-q} a_{q}^† a_{p}^† a_{k}^†
+        0,                                                                            # a_{-k-p-q}^† a_{q} a_{p} a_{k}
+        6 * (2*np.cos(ks[1,0]+ks[2,0]) + 2*np.cos(ks[0,0]+ks[2,0]) - sum_of_cosines), # a_{-k-p-q}^† a_{q} a_{p} a_{k}^†
+        6 * (2*np.cos(ks[1,0]+ks[2,0]) + 2*np.cos(ks[0,0]+ks[1,0]) - sum_of_cosines), # a_{-k-p-q}^† a_{q} a_{p}^† a_{k}
+        0,                                                                            # a_{-k-p-q}^† a_{q} a_{p}^† a_{k}^†
+        6 * (2*np.cos(ks[0,0]+ks[1,0]) + 2*np.cos(ks[0,0]+ks[2,0]) - sum_of_cosines), # a_{-k-p-q}^† a_{q}^† a_{p} a_{k}
+        0,                                                                            # a_{-k-p-q}^† a_{q}^† a_{p} a_{k}^†
+        0,                                                                            # a_{-k-p-q}^† a_{q}^† a_{p}^† a_{k}
+        0,                                                                            # a_{-k-p-q}^†, a_{q}^† a_{p}^† a_{k}^†
+    ]).reshape((16, 1, 1, 1, 1))
     expected_magnon_H_eigenspace_nosym_4 = np.array([
         [1/24 * sum_over_idxs(magnon_H_eigenspace_4, [(n, 0,0,0,0) for n in range(24)])], # a_{-k-p-q}, a_{q} a_{p} a_{k}
         [1/6  * sum_over_idxs(magnon_H_eigenspace_4, [                                    # a_{-k-p-q} a_{q} a_{p} a_{k}^†
@@ -203,9 +222,10 @@ def test_normal_order_FM_Heisenberg_chain():
         ],
         [1/24 * sum_over_idxs(magnon_H_eigenspace_4, [(n, 1,1,1,1) for n in range(24)])], # a_{-k-p-q}^†, a_{q}^† a_{p}^† a_{k}^†
     ]).reshape((16, 1, 1, 1, 1))
+    assert np.allclose(expected_magnon_H_eigenspace_nosym_4, expected_magnon_H_eigenspace_nosym_4_explicit)
     expected_commutator_terms_2 = J * np.array([
-        [[0, 0], [np.sum(np.exp(1j*(ks[0,0] + ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{-q} α_{q}
-        [[0, 0], [np.sum(np.exp(1j*(-ks[0,0] + ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{q} α_{-q}
+        [[0, 0], [np.sum(np.exp(1j*(ks[0,0] - ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{-q} α_{q}
+        [[0, 0], [np.sum(np.exp(1j*(-ks[0,0] - ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],  # α_{q} α_{-q}
     ])
 
     assert_all_nosym_eigenspace_Hamiltonians_terms_equal([
