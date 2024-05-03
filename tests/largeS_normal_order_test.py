@@ -79,7 +79,7 @@ def test_normal_order_FM_Heisenberg_chain():
     model, (J, S) = test_models.FM_Heisenberg_chain()
 
     # COMMUTATOR TERMS
-    ks_BZ = np.linspace(1, 1, 1).reshape(1, 1)    # not really the BZ, just a mock
+    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
 
     np.random.seed(1)
