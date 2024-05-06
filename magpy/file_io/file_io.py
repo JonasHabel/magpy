@@ -13,10 +13,11 @@ class DefaultFileNamingConvention(FileNamingConvention):
         self.entry_separator = entry_separator
         self.key_val_separator = key_val_separator
         self.quotation_char = quotation_char
+        self.ndarray_formatter = str
 
     def quantity_to_string(self, quantity):
         if type(quantity) == np.ndarray:
-            return "[" + ",".join(map(str, quantity)) + "]"
+            return "[" + ",".join(map(self.ndarray_formatter, quantity)) + "]"
         elif type(quantity) == ReciprocalLattice.MomentumPath:
             return "{" + ",".join(quantity.high_sym_point_labels) + ";" \
                 + str(len(quantity.ks)) + "}"
