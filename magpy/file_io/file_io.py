@@ -13,21 +13,25 @@ class DefaultFileNamingConvention(FileNamingConvention):
         self.entry_separator = entry_separator
         self.key_val_separator = key_val_separator
         self.quotation_char = quotation_char
-        self.ndarray_formatter = str
+        self.type_formatters = {}
 
-    def quantity_to_string(self, quantity):
-        if type(quantity) == np.ndarray:
-            return "[" + ",".join(map(self.ndarray_formatter, quantity)) + "]"
-        elif type(quantity) == ReciprocalLattice.MomentumPath:
+    def quantity_to_string(self, quantity, key):
+        typ = type(quantity)
+
+        if typ == np.ndarray:
+            return "[" + ",".join(map(lambda q: self.quantity_to_string(q, key), quantity)) + "]"
+        elif typ == ReciprocalLattice.MomentumPath:
             return "{" + ",".join(quantity.high_sym_point_labels) + ";" \
                 + str(len(quantity.ks)) + "}"
-        elif type(quantity) == tuple:
-            return "(" + ",".join(map(self.quantity_to_string, quantity)) + ")"
-        elif type(quantity) == list:
-            return "[" + ",".join(map(self.quantity_to_string, quantity)) + "]"
-        elif type(quantity) == str:
+        elif typ == tuple:
+            return "(" + ",".join(map(lambda q: self.quantity_to_string(q, key), quantity)) + ")"
+        elif typ == list:
+            return "[" + ",".join(map(lambda q: self.quantity_to_string(q, key), quantity)) + "]"
+        elif typ == str:
             q = self.quotation_char
             return f"{q}{quantity.split(os.sep)[-1]}{q}"
+        elif typ in self.type_formatters:
+            return self.type_formatters.get(typ)(quantity, key)
         else:
             return str(quantity)
         
@@ -36,8 +40,9 @@ class DefaultFileNamingConvention(FileNamingConvention):
                   .replace(self.entry_separator, "-")
     
     def create_key_val_pair_string(self, k, v):
-        return self.key_to_string(k) + self.key_val_separator \
-                + self.quantity_to_string(v)
+        return self.key_to_string(k) \
+            + self.key_val_separator \
+            + self.quantity_to_string(v, k)
 
     def create_file_name(self, quantity_name, parameters: dict):
         if not parameters:
