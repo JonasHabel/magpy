@@ -26,7 +26,7 @@ def plot_ax_LLG_animation(times, spin_configs, lattice, params={},
     spin_configs = spin_configs.reshape(
         (num_sites_total, 3, num_times))
     # normalize wrt largest spin quantum number
-    S_max = np.amax(np.linalg.norm(spin_configs[:, :, 0], axis=1))
+    S_max = np.amax(np.linalg.norm(spin_configs[..., 0], axis=1))
     has_cmap = "cmap" in params
     cmap = plt.get_cmap(params["cmap"]) if has_cmap else None
     
