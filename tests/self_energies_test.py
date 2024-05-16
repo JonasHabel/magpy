@@ -3,7 +3,7 @@ from magpy import models
 from magpy.interactions import *
 from magpy.largeS import real_space, momentum_space, eigenspace, normal_order
 from magpy.largeS import LSWT
-from magpy.self_energies import bubble, tadpole
+from magpy.self_energies import bubble, tadpole, quartic_bubble
 import numpy as np
 
 from magpy.momenta_utils import MSQ, Momenta
@@ -814,4 +814,21 @@ def test_tadpole():
         freqs, eigw_Gamma, eigv_k, cubic_verts, eigvs_verts,
         linear_commutator_terms, eigv_commutator_term,
         (20, 20, 20), 0, ["p", "p", "p"], reg=0.05
+    )
+
+
+
+def test_quartic_bubble():
+    freqs = np.linspace(0, 1, 120)
+    quadratic_commutator_terms = np.zeros((4, 1, 1))
+    num_ks_BZ = 10
+
+    quartic_bubble.compute_one_magnon_self_energy(
+        freqs,
+        np.identity(2),
+        quadratic_commutator_terms,
+        np.full((2, 2, 2), np.identity(2)),
+        num_ks_BZ,
+        T=0.0, 
+        ph_labels=["p", "p"],
     )

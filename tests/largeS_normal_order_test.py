@@ -25,6 +25,13 @@ def assert_all_commutator_terms_equal(model, ks, eigvs, ks_BZ, eigvs_BZ, expecte
         assert np.allclose(commutator_term, expected_commutator_term)
 
 
+def assert_all_nosym_commutator_terms_equal(commutator_terms, expected_commutator_terms_nosym):
+    for commutator_term, expected_commutator_term_nosym in zip(commutator_terms, expected_commutator_terms_nosym):
+        commutator_term_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonian(commutator_term)
+        assert np.allclose(commutator_term_nosym, expected_commutator_term_nosym)
+
+
+
 def get_eigensystems(model, ks):
     order = len(ks) + 1
     eigws = np.zeros((order, 2*model.lattice.num_sites_unit_cell))
@@ -43,6 +50,9 @@ def sum_over_idxs(arr, idxs):
 def test_normal_order_AFM_Heisenberg_chain():
     model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
 
+    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
+    eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
+
     np.random.seed(1)
     ks = np.random.rand(3, 1)
 
@@ -52,13 +62,15 @@ def test_normal_order_AFM_Heisenberg_chain():
     expected_magnon_H_0 = np.array(-2*J*S_A*S_B, dtype=np.complex128)
 
     # order S^(3/2)
-    magnon_H_mom_space_1 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:0])
+    magnon_H_mom_space_1 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(model, ks[:0])
     eigws_1, eigvs_1 = get_eigensystems(model, np.zeros((0, 1)))
-    expected_magnon_H_1 = np.zeros((4,), dtype=np.complex128)
+    magnon_H_eigenspace_1 = eigenspace.compute_magnon_Hamiltonian_with_permutations(eigvs_1, magnon_H_mom_space_1)
+    expected_magnon_H_eigenspace_nosym_1 = np.zeros((2, 2), dtype=np.complex128)
 
     # order S^1
-    magnon_H_mom_space_2 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation(model, ks[:1])
+    magnon_H_mom_space_2 = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(model, ks[:1])
     eigws_2, eigvs_2 = get_eigensystems(model, ks[:1])
+    magnon_H_eigenspace_2 = eigenspace.compute_magnon_Hamiltonian_with_permutations(eigvs_2, magnon_H_mom_space_2)
     B = lambda k: -(1 + np.exp(1j*k[0]))*np.sqrt(S_A*S_B)
     tanh = 1/np.abs(B(ks[0])) * (-(S_A + S_B) + np.sqrt((S_A + S_B)**2 - np.abs(B(ks[0]))**2))
     cosh, sinh = 1/np.sqrt(1 - tanh**2), tanh/np.sqrt(1 - tanh**2)
@@ -66,11 +78,41 @@ def test_normal_order_AFM_Heisenberg_chain():
     X = np.array([[cosh, 0, 0, sinh], [0, cosh, sinh, 0], [0, phase*sinh, phase*cosh, 0], [phase*sinh, 0, 0, phase*cosh]])
     def expected_magnon_H_2(q):
         return np.array([
-            [0, 2*np.abs(B(q))*sinh*cosh + 2*S_A*sinh**2, np.abs(B(q))*(cosh**2 + sinh**2) + 2*S_A*sinh*cosh, 0],
-            [2*S_B*cosh**2, 0, 0, 2*S_B*sinh*cosh],
-            [2*S_B*sinh*cosh, 0, 0, 2*S_B*sinh**2],
-            [0, np.abs(B(q))*(cosh**2 + sinh**2) + 2*S_A*sinh*cosh, 2*np.abs(B(q))*sinh*cosh + 2*S_A*cosh**2, 0],
+            [0, 2*np.abs(B(q))*sinh*cosh + 2*S_A*sinh**2, np.conj(B(q))*(cosh**2 + sinh**2) + 2*S_A*np.conj(phase)*sinh*cosh, 0],
+            [2*S_B*cosh**2, 0, 0, 2*S_B*np.conj(phase)*sinh*cosh],
+            [2*S_B*phase*sinh*cosh, 0, 0, 2*S_B*sinh**2],
+            [0, B(q)*(cosh**2 + sinh**2) + 2*S_A*phase*sinh*cosh, 2*np.abs(B(q))*sinh*cosh + 2*S_A*cosh**2, 0],
         ], dtype=np.complex128)
+    expected_magnon_H_eigenspace_nosym_2 = np.array([
+        np.zeros((2, 2)),
+        np.diag(eigws_2[0, ::2]),
+        np.diag(eigws_2[0, ::2]),
+        np.zeros((2, 2))
+    ])
+    expected_commutator_terms_0 = 0.5 * np.array([
+        np.sum(eigws_BZ.raw_quantity[..., 0] + eigws_BZ.raw_quantity[..., 2] - 2*(S_A + S_B))
+    ])
+    
+
+    assert_all_nosym_eigenspace_Hamiltonians_terms_equal([
+        None,
+        magnon_H_eigenspace_1,
+        magnon_H_eigenspace_2,
+        #magnon_H_mom_space_3,
+        #magnon_H_mom_space_4,
+    ], [
+        None,
+        expected_magnon_H_eigenspace_nosym_1,
+        expected_magnon_H_eigenspace_nosym_2,
+        #expected_magnon_H_eigenspace_nosym_3,
+        #expected_magnon_H_eigenspace_nosym_4,
+    ])
+
+    assert_all_commutator_terms_equal(
+        model,
+        ks, [eigvs_0],
+        ks_BZ, eigvs_BZ.raw_quantity,
+        [expected_commutator_terms_0])
 
     
 
@@ -227,6 +269,12 @@ def test_normal_order_FM_Heisenberg_chain():
         [[0, 0], [np.sum(np.exp(1j*(ks[0,0] - ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],   # α_{-q} α_{q}
         [[0, 0], [np.sum(np.exp(1j*(-ks[0,0] - ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), 0]],  # α_{q} α_{-q}
     ])
+    expected_commutator_terms_nosym_2 = J * np.array([
+        0,                                                                 # α_{-q} α_{q}
+        np.sum(np.exp(1j*(-ks[0,0] - ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])), # α_{-q} α_{q}^†
+        np.sum(np.exp(1j*(ks[0,0] - ks_BZ[:,0])) - 2*np.cos(ks_BZ[:,0])),  # α_{-q}^† α_{q}
+        0,                                                                 # α_{-q}^† α_{q}^†
+    ]).reshape((4, 1, 1))
 
     assert_all_nosym_eigenspace_Hamiltonians_terms_equal([
         None,
@@ -251,6 +299,11 @@ def test_normal_order_FM_Heisenberg_chain():
             expected_commutator_terms_1,
             expected_commutator_terms_2,
         ])
+    
+    assert_all_nosym_commutator_terms_equal(
+        [expected_commutator_terms_2],
+        [expected_commutator_terms_nosym_2],
+    )
 
 
 
@@ -368,3 +421,16 @@ def test_commutator_terms_KH_model_2d():
     assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands
     assert np.allclose(comm_terms_nosym.raw_quantity[0], comm_terms_nosym.raw_quantity[1].conj())
     
+
+
+def test_BdG_ground_state_correction_due_to_commutator_term():
+    model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
+
+    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
+    _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
+
+    comm_terms = normal_order.compute_commutator_term_with_permutations(
+        model, None, np.zeros((0, 4, 4)), ks_BZ, eigvs_BZ.raw_quantity)
+    expected_comm_terms = np.array([
+
+    ])
