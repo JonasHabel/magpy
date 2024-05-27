@@ -37,13 +37,13 @@ def test_two_site_quantum_dot_with_DMI():
     freqs = np.array([0.0]) # np.linspace(0, 5, 11)
     reg = 0.05
     expected_se_pp = np.array([
-        0.5/(freq + 1j*reg) * np.array([
+        0.5/(freq - 2. + 1j*reg) * np.array([
             [9./8, -1.],
             [-1., 9./8],
         ]) for freq in freqs
     ])
     se_p_pp_p = bubble.compute_one_magnon_self_energy(
-        freqs, np.array([0.0, 0, 0, 0]), np.array([0.0, 0, 0, 0]),
+        freqs, np.array([1., 1., 1., 1.]), np.array([1., 1., 1., 1.]),
         verts_eigenspace_nosym, 0.0, ["p", "pp", "p"], reg)
     
     assert np.allclose(se_p_pp_p, expected_se_pp)
@@ -92,7 +92,7 @@ def test_field_orthogonal_to_quantization_direction():
     #     .reshape((len(freqs), 1, 1))
     expected_se_pp = np.array(1/16 * B_xy_sq / (freqs - 2*B[2] + 1j*reg)) \
         .reshape((len(freqs), 1, 1))
-    expected_se_hh = np.array(1/16 * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
+    expected_se_hh = -np.array(1/16 * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
         .reshape((len(freqs), 1, 1))
     
     se_p_pp_p = bubble.compute_one_magnon_self_energy(
