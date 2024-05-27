@@ -47,12 +47,6 @@ def permute_all(arr, perms):
     return out_arr
 
 
-@njit
-def Bose_Einstein(energy, T):
-    if T == 0:
-        return 0
-    return 1.0 / (np.exp(energy/T) - 1)
-
 
 __FACTORIAL_LOOKUP_TABLE = np.array([
     1, 1, 2, 6, 24, 120, 720, 5040, 40320,

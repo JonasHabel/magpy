@@ -1,4 +1,5 @@
 import numpy as np
+from numba import njit
 from ..util import PAULI_MATRICES
 
 
@@ -50,3 +51,8 @@ def compute_gauge_phase(eigvs_1, eigvs_2):
     eigvs_1_inv = sigma_z @ eigvs_1.T.conj() @ sigma_z
 
     return np.diag(eigvs_1_inv @ sigma_x @ eigvs_2.conj() @ sigma_x)
+
+
+@njit
+def compute_diagram_sign(order, num_internal_propagators):
+    return -1 * (-1)**order * (-1)**num_internal_propagators

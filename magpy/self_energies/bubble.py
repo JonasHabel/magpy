@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 
 from ..models import *
-from ..greens_functions import get_free_propagator_zero_T
+from ..greens_functions import get_free_two_magnon_propagator
 from .util import *
 
 
@@ -77,9 +77,12 @@ def compute_one_magnon_self_energy_jit(
             frequencies, pos_energies_at_q, pos_energies_at_k_minus_q,
             cubic_vert1_reshaped, cubic_vert2_reshaped, ph_signs, T, reg)
         
-    num_Wick_contractions = 2.0 # TODO
+    num_Wick_contractions = 2.0 # TODO only true for pp bubble, not for ph/hh bubbles!!!
     out_arr *= num_Wick_contractions
     out_arr /= num_ks
+
+    diagram_sign = compute_diagram_sign(order=2, num_internal_propagators=2)
+    out_arr *= diagram_sign
     
     
 
@@ -93,8 +96,8 @@ def compute_one_magnon_self_energy_loop_integral_contribution_jit(
     pos_energies_in_propagator[1] = pos_energies_at_k_minus_q
 
     for nf, freq in enumerate(frequencies):
-        G0 = get_free_propagator_zero_T(
-            freq, pos_energies_in_propagator, ph_signs, reg)
+        G0 = get_free_two_magnon_propagator(
+            freq, pos_energies_in_propagator, ph_signs, T, reg)
         out_arr[nf] += (cubic_vert1.T * G0) @ cubic_vert2
 
 
