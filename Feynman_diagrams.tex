@@ -38,7 +38,14 @@ The Dyson equation reads
 with the non-interacting propagator $G^0$, the interacting propagator $G$ and the self-energy $\Sigma$.
 Diagramatically, we assign a negative propagator to every line due to the sign the propagator $G(\tau) \sim -\braket{T_\tau a(\tau) a^\dagger(0)}$ is defined with. We obtain: \\
 \includegraphics{Dyson_equation.png} \\
-So the one-particle irreducible diagrams we draw acually give us the \emph{negative} of the self-energy.
+So the one-particle irreducible diagrams we draw acually give us the \emph{negative} of the self-energy. \\
+\\
+The Feynman rules for the sign of a particular diagram are given as follows:
+\begin{itemize}
+	\item a global $-1$ due to the above argument.
+	\item a $-1$ for every internal propagator
+	\item a $(-1)^n$ for a diagram of order $n$ (i.e., with $n$ vertices)
+\end{itemize}
 	
 \section{One-Loop}
 	
@@ -46,18 +53,20 @@ So the one-particle irreducible diagrams we draw acually give us the \emph{negat
 Compute exact expressions for all one-loop Feynman diagrams.
 We will need the bosonic Matsubara sum
 \begin{align}
-	\frac{1}{\beta} \sum_{i\omega} \frac{1}{(i\omega - \xi_1) (i\omega - \xi_2)} = -\frac{n_B(\xi_1) - n_B(\xi_2)}{\xi_1 - \xi_2} \qquad (*)
+	\frac{1}{\beta} \sum_{i\omega} \frac{1}{(i\omega - \xi_1) (i\omega - \xi_2)} &= -\frac{n_B(\xi_1) - n_B(\xi_2)}{\xi_1 - \xi_2} \\
+	\Rightarrow \frac{1}{\beta} \sum_{i\omega} \frac{1}{(\eta_1 i\omega - \xi_1) (\eta_2 (i\Omega - i\omega) - \xi_2)} &= -\eta_1 \eta_2 \frac{n_B(\eta_1 \xi_1) - n_B(-\eta_2 \xi_2)}{i\Omega - \eta_1 \xi_1 - \eta_2 \xi_2} \qquad (*)
 \end{align}
-We will also use that $n_B(i\omega + z) = n_B(z)$ for bosonic Matsubara frequencies $i\omega$, and that $n_B(-z) = -1 - n_B(z)$.
+with $\eta_1, \eta_2 \in \{+, -\}$, where we have used that $n_B(i\Omega + z) = n_B(z)$ for bosonic Matsubara frequencies $i\Omega$. \\
+We will also use that $n_B(-z) = -1 - n_B(z)$.
 
 \subsection{Particle-Particle Bubble}
 \includegraphics{Feynman_pp_bubble.png} \\
 By the Feynman rules, we find the following expression:
 \begin{align}
-	\Sigma_{nm}^\mathrm{pp-bubble}(i\Omega, \vec k) &= -\frac{2}{\beta N} \sum_{\vec q,ll'} g^{++-}_{kq,ll'n} (g^{++-}_{kq,ll'm})^* \sum_{i\omega} \frac{1}{(i\omega - \epsilon_{-q,l}) (i\Omega - i\omega - \epsilon_{k+q,l'})} \\
+	\Sigma_{nm}^\mathrm{pp-bubble}(i\Omega, \vec k) &= -(-1)^2 (-1)^2 \frac{2}{\beta N} \sum_{\vec q,ll'} g^{++-}_{kq,ll'n} (g^{++-}_{kq,ll'm})^* \sum_{i\omega} \frac{1}{(i\omega - \epsilon_{-q,l}) (i\Omega - i\omega - \epsilon_{k+q,l'})} \\
 %
-	&\overset{(*)}{=} -\frac{2}{N} \sum_{\vec q,ll'} g^{++-}_{kq,ll'n} (g^{++-}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{-q,l}) - n_B(i\Omega - \epsilon_{k+q,l'})}{\epsilon_{-q,l} - (i\Omega - \epsilon_{k+q,l'})} \\
-%
+	&= \frac{2}{N} \sum_{\vec q,ll'} g^{++-}_{kq,ll'n} (g^{++-}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{-q,l}) - n_B(-\epsilon_{k+q,l'})}{i\Omega - \epsilon_{-q,l} - \epsilon_{k+q,l'}} \\
+	%
 	&= \frac{2}{N} \sum_{\vec q,ll'} g^{++-}_{kq,ll'n} (g^{++-}_{kq,ll'm})^* \, \frac{1 + n_B(\epsilon_{-q,l}) + n_B(\epsilon_{k+q,l'})}{i\Omega - \epsilon_{-q,l} - \epsilon_{k+q,l'}} \\
 %
 	&\overset{T\to 0}{\longrightarrow} \frac{2}{N} \sum_{\vec q,ll'} \frac{g^{++-}_{kq,ll'n} (g^{++-}_{kq,ll'm})^*}{i\Omega - \epsilon_{-q,l} - \epsilon_{k+q,l'}}
@@ -68,57 +77,57 @@ The symmetry factor $2$ comes about because there are two possible ways to wire 
 \includegraphics{Feynman_ph_bubble.png} \\
 By the Feynman rules, we find the following expression:
 \begin{align}
-	\Sigma_{nm}^\mathrm{ph-bubble}(i\Omega, \vec k) &= -\frac{1}{\beta N} \sum_{\vec q,ll'} g^{+--}_{kq,ll'n} (g^{+--}_{kq,ll'm})^* \sum_{i\omega} \frac{1}{(i\omega - \epsilon_{q,l}) (i\Omega + i\omega - \epsilon_{k+q,l'})} \\
+	\Sigma_{nm}^\mathrm{ph-bubble}(i\Omega, \vec k) &= -(-1)^2 (-1)^2 \frac{2\cdot 2}{\beta N} \sum_{\vec q,ll'} g^{+--}_{kq,ll'n} (g^{+--}_{kq,ll'm})^* \sum_{i\omega} \frac{1}{(i\omega - \epsilon_{q,l}) (-i\Omega + i\omega - \epsilon_{k+q,l'})} \\
 	%
-	&\overset{(*)}{=} \frac{1}{N} \sum_{\vec q,ll'} g^{+--}_{kq,ll'n} (g^{+--}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{q,l}) - n_B(-i\Omega + \epsilon_{k+q,l'})}{\epsilon_{q,l} - (-i\Omega + \epsilon_{k+q,l'})} \\
+	&\overset{(*)}{=} -\frac{4}{N} \sum_{\vec q,ll'} g^{+--}_{kq,ll'n} (g^{+--}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{q,l}) - n_B(\epsilon_{k+q,l'})}{i\Omega - \epsilon_{q,l} + \epsilon_{k+q,l'})} \\
 	%
-	&= \frac{1}{N} \sum_{\vec q,ll'} g^{+--}_{kq,ll'n} (g^{+--}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{q,l}) - n_B(\epsilon_{k+q,l'})}{i\Omega + \epsilon_{q,l} - \epsilon_{k+q,l'}} \\
+	&= -\frac{4}{N} \sum_{\vec q,ll'} g^{+--}_{kq,ll'n} (g^{+--}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{q,l}) - n_B(\epsilon_{k+q,l'})}{i\Omega - \epsilon_{q,l} + \epsilon_{k+q,l'}} \\
 	%
 	&\overset{T\to 0}{\longrightarrow} 0
 \end{align}
-The symmetry factor is $1$ (TODO) because there is exactly one possible way to wire the loop.
+The symmetry factor is $2\cdot 2 = 4$ because there are two ways to wire each vertex to an external leg, and one way to wire the loop.
 
 \subsection{Hole-Hole Bubble}
 \includegraphics{Feynman_hh_bubble.png} \\
 By the Feynman rules, we find the following expression:
 \begin{align}
-	\Sigma_{nm}^\mathrm{hh-bubble}(i\Omega, \vec k) &= -\frac{2}{\beta N} \sum_{\vec q,ll'} g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^* \sum_{i\omega} \frac{1}{(i\omega - \epsilon_{q,l}) (-i\Omega - i\omega - \epsilon_{-k-q,l'})} \\
+	\Sigma_{nm}^\mathrm{hh-bubble}(i\Omega, \vec k) &= -(-1)^2 (-1)^2 \frac{3\cdot 3\cdot 2}{\beta N} \sum_{\vec q,ll'} g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^* \sum_{i\omega} \frac{1}{(-i\omega - \epsilon_{q,l}) (-i\Omega + i\omega - \epsilon_{-k-q,l'})} \\
 	%
-	&\overset{(*)}{=} -\frac{2}{N} \sum_{\vec q,ll'} g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^* \, \frac{n_B(\epsilon_{q,l}) - n_B(-i\Omega - \epsilon_{-k-q,l'})}{\epsilon_{q,l} - (-i\Omega - \epsilon_{-k-q,l'})} \\
+	&\overset{(*)}{=} \frac{18}{N} \sum_{\vec q,ll'} g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^* \, \frac{n_B(-\epsilon_{q,l}) - n_B(\epsilon_{-k-q,l'})}{i\Omega + \epsilon_{q,l} + \epsilon_{-k-q,l'}} \\
 	%
-	&= -\frac{2}{N} \sum_{\vec q,ll'} g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^* \, \frac{1 + n_B(\epsilon_{q,l}) + n_B(\epsilon_{-k-q,l'})}{i\Omega + \epsilon_{q,l} + \epsilon_{-k-q,l'}} \\
+	&= -\frac{18}{N} \sum_{\vec q,ll'} g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^* \, \frac{1 + n_B(\epsilon_{q,l}) + n_B(\epsilon_{-k-q,l'})}{i\Omega + \epsilon_{q,l} + \epsilon_{-k-q,l'}} \\
 	%
-	&\overset{T\to 0}{\longrightarrow} -\frac{2}{N} \sum_{\vec q,ll'} \frac{g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^*}{i\Omega + \epsilon_{q,l} + \epsilon_{-k-q,l'}}
+	&\overset{T\to 0}{\longrightarrow} -\frac{18}{N} \sum_{\vec q,ll'} \frac{g^{---}_{kq,ll'n} (g^{---}_{kq,ll'm})^*}{i\Omega + \epsilon_{q,l} + \epsilon_{-k-q,l'}}
 \end{align}
-The symmetry factor $2$ (TODO!) comes about because there are two possible ways to wire the loop.
+The symmetry factor $3\cdot 3\cdot 2 = 18$ comes about because there are three ways to wire each vertex to an external leg, and two ways to wire the loop.
 
 \subsection{Particle Stub}
 \includegraphics{Feynman_p_stub.png} \\
 By the Feynman rules, we find the following expression:
 \begin{align}
-	\Sigma_{nm}^\mathrm{p-stub}(\vec k) &= -\frac{1}{N} \sum_{l} \frac{g^{++-}_{k0,mln} \tilde g^{-}_{l}}{-\epsilon_{0l}}
+	\Sigma_{nm}^\mathrm{p-stub}(\vec k) &= -(-1) (-1)^2 \frac{1}{N} \sum_{l} \frac{g^{++-}_{k0,mln} \tilde g^{-}_{l}}{-\epsilon_{0l}}
 %
-	= \frac{1}{N} \sum_{l} \frac{g^{++-}_{k0,mln} \tilde g^{-}_{l}}{\epsilon_{0l}}
+	= -\frac{1}{N} \sum_{l} \frac{g^{++-}_{k0,mln} \tilde g^{-}_{l}}{\epsilon_{0l}}
 \end{align}
-The symmetry factor is $1$ (TODO) because there is exactly one possible way to wire the vertices together. \\
+The symmetry factor is $2$ because there is one possible way to wire the cubic vertex to the incoming external leg, two ways to wire the cubic vertex to the outgoing external leg, and one remaining way to wire the two vertices together. \\
 Note that the diagram is frequency-independent.
 
 \subsection{Hole Stub}
 \includegraphics{Feynman_h_stub.png} \\
 By the Feynman rules, we find the following expression:
 \begin{align}
-	\Sigma_{nm}^\mathrm{h-stub}(\vec k) &= -\frac{1}{N} \sum_{l} \frac{g^{+--}_{k0,mln} \tilde g^{+}_{l}}{-\epsilon_{0l}}
+	\Sigma_{nm}^\mathrm{h-stub}(\vec k) &= -(-1) (-1)^2 \frac{2}{N} \sum_{l} \frac{g^{+--}_{k0,mln} \tilde g^{+}_{l}}{-\epsilon_{0l}}
 	%
-	= \frac{1}{N} \sum_{l} \frac{g^{+--}_{k0,mln} \tilde g^{+}_{l}}{\epsilon_{0l}}
+	= -\frac{2}{N} \sum_{l} \frac{g^{+--}_{k0,mln} \tilde g^{+}_{l}}{\epsilon_{0l}}
 \end{align}
-The symmetry factor is $1$ (TODO) because there is exactly one possible way to wire the vertices together. \\
+The symmetry factor is $2$ because there is one possible way to wire the cubic vertex to the incoming external leg, two ways to wire the cubic vertex to the outgoing external leg, and one remaining way to wire the two vertices together. \\
 Note that the diagram is frequency-independent.
 
 \subsection{Quadratic Insertion}
 \includegraphics{Feynman_quadratic_insertion.png} \\
 By the Feynman rules, we find the following expression:
 \begin{align}
-	\Sigma_{nm}^\mathrm{quadratic-insertion}(\vec k) &= -\frac{1}{N} \tilde h^{+-}_{k,nm}
+	\Sigma_{nm}^\mathrm{quadratic-insertion}(\vec k) &= -(-1) \frac{1}{N} \tilde h^{+-}_{k,nm} = \frac{1}{N} \tilde h^{+-}_{k,nm}
 \end{align}
 The symmetry factor is $1$ because there is exactly one possible way to wire the external legs to the vertex. \\
 Note that the diagram is frequency-independent.
