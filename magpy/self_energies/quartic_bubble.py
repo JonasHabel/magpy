@@ -46,8 +46,11 @@ def compute_one_magnon_self_energy(
         gauge_phase_out)[np.newaxis]
     
     
-    diagram_sign = compute_diagram_sign(order=1, num_internal_propagators=0)
-    self_energy *= diagram_sign
+    self_energy *= compute_diagram_prefactor(
+        ph_idxs_verts=[ph_idxs_comm_term],
+        ph_idxs_loops=[],
+        num_internal_propagators=0,
+    )
     
     return self_energy / np.prod(num_ks_BZ)
 

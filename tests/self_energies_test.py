@@ -3,7 +3,7 @@ from magpy import models
 from magpy.interactions import *
 from magpy.largeS import real_space, momentum_space, eigenspace, normal_order
 from magpy.largeS import LSWT
-from magpy.self_energies import bubble, tadpole, quartic_bubble
+from magpy.self_energies import bubble, tadpole, quartic_bubble, util
 import numpy as np
 
 from magpy.momenta_utils import MSQ, Momenta
@@ -832,3 +832,51 @@ def test_quartic_bubble():
         T=0.0, 
         ph_labels=["p", "p"],
     )
+
+
+
+def test_diagram_signs():
+    # bubbles
+    assert util.compute_diagram_sign(order=2, num_internal_propagators=2) == -1
+    # stubs
+    assert util.compute_diagram_sign(order=2, num_internal_propagators=1) == 1
+    # quadratic insertion
+    assert util.compute_diagram_sign(order=1, num_internal_propagators=0) == 1
+
+
+
+def test_num_Wick_contractions():
+    PARTICLE, HOLE = 1, 0
+
+    # particle-particle bubble
+    assert util.compute_num_Wick_contractions(
+        ph_idxs_verts=[[PARTICLE, HOLE, HOLE], [PARTICLE, PARTICLE, HOLE]],
+        ph_idxs_loops=[[PARTICLE, PARTICLE]],
+    ) == 2
+    # particle-hole bubble
+    assert util.compute_num_Wick_contractions(
+        ph_idxs_verts=[[PARTICLE, HOLE, PARTICLE], [PARTICLE, HOLE, HOLE]],
+        ph_idxs_loops=[[PARTICLE, HOLE]],
+    ) == 4
+    # hole-hole bubble
+    assert util.compute_num_Wick_contractions(
+        ph_idxs_verts=[[PARTICLE, PARTICLE, PARTICLE], [HOLE, HOLE, HOLE]],
+        ph_idxs_loops=[[HOLE, HOLE]],
+    ) == 18
+
+    # particle stub
+    assert util.compute_num_Wick_contractions(
+        ph_idxs_verts=[[PARTICLE, HOLE, HOLE]],
+        ph_idxs_loops=[],
+    ) == 2
+    # hole stub
+    assert util.compute_num_Wick_contractions(
+        ph_idxs_verts=[[PARTICLE, PARTICLE, HOLE]],
+        ph_idxs_loops=[],
+    ) == 2
+
+    # quadratic insertion
+    assert util.compute_num_Wick_contractions(
+        ph_idxs_verts=[[PARTICLE, HOLE]],
+        ph_idxs_loops=[],
+    ) == 1

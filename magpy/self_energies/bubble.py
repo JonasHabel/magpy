@@ -47,6 +47,13 @@ def compute_one_magnon_self_energy(
         pos_energies_BZ_flat, pos_energies_k_minus_BZ_flat,
         cubic_vert_left_flat, cubic_vert_right_flat,
         intermedate_state_ph_signs, T, reg)
+        
+
+    self_energy *= compute_diagram_prefactor(
+        ph_idxs_verts=[ph_idxs_left_vert, ph_idxs_right_vert],
+        ph_idxs_loops=[ph_idxs[1]],
+        num_internal_propagators=2)
+    self_energy /= num_ks
     
     return self_energy
     
@@ -76,13 +83,6 @@ def compute_one_magnon_self_energy_jit(
             out_arr,
             frequencies, pos_energies_at_q, pos_energies_at_k_minus_q,
             cubic_vert1_reshaped, cubic_vert2_reshaped, ph_signs, T, reg)
-        
-    num_Wick_contractions = 2.0 # TODO only true for pp bubble, not for ph/hh bubbles!!!
-    out_arr *= num_Wick_contractions
-    out_arr /= num_ks
-
-    diagram_sign = compute_diagram_sign(order=2, num_internal_propagators=2)
-    out_arr *= diagram_sign
     
     
 

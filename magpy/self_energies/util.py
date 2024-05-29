@@ -53,6 +53,39 @@ def compute_gauge_phase(eigvs_1, eigvs_2):
     return np.diag(eigvs_1_inv @ sigma_x @ eigvs_2.conj() @ sigma_x)
 
 
+
+
+def compute_diagram_prefactor(ph_idxs_verts, ph_idxs_loops, num_internal_propagators):
+    order = len(ph_idxs_verts)
+
+    return compute_diagram_sign(order, num_internal_propagators) \
+         * compute_num_Wick_contractions(ph_idxs_verts, ph_idxs_loops)
+
+
 @njit
 def compute_diagram_sign(order, num_internal_propagators):
     return -1 * (-1)**order * (-1)**num_internal_propagators
+
+
+def compute_num_Wick_contractions(ph_idxs_verts, ph_idxs_loops):
+    PARTICLE, HOLE = 1, 0
+    num_Wick_contractions = 1
+
+    # possible ways to wire the vertices
+    for ph_idxs_vert in ph_idxs_verts:
+        ph_idxs_vert = np.array(ph_idxs_vert)
+        num_particle_idxs = np.count_nonzero(ph_idxs_vert == PARTICLE)
+        num_hole_idxs = np.count_nonzero(ph_idxs_vert == HOLE)
+        num_Wick_contractions *= \
+            np.math.factorial(num_particle_idxs) * np.math.factorial(num_hole_idxs)
+        
+    # account for overcounting due to loops
+    for ph_idxs_loop_state in ph_idxs_loops:
+        ph_idxs_loop_state = np.array(ph_idxs_loop_state)
+        num_particle_idxs = np.count_nonzero(ph_idxs_loop_state == PARTICLE)
+        num_hole_idxs = np.count_nonzero(ph_idxs_loop_state == HOLE)
+        num_Wick_contractions /= \
+            np.math.factorial(num_particle_idxs) * np.math.factorial(num_hole_idxs)
+        
+    assert np.allclose(num_Wick_contractions, int(num_Wick_contractions))
+    return int(num_Wick_contractions)
