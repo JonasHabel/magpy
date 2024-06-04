@@ -108,8 +108,8 @@ def compute_LSWT_Hamiltonian_momentum_space(model: Model, k,
     if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for LSWT of one- or two-spin interactions.")
     
-    if model.lattice.dim >= 1 and \
-        model.lattice.dim != len(k):
+    if model.lattice.embedding_dim >= 1 and \
+        model.lattice.embedding_dim != len(k):
         raise Exception(f"dimension of momentum vector " \
                         + f"{len(k)} must equal the "\
                         + f"lattice dimension {model.lattice.dim}")
