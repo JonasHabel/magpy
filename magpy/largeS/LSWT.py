@@ -15,11 +15,11 @@ def compute_LSWT_Hamiltonian_momentum_space_BdG(
     if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for LSWT of one- or two-spin interactions.")
     
-    if model.lattice.dim >= 1 and \
-        model.lattice.dim != len(k):
+    if model.lattice.embedding_dim >= 1 and \
+        model.lattice.embedding_dim != len(k):
         raise Exception(f"dimension of momentum vector " \
                         + f"{len(k)} must equal the "\
-                        + f"lattice dimension {model.lattice.dim}")
+                        + f"embedding dimension {model.lattice.embedding_dim}")
     
     LSWT_Hamiltonian_real_space = get_real_space_magnon_Hamiltonian(
         LSWT_Hamiltonian_real_space, model, order=2)
