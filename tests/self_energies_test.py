@@ -736,23 +736,26 @@ def test_1D_BdG_chain_with_cubic_interaction():
         [eigvs_cubic_vert[0][0], eigvs_cubic_vert[1][0], eigvs_cubic_vert[2]],
         linear_comm_terms_nosym[:, 0], eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
-    np.random.seed(0xAF)    # some random seed
-    random_gauge_trafo = lambda: np.exp(2j*np.pi*np.random.rand(2))
+    
     gauge_trafo_comm_terms = np.array([1j, 1])
     gauge_trafo_in = np.array([-1, np.exp(1j*np.pi/4)])
     gauge_trafo_internal = np.array([np.exp(2j/3*np.pi), -1j])
     gauge_trafo_out = np.array([1, np.exp(1j/5*np.pi)])
+    linear_comm_terms_different_gauge = normal_order.compute_commutator_terms_with_permutations(
+        mod, [], [np.array([gauge_trafo_comm_terms*eigv_Gamma])], momenta_BZ, eigvs_BZ,
+        interaction_Hamiltonian_real_space=cubic_verts_real_space)
+    linear_comm_terms_different_gauge_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms_different_gauge)
     self_energies_tadpole_p_different_gauge = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx],
         np.einsum("i,i...->i...", np.kron(gauge_trafo_out, np.kron(gauge_trafo_internal, gauge_trafo_in)), cubic_verts_k0k),
         [gauge_trafo_out*eigvs_cubic_vert[0][0], gauge_trafo_internal*eigvs_cubic_vert[1][0], gauge_trafo_in*eigvs_cubic_vert[2]],
-        np.diag(gauge_trafo_comm_terms) @ linear_comm_terms_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
+        linear_comm_terms_different_gauge_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
     self_energies_tadpole_h_different_gauge = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx],
         np.einsum("i,i...->i...", np.kron(gauge_trafo_out, np.kron(gauge_trafo_internal, gauge_trafo_in)), cubic_verts_k0k),
         [gauge_trafo_out*eigvs_cubic_vert[0][0], gauge_trafo_internal*eigvs_cubic_vert[1][0], gauge_trafo_in*eigvs_cubic_vert[2]],
-        np.diag(gauge_trafo_comm_terms) @ linear_comm_terms_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
+        linear_comm_terms_different_gauge_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
     
     assert np.allclose(self_energies_tadpole_p, self_energies_tadpole_p_different_gauge)
