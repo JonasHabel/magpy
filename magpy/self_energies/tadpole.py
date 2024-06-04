@@ -40,16 +40,16 @@ def compute_one_magnon_self_energy(
     
     eigvs_in = conjugate_if(eigvs_k, lambda: ph_idxs[0][0] == PARTICLE)
     eigvs_out = conjugate_if(eigvs_k, lambda: ph_idxs[2][0] == HOLE)
-    gauge_phase_in = compute_gauge_phase(eigvs_verts[2], eigvs_in)[1-ph_idxs[0][0]::2]
-    gauge_phase_internal = compute_gauge_phase(eigvs_verts[1], eigvs_commutator_terms)[ph_idxs[1][0]::2]
-    gauge_phase_out = compute_gauge_phase(eigvs_verts[0], eigvs_out)[ph_idxs[2][0]::2]
+    gauge_phase_in = compute_gauge_phase(eigvs_verts[2], eigvs_in)[1-ph_idxs[0][0]::2, 1-ph_idxs[0][0]::2]
+    gauge_phase_internal = compute_gauge_phase(eigvs_verts[1], eigvs_commutator_terms)[ph_idxs[1][0]::2, ph_idxs[1][0]::2]
+    gauge_phase_out = compute_gauge_phase(eigvs_verts[0], eigvs_out)[ph_idxs[2][0]::2, ph_idxs[2][0]::2]
 
     # EVALUATE DIAGRAM
     self_energy = np.zeros((num_freqs, num_bands, num_bands),
                             dtype=np.complex128)
     
     self_energy[:] = np.einsum(
-        "n,mln,l,l,l,m->nm", 
+        "Nn,MLN,Ll,l,l,Mm->nm", 
         gauge_phase_in,
         cubic_vert, 
         gauge_phase_internal,

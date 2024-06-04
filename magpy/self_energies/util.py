@@ -50,7 +50,11 @@ def compute_gauge_phase(eigvs_1, eigvs_2):
     sigma_z = np.kron(identity, PAULI_MATRICES[2])
     eigvs_1_inv = sigma_z @ eigvs_1.T.conj() @ sigma_z
 
-    return np.diag(eigvs_1_inv @ sigma_x @ eigvs_2.conj() @ sigma_x)
+    # this should usually be a diagonal matrix;
+    # except if there are degenerate eigenspaces, in which case the matrix is
+    # block-diagonal. But there should be no off-diagonal terms between
+    # eigenspaces pertaining to different eigenvalues.
+    return eigvs_1_inv @ sigma_x @ eigvs_2.conj() @ sigma_x
 
 
 
