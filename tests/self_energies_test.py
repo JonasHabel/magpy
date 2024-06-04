@@ -25,7 +25,7 @@ def test_two_site_quantum_dot_with_DMI():
         mod, np.zeros((2, 1)), verts_real_space)
 
     # VERTICES EIGENSPACE
-    _, eigvs = LSWT.get_eigensystem_momentum_space(mod, np.zeros((0, 1)))
+    _, eigvs = LSWT.get_eigensystem_momentum_space(mod, np.zeros((1, 1)))
     eigvs = np.array([eigvs, eigvs, eigvs])
     verts_eigenspace = eigenspace.compute_magnon_Hamiltonian_with_permutations(
         eigvs, verts_mom_space)
