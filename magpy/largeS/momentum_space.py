@@ -83,11 +83,11 @@ def compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
 #    else:
 #        k_arrays = momentum_arrays
 
-    if len(k_arrays) >= 1 and any(map(lambda k_array: k_array.shape[-1] != model.lattice.dim, k_arrays)):
+    if len(k_arrays) >= 1 and any(map(lambda k_array: k_array.shape[-1] != model.lattice.embedding_dim, k_arrays)):
         raise Exception(f"dimensions of momentum vectors " \
                         + f"{[k_array[-1].shape for k_array in k_arrays]} " \
-                        + f"must equal the lattice dimension " \
-                        + f"{model.lattice.dim}")
+                        + f"must equal the embedding dimension " \
+                        + f"{model.lattice.embedding_dim}")
     
     order = len(k_arrays) + 1
     magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
