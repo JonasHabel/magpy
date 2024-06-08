@@ -7,6 +7,7 @@ from magpy.self_energies import bubble, tadpole, quartic_bubble, util
 import numpy as np
 
 from magpy.momenta_utils import MSQ, Momenta
+from magpy.util import PAULI_MATRICES
 
 
 
@@ -129,6 +130,9 @@ def test_field_orthogonal_to_quantization_direction():
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["h", "hh", "h"], reg)
     assert np.allclose(se_h_hh_h, expected_se_hh)
+
+
+
 
 
 
@@ -747,14 +751,26 @@ def test_1D_BdG_chain_with_cubic_interaction():
     linear_comm_terms_different_gauge_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms_different_gauge)
     self_energies_tadpole_p_different_gauge = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx],
-        np.einsum("i,i...->i...", np.kron(gauge_trafo_out, np.kron(gauge_trafo_internal, gauge_trafo_in)), cubic_verts_k0k),
-        [gauge_trafo_out*eigvs_cubic_vert[0][0], gauge_trafo_internal*eigvs_cubic_vert[1][0], gauge_trafo_in*eigvs_cubic_vert[2]],
+        np.einsum(
+            "i,i...->i...", 
+            np.kron(gauge_trafo_out, np.kron(gauge_trafo_internal, gauge_trafo_in)), cubic_verts_k0k
+        ), [
+            gauge_trafo_out*eigvs_cubic_vert[0][0], 
+            gauge_trafo_internal*eigvs_cubic_vert[1][0], 
+            gauge_trafo_in*eigvs_cubic_vert[2]
+        ],
         linear_comm_terms_different_gauge_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
     self_energies_tadpole_h_different_gauge = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx],
-        np.einsum("i,i...->i...", np.kron(gauge_trafo_out, np.kron(gauge_trafo_internal, gauge_trafo_in)), cubic_verts_k0k),
-        [gauge_trafo_out*eigvs_cubic_vert[0][0], gauge_trafo_internal*eigvs_cubic_vert[1][0], gauge_trafo_in*eigvs_cubic_vert[2]],
+        np.einsum(
+            "i,i...->i...", 
+            np.kron(gauge_trafo_out, np.kron(gauge_trafo_internal, gauge_trafo_in)), cubic_verts_k0k),
+        [
+            gauge_trafo_out*eigvs_cubic_vert[0][0], 
+            gauge_trafo_internal*eigvs_cubic_vert[1][0], 
+            gauge_trafo_in*eigvs_cubic_vert[2]
+        ],
         linear_comm_terms_different_gauge_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
     
@@ -765,79 +781,212 @@ def test_1D_BdG_chain_with_cubic_interaction():
 
 
 
-def test_honeycomb_FM_Heisenberg_with_DMI():
-    latt = HoneycombLatticeA()
-    D = np.array([0, 0, 0.1])
-    inter = [
-        NthNearestNeighborHeisenbergInteraction(latt, n=1, J=-1.0),
-        DMInteraction(BravaisLattice.Edge(np.array([1, 0]), [0, 0]), D=D),
-        DMInteraction(BravaisLattice.Edge(np.array([0, -1]), [0, 0]), D=D),
-        DMInteraction(BravaisLattice.Edge(np.array([-1, 1]), [0, 0]), D=D),
-        DMInteraction(BravaisLattice.Edge(np.array([1, 0]), [1, 1]), D=-D),
-        DMInteraction(BravaisLattice.Edge(np.array([0, -1]), [1, 1]), D=-D),
-        DMInteraction(BravaisLattice.Edge(np.array([-1, 1]), [1, 1]), D=-D),
-    ]
-    # in-plane ground state polarization to get cubic vertices
-    mod = models.Model(latt, inter, np.array([[1, 0, 0]]*2))
-
-    # VERTICES REAL SPACE
-    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
-
-    # VERTICES MOMENTUM SPACE
-    k = np.array([0.5, 0.5])
-    N_BZ = (5, 5)
-    momenta_BZ = mod.lattice.reciprocal_lattice \
-        .sample_inverse_unit_cell(N_BZ) \
-        .transpose([1, 2, 0])
-    momenta_q_k = Momenta(momenta_BZ, k)
-    momenta_minuskminusq_q_k = Momenta(-k-momenta_BZ, momenta_BZ, k)
-    verts_mom_space = momentum_space \
-        .compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
-            mod, momenta_q_k, verts_real_space)
-    
-    # VERTICES EIGENSPACE
-    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, momenta_minuskminusq_q_k)
-    verts_eigenspace = \
-        eigenspace.compute_magnon_Hamiltonians_with_permutations(
-            mod, eigvs, verts_mom_space)
-    verts_eigenspace_nosym = \
-        normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
-            verts_eigenspace)
-    
-    freqs = np.linspace(0, 5, 11)
-    energies_minus_k_minus_BZ = eigws.raw_quantity[0]
-    energies_BZ = eigws.raw_quantity[1]
-    reg = 0.05
-    se_p_pp_p = bubble.compute_one_magnon_self_energy(
-        freqs, energies_BZ, energies_minus_k_minus_BZ,
-        verts_eigenspace_nosym.raw_quantity, 0, ["p", "pp", "p"], reg)
-
-
-    sigma_y = np.kron(np.eye(2), np.array([[0, -1j], [1j, 0]]))
-    U_k = eigvs.raw_quantity[2]
-    U_minusk = eigvs.raw_quantity[0][0, 0]
-
-    
-    pass
-
-
-
-
-def test_tadpole():
+def test_tadpole_gauge_invariance():
     np.random.seed(2)
     freqs = np.linspace(0, 1, 120)
-    eigw_Gamma = np.random.rand(12)
-    eigv_k = np.random.rand(12, 12)
-    cubic_verts = np.random.rand(8, 6, 6, 6)
-    eigvs_verts = np.random.rand(3, 12, 12)
-    linear_commutator_terms = np.random.rand(2, 6)
-    eigv_commutator_term = np.random.rand(12, 12)
+    eigw_Gamma = np.array([1., -1., 1., -1.])
+    eigv_Gamma = np.identity(4)
+    eigv_k = np.identity(4)
+    eigv_minus_k = np.identity(4)
+    cubic_verts_k0k = np.zeros((8, 2, 2, 2), dtype=np.complex128)
+    cubic_verts_k0k[0b110] = np.ones((2, 2, 2))
+    eigvs_cubic_vert = np.array([eigv_minus_k, eigv_Gamma, eigv_k])
+    linear_comm_terms = np.ones((2, 2), dtype=np.complex128)
+    eigv_comm_term = eigv_Gamma
 
-    tadpole.compute_one_magnon_self_energy(
-        freqs, eigw_Gamma, eigv_k, cubic_verts, eigvs_verts,
-        linear_commutator_terms, eigv_commutator_term,
-        (20, 20, 20), 0, ["p", "p", "p"], reg=0.05
+    self_energies_tadpole_p = tadpole.compute_one_magnon_self_energy(
+        freqs, eigw_Gamma, eigv_k, cubic_verts_k0k, eigvs_cubic_vert,
+        linear_comm_terms, eigv_comm_term,
+        (1, 1, 1), 0, ["p", "p", "p"], reg=0.05,
     )
+
+    # gauge_trafo_comm_terms = np.diag([1j, 1, 1, 1])
+    # gauge_trafo_in = np.diag([-1, np.exp(1j*np.pi/4), 1, 1])
+    # gauge_trafo_internal = np.diag([np.exp(2j/3*np.pi), -1j, 1, 1])
+    # gauge_trafo_out = np.diag([1, np.exp(1j/5*np.pi), 1, 1])
+    gauge_trafo_comm_terms = np.zeros((4, 4), dtype=np.complex128)
+    gauge_trafo_comm_terms[::2,::2] = np.array([
+        [np.cos(np.pi/4), -1j*np.sin(np.pi/4)],
+        [np.sin(np.pi/4), 1j*np.cos(np.pi/4)],
+    ])
+    gauge_trafo_comm_terms[1::2,1::2] = np.eye(2)
+    gauge_trafo_in = np.zeros((4, 4), dtype=np.complex128)
+    gauge_trafo_in[::2,::2] = np.array([
+        [np.cos(np.pi/4), -1j*np.sin(np.pi/4)],
+        [np.sin(np.pi/4), 1j*np.cos(np.pi/4)],
+    ])
+    gauge_trafo_in[1::2,1::2] = np.array([
+        [np.cos(np.pi/3), -np.sin(np.pi/3)],
+        [np.sin(np.pi/3), np.cos(np.pi/3)],
+    ])
+    gauge_trafo_internal = np.diag([1, 1, 1, 1])
+    gauge_trafo_out = np.zeros((4, 4), dtype=np.complex128)
+    gauge_trafo_out[::2,::2] = np.array([
+        [np.cos(np.pi/4), 1j*np.sin(np.pi/4)],
+        [1j*np.sin(np.pi/4), np.cos(np.pi/4)],
+    ])
+    gauge_trafo_out[1::2,1::2] = np.array([
+        [-1j*np.cos(np.pi/4), -np.sin(np.pi/4)],
+        [np.sin(np.pi/4), 1j*np.cos(np.pi/4)],
+    ])
+    cubic_verts_k0k_different_gauge = np.zeros((8, 2, 2, 2), dtype=np.complex128)
+    for n in range(8):
+        cubic_verts_k0k_different_gauge[n] = np.einsum(
+            "IJK,Ii,Jj,Kk",
+            cubic_verts_k0k[n],
+            gauge_trafo_out[(n&0b100)>>2::2,(n&0b100)>>2::2], 
+            gauge_trafo_internal[(n&0b010)>>1::2,(n&0b010)>>1::2],
+            gauge_trafo_in[(n&0b001)>>0::2,(n&0b001)>>0::2],
+        )
+    linear_comm_terms_different_gauge = np.zeros((2, 2), dtype=np.complex128)
+    for n in range(2):
+        linear_comm_terms_different_gauge[n] = np.einsum(
+            "I,Ii",
+            linear_comm_terms[n],
+            gauge_trafo_comm_terms[n::2, n::2],
+        )
+
+    self_energies_tadpole_p_different_gauge = tadpole.compute_one_magnon_self_energy(
+        freqs, eigw_Gamma, eigv_k, 
+        cubic_verts_k0k_different_gauge, [
+            eigvs_cubic_vert[0] @ gauge_trafo_out, 
+            eigvs_cubic_vert[1] @ gauge_trafo_internal, 
+            eigvs_cubic_vert[2] @ gauge_trafo_in,
+        ],
+        linear_comm_terms_different_gauge, 
+        eigv_Gamma @ gauge_trafo_comm_terms,
+        (1, 1, 1), 0, ["p", "p", "p"], reg=0.05,
+    )
+    
+    assert np.allclose(self_energies_tadpole_p, self_energies_tadpole_p_different_gauge)
+
+
+
+
+def test_tadpole_gauge_invariance_with_degeneracies():
+    J = -1.0
+    Bz = 1.0
+    Bx1, Bx2 = 0.7, 0.5
+
+    ladder_lattice = ChainLattice(2, edges=[
+        BravaisLattice.Edge(np.array([1]), np.array([0, 0])),   # lower ladder rail
+        BravaisLattice.Edge(np.array([1]), np.array([1, 1])),   # upper ladder rail
+        BravaisLattice.Edge(np.array([0]), np.array([0, 1])),   # ladder rung
+    ])
+    model = models.Model(ladder_lattice, interactions=[
+        # Interaction([
+        #     BravaisLattice.Site(np.array([0]), 0),
+        #     BravaisLattice.Site(np.array([1]), 0),
+        # ], interaction_tensor=J*np.eye(3)),
+        # Interaction([
+        #     BravaisLattice.Site(np.array([0]), 1),
+        #     BravaisLattice.Site(np.array([1]), 1),
+        # ], interaction_tensor=J*np.eye(3)),
+        MagneticField(ladder_lattice, sublattice_index=0, B=np.array([Bx1, 0, Bz])),
+        MagneticField(ladder_lattice, sublattice_index=1, B=np.array([Bx2, 0, Bz])),
+    ], classical_ground_state=np.array([[0, 0, 1], [0, 0, 1]]))
+
+    kpath = ladder_lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
+        ["Gamma", "Gamma'"], 1, {
+            "Gamma": np.array([0]),
+            "Gamma'": np.array([1]),
+        })
+    N_BZ = (1,)
+    momenta_kpath = Momenta.of(kpath)
+    momenta_BZ = Momenta.of_BZ(ladder_lattice, N_BZ)
+    momenta_kpath_minus_BZ = Momenta(np.array([
+        -k - ladder_lattice.reciprocal_lattice.sample_inverse_unit_cell(N_BZ, as_meshgrid=False) \
+        for k in kpath.ks
+    ]))
+    momenta_Gamma = Momenta(np.zeros(1))
+
+    eigws_kpath, eigvs_kpath = LSWT.get_eigensystems_momentum_space(
+        model, momenta_kpath)
+    eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(
+        model, momenta_BZ)
+    eigws_minus_kpath_minus_BZ, eigvs_minus_kpath_minus_BZ = LSWT.get_eigensystems_momentum_space(
+        model, momenta_kpath_minus_BZ)
+    eigws_Gamma, eigvs_Gamma = LSWT.get_eigensystems_momentum_space(
+        model, momenta_Gamma)
+    
+    def unitary_2x2_matrix(chi, psi, cos_theta, phi):
+        sin_theta = np.sqrt(1 - cos_theta**2)
+        return np.exp(1j*chi) * (
+            np.cos(psi) * np.eye(2) +
+            np.sin(psi) * 1j * np.einsum(
+                "i,ijk->jk",
+                np.array([sin_theta*np.cos(phi), sin_theta*np.sin(phi), cos_theta]),
+                PAULI_MATRICES,
+            )
+        )
+
+    def random_regauge(eigvs):
+        num_eigvs = int(np.prod(eigvs.shape[:-2]))
+        chis = 2*np.pi*np.random.rand(num_eigvs, 2)
+        psis = 2*np.pi*np.random.rand(num_eigvs, 2)
+        cos_thetas = 2*np.random.rand(num_eigvs, 2) - 1
+        phis = 2*np.pi*np.random.rand(num_eigvs, 2)
+
+        eigvs_flat = eigvs.reshape((num_eigvs, *eigvs.shape[-2:]))
+        for n, (chi, psi, cos_theta, phi) in enumerate(zip(chis, psis, cos_thetas, phis)):
+            hole_gauge = unitary_2x2_matrix(chi[0], psi[0], cos_theta[0], phi[0])
+            particle_gauge = unitary_2x2_matrix(chi[1], psi[1], cos_theta[1], phi[1])
+            eigvs_flat[n, ::2, ::2] = eigvs_flat[n, ::2, ::2] @ hole_gauge
+            eigvs_flat[n, 1::2, 1::2] = eigvs_flat[n, 1::2, 1::2] @ particle_gauge
+
+        return eigvs_flat.reshape(eigvs.shape)
+
+    eigvs_Gamma.raw_quantity[0] = random_regauge(eigvs_Gamma.raw_quantity[0])
+    eigvs_BZ.raw_quantity[0] = random_regauge(eigvs_BZ.raw_quantity[0])
+    eigvs_minus_kpath_minus_BZ.raw_quantity[0] = random_regauge(eigvs_minus_kpath_minus_BZ.raw_quantity[0])
+    
+    linear_vert_mom_space = momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
+        model, Momenta())
+    linear_vert_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(
+        model, eigvs_Gamma, linear_vert_mom_space)
+    linear_vert_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
+        linear_vert_eigenspace)
+    
+    cubic_vert_mom_space = momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
+        model, Momenta.join(momenta_BZ, momenta_kpath))
+    cubic_vert_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(
+        model, MSQ.join(eigvs_minus_kpath_minus_BZ, eigvs_BZ, eigvs_kpath), cubic_vert_mom_space)
+    cubic_vert_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
+        cubic_vert_eigenspace)
+
+    freqs = np.array([0.])
+    expected_se_tadpoles_p = 1/np.prod(N_BZ) * np.array([
+        [np.diag([Bx1, Bx2])**2 / (4*Bz)] for _ in range(len(kpath.ks))
+    ])
+    expected_se_tadpoles_h = 1/np.prod(N_BZ) * np.array([
+        [np.diag([Bx1, Bx2])**2 / (4*Bz)] for _ in range(len(kpath.ks))
+    ])
+
+    se_tadpoles_p = np.zeros((len(kpath.ks), 1, 2, 2))
+    se_tadpoles_h = np.zeros((len(kpath.ks), 1, 2, 2))
+    for k_idx, (k, eigvs_k, eigvs_k_minus_BZ, cubic_vert_k0k) in enumerate(zip(
+        kpath.ks, 
+        eigvs_kpath.raw_quantity[0], 
+        eigvs_minus_kpath_minus_BZ.raw_quantity[0], 
+        np.swapaxes(cubic_vert_nosym.raw_quantity[:, 0], 0, 1),
+    )):
+        se_tadpoles_p[k_idx] = tadpole.compute_one_magnon_self_energy(
+            freqs, eigws_Gamma.raw_quantity[0], eigvs_k,
+            cubic_vert_k0k, [eigvs_k_minus_BZ[0], eigvs_BZ.raw_quantity[0][0], eigvs_k],
+            linear_vert_nosym.raw_quantity, eigvs_Gamma.raw_quantity[0],
+            int(np.prod(N_BZ)), T=0, ph_labels=["p", "p", "p"], reg=0.0,
+        )
+        se_tadpoles_h[k_idx] = tadpole.compute_one_magnon_self_energy(
+            freqs, eigws_Gamma.raw_quantity[0], eigvs_k,
+            cubic_vert_k0k, [eigvs_k_minus_BZ[0], eigvs_BZ.raw_quantity[0][0], eigvs_k],
+            linear_vert_nosym.raw_quantity, eigvs_Gamma.raw_quantity[0],
+            int(np.prod(N_BZ)), T=0, ph_labels=["p", "h", "p"], reg=0.0,
+        )
+    
+    assert np.allclose(se_tadpoles_p, expected_se_tadpoles_p)
+    assert np.allclose(se_tadpoles_h, expected_se_tadpoles_h)
+
+
 
 
 
