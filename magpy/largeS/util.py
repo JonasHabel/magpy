@@ -43,7 +43,7 @@ def flat_iterator_index(dimensions, func):
         np.prod(dimensions[n+1:]) for n in range(len(dimensions))
     ])
 
-    for flat_idx in range(np.prod(dimensions)):
+    for flat_idx in range(int(np.prod(dimensions))):    # need int(...) in case dimensions is empty and np.prod(dimensions) returns 1.0
         multiidx = convert_flat_index_into_multiindex(flat_idx, partial_modulos)
         yield multiidx, func(multiidx, flat_idx)
 
