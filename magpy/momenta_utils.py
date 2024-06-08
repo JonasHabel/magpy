@@ -1,5 +1,5 @@
 import numpy as np
-from functools import wraps
+from functools import wraps, reduce
 
 
 class Momenta:
@@ -21,6 +21,10 @@ class Momenta:
         k_BZ = lattice.reciprocal_lattice.sample_inverse_unit_cell(N_BZ, as_meshgrid=False)
         if trans is not None: k_BZ = trans(k_BZ)
         return Momenta(k_BZ)
+    
+    @staticmethod
+    def join(*momenta):
+        return Momenta(*flatmap(momenta, map_func=lambda momenta: momenta.k_arrays))
     
 
     def collapse(self, quantities_arr=None, first_momentum_idx=0):
@@ -82,9 +86,31 @@ class MomentumSpaceQuantity:
     def __init__(self, raw_quantity, momenta):
         self.raw_quantity = raw_quantity
         self.momenta = momenta
+        
+    @staticmethod
+    def join(*momentum_space_quantities):
+        return MSQ(
+            raw_quantity = flatmap(
+                momentum_space_quantities, 
+                map_func=lambda msq: msq.raw_quantity),
+            momenta = Momenta(*flatmap(
+                momentum_space_quantities, 
+                map_func=lambda msq: msq.momenta.k_arrays)),
+        )
+    
 
 # alias
 class MSQ(MomentumSpaceQuantity): pass
+
+
+def flatmap(list_of_objects, map_func=lambda x: x):
+    return reduce(
+        lambda acc, x: acc + x, 
+        map(
+            map_func,
+            list_of_objects
+        )
+    )
 
 
 def Raw(arg_idxs):
