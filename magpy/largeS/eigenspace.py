@@ -29,16 +29,15 @@ returns: list of numpy array
 """
 def compute_magnon_Hamiltonian(eigvs, magnon_H_mom_space):
     order = len(eigvs)
-    assert order <= 26
+    magnon_H_eigenspace = magnon_H_mom_space.copy()
 
-    einsum_str = ",".join([chr(97 + i) + chr(65 + i) for i in range(order)])
-    if order >= 1:
-        einsum_str += ","
-    einsum_str += "".join([chr(97 + i) for i in range(order)])
-    einsum_str += "->"
-    einsum_str += "".join([chr(65 + i) for i in range(order)])
+    # in einsum notation, this contraction corresponds to
+    # np.einsum("abcd...,aA,bB,cC,dD,...->ABCD...", magnon_H_mom_space, *eigvs)
+    for n, eigv in enumerate(eigvs):
+        magnon_H_eigenspace = np.tensordot(magnon_H_eigenspace, eigv, axes=[[n], [0]])
+        magnon_H_eigenspace = np.moveaxis(magnon_H_eigenspace, -1, n)
 
-    return np.einsum(einsum_str, *eigvs, magnon_H_mom_space)
+    return magnon_H_eigenspace
 
 
 
