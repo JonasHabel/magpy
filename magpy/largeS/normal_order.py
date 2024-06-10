@@ -141,7 +141,10 @@ def compute_commutator_term_with_permutations(
     
     sigma_x_ph = np.kron(np.eye(H_dim // 2), np.array([[0, 1], [1, 0]]))
     
-    for k_BZ, eigv_BZ in zip(ks_BZ, eigvs_BZ):
+    from datetime import datetime
+    for nk_BZ, (k_BZ, eigv_BZ) in enumerate(zip(ks_BZ, eigvs_BZ)):
+        if nk_BZ % 1000 == 0:
+            print(f"{nk_BZ} / {len(ks_BZ)} -- {datetime.now()}")
         eigv_minus_BZ = sigma_x_ph @ eigv_BZ.conj() @ sigma_x_ph
 
         ks_conserved = np.array([-np.sum(ks, axis=0), *ks, k_BZ, -k_BZ]) \
@@ -159,6 +162,7 @@ def compute_commutator_term_with_permutations(
                 eigenspace.compute_magnon_Hamiltonian(
                     eigvs_permuted, 
                     commutator_term_loop_contrib_mom_space)
+            
             commuted_operator_idx_1 = inv_permutation[-2]
             commuted_operator_idx_2 = inv_permutation[-1]
             commuted_operators_ph_idx = (
@@ -181,7 +185,7 @@ def compute_commutator_term_with_permutations(
 
 
 @RestoreMomenta(
-    momentum_arrays_arg_idx=2,
+    momentum_arrays_arg_idx=1,
     output_first_momentum_idx=1,
     output_is_tensor=True,
 )
@@ -206,7 +210,8 @@ def compute_commutator_terms_with_permutations(
     magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
         interaction_Hamiltonian_real_space, model, order + 2)
         
-    momenta_shape = np.array([len(eigv) for eigv in eigvs], dtype=np.int64)
+    momenta_shape = np.array([[*k_array.shape[:-1]] for k_array in k_arrays], dtype=np.int64) \
+                      .flatten()
     H_dim = 2*model.lattice.num_sites_unit_cell
     commutator_terms_shape = \
         (np.math.factorial(order), *momenta_shape, *((H_dim,) * order))
