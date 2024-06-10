@@ -394,14 +394,14 @@ def test_commutator_terms_AFM_Heisenberg_chain_with_magnetic_field():
 
     comm_terms = normal_order.compute_commutator_terms_with_permutations(
         model, ks, eigvs, ks_BZ, eigvs_BZ)
-    assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
+    assert comm_terms.raw_quantity.shape == (1, *(), 4)   # 1 permutation, 0 momenta, 4 BdG bands
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
 
     sigma_x = np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))
     gauge_phase = np.diag(sigma_x @ np.linalg.inv(eigvs.raw_quantity[0][0]).conj() @ sigma_x @ eigvs.raw_quantity[0][0])[::2]
-    assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands
-    assert np.allclose(comm_terms_nosym.raw_quantity[0][0], gauge_phase * comm_terms_nosym.raw_quantity[1][0].conj())
+    assert comm_terms_nosym.raw_quantity.shape == (2, *(), 2) # 2 permutations, 0 momenta, 2 particle bands
+    assert np.allclose(comm_terms_nosym.raw_quantity[0], gauge_phase * comm_terms_nosym.raw_quantity[1].conj())
 
 
 
@@ -415,10 +415,10 @@ def test_commutator_terms_KH_model_2d():
 
     comm_terms = normal_order.compute_commutator_terms_with_permutations(
         model, ks, eigvs_Gamma, ks_BZ, eigvs_BZ)
-    assert comm_terms.raw_quantity.shape == (1, 1, 4)   # 1 permutation, 1 momentum, 4 BdG bands
+    assert comm_terms.raw_quantity.shape == (1, *(), 4)   # 1 permutation, 0 momenta, 4 BdG bands
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
-    assert comm_terms_nosym.raw_quantity.shape == (2, 1, 2) # 2 permutations, 1 momentum, 2 particle bands
+    assert comm_terms_nosym.raw_quantity.shape == (2, *(), 2) # 2 permutations, 0 momenta, 2 particle bands
     assert np.allclose(comm_terms_nosym.raw_quantity[0], comm_terms_nosym.raw_quantity[1].conj())
     
 

@@ -729,16 +729,16 @@ def test_1D_BdG_chain_with_cubic_interaction():
     linear_comm_terms = normal_order.compute_commutator_terms_with_permutations(
         mod, [], [np.array([eigv_Gamma])], momenta_BZ, eigvs_BZ,
         interaction_Hamiltonian_real_space=cubic_verts_real_space)
-    linear_comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms)
+    linear_comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms.reshape((1, 1, 2)))[:, 0]
     self_energies_tadpole_p = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx], cubic_verts_k0k,
         [eigvs_cubic_vert[0][0], eigvs_cubic_vert[1][0], eigvs_cubic_vert[2]],
-        linear_comm_terms_nosym[:, 0], eigv_Gamma,
+        linear_comm_terms_nosym, eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
     self_energies_tadpole_h = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx], cubic_verts_k0k, 
         [eigvs_cubic_vert[0][0], eigvs_cubic_vert[1][0], eigvs_cubic_vert[2]],
-        linear_comm_terms_nosym[:, 0], eigv_Gamma,
+        linear_comm_terms_nosym, eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
     
     gauge_trafo_comm_terms = np.array([1j, 1])
@@ -748,7 +748,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     linear_comm_terms_different_gauge = normal_order.compute_commutator_terms_with_permutations(
         mod, [], [np.array([gauge_trafo_comm_terms*eigv_Gamma])], momenta_BZ, eigvs_BZ,
         interaction_Hamiltonian_real_space=cubic_verts_real_space)
-    linear_comm_terms_different_gauge_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms_different_gauge)
+    linear_comm_terms_different_gauge_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms_different_gauge.reshape((1, 1, 2)))[:, 0]
     self_energies_tadpole_p_different_gauge = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx],
         np.einsum(
@@ -759,7 +759,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
             gauge_trafo_internal*eigvs_cubic_vert[1][0], 
             gauge_trafo_in*eigvs_cubic_vert[2]
         ],
-        linear_comm_terms_different_gauge_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
+        linear_comm_terms_different_gauge_nosym, gauge_trafo_comm_terms*eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "p", "p"], reg=0.05)
     self_energies_tadpole_h_different_gauge = tadpole.compute_one_magnon_self_energy(
         freqs, eigw_Gamma, eigvs[k_idx],
@@ -771,7 +771,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
             gauge_trafo_internal*eigvs_cubic_vert[1][0], 
             gauge_trafo_in*eigvs_cubic_vert[2]
         ],
-        linear_comm_terms_different_gauge_nosym[:, 0], gauge_trafo_comm_terms*eigv_Gamma,
+        linear_comm_terms_different_gauge_nosym, gauge_trafo_comm_terms*eigv_Gamma,
         (len(momenta_BZ),), 0.0, ["p", "h", "p"], reg=0.05)
     
     assert np.allclose(self_energies_tadpole_p, self_energies_tadpole_p_different_gauge)
