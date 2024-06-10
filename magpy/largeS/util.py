@@ -67,7 +67,7 @@ def get_inverse_permutations(num_elements):
 
 
 def invert_permutation(permutation):
-    permutation_np = np.array(permutation)
+    permutation_np = np.array(permutation, dtype=np.int64)
     inv = np.empty_like(permutation_np)
     inv[permutation_np] = np.arange(len(inv), dtype=inv.dtype)
     return tuple(inv)
