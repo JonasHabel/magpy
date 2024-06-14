@@ -303,10 +303,10 @@ The number of vectors in new_bravais_vecs should equal the old lattice dimension
 minus the number of removed dimensions (i.e., the length of dims).
 The dimension of each new bravais vector must equal the embedding dimension.
 """
-def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
-                              new_high_symmetry_points=None,
-                              new_classical_ground_state=None,
-                              periodic_boundary_conditions=False):
+def delete_dimensions(model: Model, dims, new_bravais_vecs,
+                      new_high_symmetry_points=None,
+                      new_classical_ground_state=None,
+                      periodic_boundary_conditions=False):
 
     if new_bravais_vecs.shape[0] != model.lattice.dim - len(dims):
         raise Exception(f"number supplied new bravais vectors " + 
@@ -320,36 +320,10 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
                         f"embedding dimension of the lattice " +
                         f"{model.lattice.embedding_dim}")
     
-    def filter(objects, get_bravais_coords, dims, periodic_boundary_conditions):
-        for obj in objects:
-            bravais_coords = get_bravais_coords(obj) 
-            bravais_coords_lower_dim = np.delete(bravais_coords, dims, axis=-1)
-            if periodic_boundary_conditions \
-            or np.all(np.take(bravais_coords, dims, axis=-1) == 0):
-                yield obj, bravais_coords_lower_dim
-                    
-
-    new_edges = [
-        BravaisLattice.Edge(
-            filtered_bravais_coords, edge.subl_idxs.copy()
-        ) \
-        for edge, filtered_bravais_coords in filter(
-            model.lattice.edges,
-            lambda edge: edge.bravais_coords,
-            dims, periodic_boundary_conditions,
-        )
-    ]
-
-    if new_high_symmetry_points is None:
-        new_high_symmetry_points = dict(
-            (k, np.delete(v, dims)) \
-            for k, v in model.lattice.reciprocal_lattice. \
-                        high_symmetry_points.items()
-        )
-
-    new_lattice = BravaisLattice(
-        new_bravais_vecs, model.lattice.sublattices.copy(),
-        new_edges, new_high_symmetry_points
+    new_lattice = lattice.delete_dimensions(
+        model.lattice, dims, new_bravais_vecs,
+        new_high_symmetry_points,
+        periodic_boundary_conditions
     )
 
     new_interactions = [
@@ -365,7 +339,7 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
             ],
             inter.interaction_tensor.copy()
         ) \
-        for inter, filtered_bravais_coords in filter(
+        for inter, filtered_bravais_coords in lattice.__DeleteDimensionsUtils.filter(
             model.interactions,
             lambda inter: np.array([site.bravais_coords for site in inter.sites]),
             dims, periodic_boundary_conditions,
@@ -459,7 +433,7 @@ def add_custom_bc(model: Model, slab_sizes, slab_surface_coords,
         raise Exception("lattice dimension out of range " \
                       + "(should not be reached)")
         
-    strip_model = delete_lattice_dimensions(
+    strip_model = delete_dimensions(
         model_enlarged_unit_cell,
         np.arange(dim - len(slab_sizes), dim),
         new_bravais_vecs,
