@@ -15,6 +15,14 @@ class BravaisLattice:
             self.bravais_coords = bravais_coords
             self.subl_idx = int(sublattice_index)
 
+        def translate(self, bravais_coords_delta):
+            new_bravais_coords = self.bravais_coords.copy()
+            new_bravais_coords += bravais_coords_delta
+            return BravaisLattice.Site(
+                new_bravais_coords,
+                self.subl_idx
+            )
+
         def __eq__(self, other):
             return np.allclose(self.bravais_coords, other.bravais_coords) \
                and self.subl_idx == other.subl_idx
@@ -586,6 +594,150 @@ def stack(latt: BravaisLattice, num_layers: int,
     )
 
     return stacked_lattice
+
+
+
+"""
+This class is only for internal use to avoid code duplication in
+lattice.transform and models.transform
+"""
+class __TransformUtils:
+    def __init__(self, bravais_trans, old_num_sites_unit_cell):
+        self.trans_active = bravais_trans.T
+        self.trans_passive = np.linalg.inv(self.trans_active)
+        self.dim = bravais_trans.shape[0]
+        self.old_num_sites_unit_cell = old_num_sites_unit_cell
+
+        self.new_unit_cell_sites_coords = self.get_new_unit_cell_sites_coords()
+
+    def get_new_unit_cell_sites_coords(self):
+        pts = np.stack(([0, 1],)*self.dim, 0)
+        corners_of_parallelepiped_in_new_coords = \
+            (np.array(np.meshgrid(*pts)).T).reshape((2**self.dim, self.dim)).T
+        corners_of_parallelepiped_in_old_coords = \
+            self.trans_active @ corners_of_parallelepiped_in_new_coords
+        
+        # in coordinates of the old bravais lattice vectors
+        new_unit_cell_sites_coords = np.array(np.meshgrid(*[
+            np.arange(
+                np.amin(corners_of_parallelepiped_in_old_coords[d]),
+                np.amax(corners_of_parallelepiped_in_old_coords[d]) + 1
+            ) \
+            for d in range(self.dim)
+        ])).astype(int)
+        new_unit_cell_sites_coords = new_unit_cell_sites_coords.reshape(
+            (self.dim, np.prod(new_unit_cell_sites_coords.shape[1:]))).T
+        
+        # filter out all sites that are not inside the parallelogram
+        # (parallelepiped) spanned by the new bravais vectors
+        new_unit_cell_sites_coords = list(filter(
+            lambda site_in_new_coords: 
+                np.all(self.trans_passive @ site_in_new_coords >= 0) and \
+                np.all(self.trans_passive @ site_in_new_coords < 1),
+            new_unit_cell_sites_coords
+        ))
+
+        return new_unit_cell_sites_coords
+
+    def map_site_to_enlarged_coord_system(self, site, new_unit_cell_sites_coords):
+        new_coords = self.trans_passive @ site.bravais_coords
+        new_bravais_coords = new_coords // 1
+        new_coords_remainder = self.trans_active @ (new_coords % 1)
+
+        idx = -1
+        for n, coords in enumerate(new_unit_cell_sites_coords):
+            if np.allclose(coords, new_coords_remainder):
+                idx = n
+                break
+
+        new_subl_idx = site.subl_idx + self.old_num_sites_unit_cell * idx
+        return BravaisLattice.Site(
+            new_bravais_coords,
+            new_subl_idx
+        )
+    
+    def get_all_translated_sites(self, old_site, new_unit_cell_sites_coords):
+        return [
+            old_site.translate(site_delta) \
+            for site_delta in new_unit_cell_sites_coords
+        ]
+    
+    def get_all_translated_sites_in_enlarged_coord_system(
+            self, old_site, new_unit_cell_sites_coords):
+        sites_in_enlarged_coord_sys = [
+            self.map_site_to_enlarged_coord_system(site, new_unit_cell_sites_coords) \
+            for site in self.get_all_translated_sites(old_site, new_unit_cell_sites_coords)
+        ]
+        return sites_in_enlarged_coord_sys
+    
+    def get_all_translated_edges_in_enlarged_coord_system(
+            self, old_edge, new_unit_cell_sites_coords):
+        old_site1, old_site2 = old_edge.get_sites()
+        new_sites1 = self.get_all_translated_sites_in_enlarged_coord_system(
+            old_site1, new_unit_cell_sites_coords)
+        new_sites2 = self.get_all_translated_sites_in_enlarged_coord_system(
+            old_site2, new_unit_cell_sites_coords)
+        return [
+            BravaisLattice.Edge(
+                site2.bravais_coords - site1.bravais_coords,
+                np.array([site1.subl_idx, site2.subl_idx])
+            ) \
+            for site1, site2 in zip(new_sites1, new_sites2)
+        ]
+
+
+
+"""
+The last parameter __return_with_transform_utils is only for internal use,
+to avoid recalculating some quantities in models.transform method
+"""
+def transform(
+    latt: BravaisLattice, bravais_trans, __return_with_transform_utils=False,
+):
+    dim = bravais_trans.shape
+    if len(dim) != 2 or dim[0] != latt.dim or dim[0] != dim[1]:
+        raise Exception(f"lattice dimension {latt.dim} " +
+                        f" and bravais_trans dimensions {dim} should be " +
+                        f"the same.")
+
+    old_lattice = latt
+
+    transform_utils = __TransformUtils(
+        bravais_trans, old_lattice.num_sites_unit_cell,
+    )
+
+    trans_active = transform_utils.trans_active
+    new_bravais_vecs = trans_active.T @ old_lattice.bravais_vecs
+
+    new_sublattices = np.array([
+        old_lattice.bravais_vecs.T @ coord + subl \
+        for coord in transform_utils.new_unit_cell_sites_coords \
+        for subl in old_lattice.sublattices
+    ])
+    
+    new_edges = []
+    for old_edge in old_lattice.edges:
+        new_edges += \
+            transform_utils.get_all_translated_edges_in_enlarged_coord_system(
+                old_edge, transform_utils.new_unit_cell_sites_coords)
+
+    new_hisym_points = dict(
+        (k, trans_active.T @ v) \
+        for k, v in old_lattice.reciprocal_lattice.high_symmetry_points.items()
+    )
+
+    lattice_with_enlarged_unit_cell = BravaisLattice(
+        new_bravais_vecs,
+        new_sublattices,
+        new_edges,
+        new_hisym_points
+    )
+
+
+    if __return_with_transform_utils:
+        return lattice_with_enlarged_unit_cell, transform_utils
+    
+    return lattice_with_enlarged_unit_cell
 
 
 
