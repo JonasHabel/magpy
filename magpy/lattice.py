@@ -580,12 +580,12 @@ def stack(latt: BravaisLattice, num_layers: int,
 
     new_high_sym_points.update(additional_high_symmetry_points)
 
-    new_lattice = BravaisLattice(
+    stacked_lattice = BravaisLattice(
         new_bravais_vecs, new_sublattices, new_edges,
         new_high_sym_points
     )
 
-    return new_lattice
+    return stacked_lattice
 
 
 

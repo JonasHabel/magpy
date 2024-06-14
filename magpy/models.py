@@ -150,12 +150,12 @@ def stack(model: Model, num_layers: int,
             model.classical_gs, (num_layers, 1)
         )
 
-    new_model = Model(
+    stacked_model = Model(
         new_lattice, new_interactions, new_classical_ground_state
     )
 
 
-    return new_model
+    return stacked_model
 
 
 """
