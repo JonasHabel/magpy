@@ -500,7 +500,8 @@ The dimension of each new bravais vector must equal the embedding dimension.
 """
 def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
                               new_high_symmetry_points=None,
-                              new_classical_ground_state=None):
+                              new_classical_ground_state=None,
+                              periodic_boundary_conditions=False):
 
     if new_bravais_vecs.shape[0] != model.lattice.dim - len(dims):
         raise Exception(f"number supplied new bravais vectors " + 
@@ -513,14 +514,25 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
                         f"{new_bravais_vecs.shape[1]} must equal the " +
                         f"embedding dimension of the lattice " +
                         f"{model.lattice.embedding_dim}")
+    
+    def filter(objects, get_bravais_coords, dims, periodic_boundary_conditions):
+        for obj in objects:
+            bravais_coords = get_bravais_coords(obj) 
+            bravais_coords_lower_dim = np.delete(bravais_coords, dims, axis=-1)
+            if periodic_boundary_conditions \
+            or np.all(np.take(bravais_coords, dims, axis=-1) == 0):
+                yield obj, bravais_coords_lower_dim
+                    
 
     new_edges = [
         BravaisLattice.Edge(
-            np.delete(edge.bravais_coords, dims),
-            edge.subl_idxs.copy()
+            filtered_bravais_coords, edge.subl_idxs.copy()
         ) \
-        for edge in model.lattice.edges \
-        if np.all(np.take(edge.bravais_coords, dims, axis=0) == 0)
+        for edge, filtered_bravais_coords in filter(
+            model.lattice.edges,
+            lambda edge: edge.bravais_coords,
+            dims, periodic_boundary_conditions,
+        )
     ]
 
     if new_high_symmetry_points is None:
@@ -539,18 +551,20 @@ def delete_lattice_dimensions(model: Model, dims, new_bravais_vecs,
         Interaction(
             [
                 BravaisLattice.Site(
-                    np.delete(site.bravais_coords, dims),
+                    filtered_bravais_coords_for_site,
                     site.subl_idx
                 ) \
-                for site in inter.sites
+                for site, filtered_bravais_coords_for_site in zip(
+                    inter.sites, filtered_bravais_coords
+                )
             ],
             inter.interaction_tensor.copy()
         ) \
-        for inter in model.interactions
-        if all(map(
-            lambda site: np.all(np.take(site.bravais_coords, dims, axis=0) == 0),
-            inter.sites
-        ))
+        for inter, filtered_bravais_coords in filter(
+            model.interactions,
+            lambda inter: np.array([site.bravais_coords for site in inter.sites]),
+            dims, periodic_boundary_conditions,
+        )
     ]
 
     if new_classical_ground_state is None:
@@ -579,6 +593,16 @@ add open boundary conditions along slab_sizes
 """
 def add_custom_open_bc(model: Model, slab_sizes, slab_surface_coords,
                        slab_normal_coords, new_classical_ground_state=None):
+    return add_custom_bc(
+        model, slab_sizes, slab_surface_coords, slab_normal_coords,
+        periodic=False,
+        new_classical_ground_state=new_classical_ground_state
+    )
+    
+
+
+def add_custom_bc(model: Model, slab_sizes, slab_surface_coords,
+        slab_normal_coords, periodic, new_classical_ground_state=None):
     dim = model.lattice.dim
     new_dim = slab_surface_coords.shape[0]
     if dim >= 3 or dim <= 0:
@@ -634,7 +658,8 @@ def add_custom_open_bc(model: Model, slab_sizes, slab_surface_coords,
         model_enlarged_unit_cell,
         np.arange(dim - len(slab_sizes), dim),
         new_bravais_vecs,
-        new_classical_ground_state=new_classical_ground_state
+        new_classical_ground_state=new_classical_ground_state,
+        periodic_boundary_conditions=periodic,
     )
 
     return strip_model
