@@ -519,7 +519,7 @@ def test_FM_Heisenberg_square_lattice_delete_dimensions():
             latt, n=1, J=-1.0)
     ]
     mod_2D = models.Model(latt, inter, np.array([[0, 0, 1]]))
-    mod_1D = models.delete_lattice_dimensions(mod_2D, [1], np.array([[1, 0]]))
+    mod_1D = models.delete_dimensions(mod_2D, [1], np.array([[1, 0]]))
 
     assert mod_1D.lattice.dim == 1
     assert mod_1D.lattice.embedding_dim == 2
@@ -536,7 +536,7 @@ def test_FM_Heisenberg_chain_lattice_delete_dimensions():
             latt, n=1, J=-1.0)
     ]
     mod_1D = models.Model(latt, inter, np.array([[0, 0, 1], [0, 0, 1]]))
-    mod_0D = models.delete_lattice_dimensions(mod_1D, [0], np.zeros((0, 1)))
+    mod_0D = models.delete_dimensions(mod_1D, [0], np.zeros((0, 1)))
 
     assert mod_0D.lattice.num_sites_unit_cell == 2
     assert set(mod_0D.lattice.edges) == set(
@@ -551,7 +551,7 @@ def test_FM_Heisenberg_honeycomb_lattice_delete_dimensions():
             latt, n=1, J=-1.0)
     ]
     mod_2D = models.Model(latt, inter, np.array([[0, 0, 1], [0, 0, 1]]))
-    mod_1D = models.delete_lattice_dimensions(mod_2D, [0], np.array([[1, 0]]))
+    mod_1D = models.delete_dimensions(mod_2D, [0], np.array([[1, 0]]))
 
     assert mod_1D.lattice.dim == 1
     assert mod_1D.lattice.embedding_dim == 2

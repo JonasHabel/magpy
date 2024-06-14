@@ -691,9 +691,9 @@ class __TransformUtils:
 The last parameter __return_with_transform_utils is only for internal use,
 to avoid recalculating some quantities in models.transform method
 """
-def transform(
-    latt: BravaisLattice, bravais_trans, __return_with_transform_utils=False,
-):
+def transform(latt: BravaisLattice, bravais_trans, 
+              __return_with_transform_utils=False):
+    
     dim = bravais_trans.shape
     if len(dim) != 2 or dim[0] != latt.dim or dim[0] != dim[1]:
         raise Exception(f"lattice dimension {latt.dim} " +
@@ -743,11 +743,61 @@ def transform(
 
 
 
+"""
+This class is only for internal use to avoid code duplication in
+lattice.delete_dimensions and models.delete_dimensions
+"""
+class __DeleteDimensionsUtils:
+    @staticmethod
+    def filter(objects, get_bravais_coords, dims, periodic_boundary_conditions):
+        for obj in objects:
+            bravais_coords = get_bravais_coords(obj) 
+            bravais_coords_lower_dim = np.delete(bravais_coords, dims, axis=-1)
+            if periodic_boundary_conditions \
+            or np.all(np.take(bravais_coords, dims, axis=-1) == 0):
+                yield obj, bravais_coords_lower_dim
 
 
+def delete_dimensions(latt: BravaisLattice, dims, new_bravais_vecs,
+                      new_high_symmetry_points=None,
+                      periodic_boundary_conditions=False):
 
+    if new_bravais_vecs.shape[0] != latt.dim - len(dims):
+        raise Exception(f"number supplied new bravais vectors " + 
+                        f"{new_bravais_vecs.shape[0]} must equal the " +
+                        f"lattice dimension of the new lower-dimensional " +
+                        f"lattice {latt.dim - len(dims)}")
+    
+    if new_bravais_vecs.shape[1] != latt.embedding_dim:
+        raise Exception(f"dimension of supplied new bravais vectors " + 
+                        f"{new_bravais_vecs.shape[1]} must equal the " +
+                        f"embedding dimension of the lattice " +
+                        f"{latt.embedding_dim}")
 
+    new_edges = [
+        BravaisLattice.Edge(
+            filtered_bravais_coords, edge.subl_idxs.copy()
+        ) \
+        for edge, filtered_bravais_coords in __DeleteDimensionsUtils.filter(
+            latt.edges,
+            lambda edge: edge.bravais_coords,
+            dims, periodic_boundary_conditions,
+        )
+    ]
 
+    if new_high_symmetry_points is None:
+        new_high_symmetry_points = dict(
+            (k, np.delete(v, dims)) \
+            for k, v in latt.reciprocal_lattice. \
+                        high_symmetry_points.items()
+        )
+
+    new_lattice = BravaisLattice(
+        new_bravais_vecs, latt.sublattices.copy(),
+        new_edges, new_high_symmetry_points
+    )
+
+    return new_lattice
 
 
 
