@@ -257,119 +257,17 @@ def transform(model: Model, bravais_trans, new_classical_ground_state=None):
                         f"the same.")
 
     old_lattice = model.lattice
-
-    trans_active = bravais_trans.T
-    trans_passive = np.linalg.inv(trans_active)
-    new_bravais_vecs = trans_active.T @ old_lattice.bravais_vecs
-
-
-    pts = np.stack(([0, 1],)*dim[0],0)
-    corners_of_parallelepiped_in_new_coords = \
-        (np.array(np.meshgrid(*pts)).T).reshape((2**dim[0], dim[0])).T
-    corners_of_parallelepiped_in_old_coords = \
-        trans_active @ corners_of_parallelepiped_in_new_coords
-    # in coordinates of the old bravais lattice vectors
-    new_unit_cell_sites_coords = np.array(np.meshgrid(*[
-        np.arange(
-            np.amin(corners_of_parallelepiped_in_old_coords[d]),
-            np.amax(corners_of_parallelepiped_in_old_coords[d]) + 1
-        ) \
-        for d in range(dim[0])
-    ])).astype(int)
-    new_unit_cell_sites_coords = new_unit_cell_sites_coords.reshape(
-        (dim[0], np.prod(new_unit_cell_sites_coords.shape[1:]))).T
-    
-    # filter out all sites that are not inside the parallelogram
-    # (parallelepiped) spanned by the new bravais vectors
-    new_unit_cell_sites_coords = list(filter(
-        lambda site_in_new_coords: 
-            np.all(trans_passive @ site_in_new_coords >= 0) and \
-            np.all(trans_passive @ site_in_new_coords < 1),
-        new_unit_cell_sites_coords
-    ))
-
     old_num_sites_unit_cell = old_lattice.num_sites_unit_cell
-    scale_factor = int(np.round(np.abs(np.linalg.det(trans_active))))
-    new_sublattices = np.array([
-        model.lattice.bravais_vecs.T @ coord + subl \
-        for coord in new_unit_cell_sites_coords \
-        for subl in model.lattice.sublattices
-    ])
-    
-    def map_site_to_enlarged_coord_system(site):
-        new_coords = trans_passive @ site.bravais_coords
-        new_bravais_coords = new_coords // 1
-        new_coords_remainder = trans_active @ (new_coords % 1)
 
-        idx = -1
-        for n, coords in enumerate(new_unit_cell_sites_coords):
-            if np.allclose(coords, new_coords_remainder):
-                idx = n
-                break
-
-        new_subl_idx = site.subl_idx + old_num_sites_unit_cell * idx
-        return BravaisLattice.Site(
-            new_bravais_coords,
-            new_subl_idx
-        )
-
-    def translate_site(site, delta):
-        new_bravais_coords = site.bravais_coords.copy()
-        new_bravais_coords += delta
-        return BravaisLattice.Site(
-            new_bravais_coords,
-            site.subl_idx
-        )
-    
-    def get_all_translated_sites(old_site):
-        return [
-            translate_site(old_site, site_delta) \
-            for site_delta in new_unit_cell_sites_coords
-        ]
-    
-    def get_all_translated_sites_in_enlarged_coord_system(old_site):
-        sites_in_enlarged_coord_sys = [
-            map_site_to_enlarged_coord_system(site) \
-            for site in get_all_translated_sites(old_site)
-        ]
-        return sites_in_enlarged_coord_sys
-    
-    def get_all_translated_edges_in_enlarged_coord_system(old_edge):
-        old_site1, old_site2 = old_edge.get_sites()
-        new_sites1 = get_all_translated_sites_in_enlarged_coord_system(
-            old_site1)
-        new_sites2 = get_all_translated_sites_in_enlarged_coord_system(
-            old_site2)
-        return [
-            BravaisLattice.Edge(
-                site2.bravais_coords - site1.bravais_coords,
-                np.array([site1.subl_idx, site2.subl_idx])
-            ) \
-            for site1, site2 in zip(new_sites1, new_sites2)
-        ]
-
-    new_edges = []
-    for old_edge in old_lattice.edges:
-        new_edges += get_all_translated_edges_in_enlarged_coord_system(old_edge)
-
-    new_hisym_points = dict(
-        (k, trans_active.T @ v) \
-        for k, v in old_lattice.reciprocal_lattice.high_symmetry_points.items()
-    )
-
-    new_lattice = BravaisLattice(
-        new_bravais_vecs,
-        new_sublattices,
-        new_edges,
-        new_hisym_points
-    )
-
+    new_lattice, transform_utils = lattice.transform(
+        model.lattice, bravais_trans, __return_with_transform_utils=True)
 
     new_interactions = []
     for old_inter in model.interactions:
         all_translated_sites = [
-            get_all_translated_sites_in_enlarged_coord_system(site) \
-            for site in old_inter.sites
+            transform_utils.get_all_translated_sites_in_enlarged_coord_system(
+                site, transform_utils.new_unit_cell_sites_coords
+            ) for site in old_inter.sites
         ]   
         new_interactions += list(map(
             lambda sites: Interaction(
@@ -377,6 +275,8 @@ def transform(model: Model, bravais_trans, new_classical_ground_state=None):
             zip(*all_translated_sites)
         ))
 
+    trans_active = transform_utils.trans_active
+    scale_factor = int(np.round(np.abs(np.linalg.det(trans_active))))
     new_num_sites_unit_cell = old_num_sites_unit_cell * scale_factor
     if new_classical_ground_state is None:
         new_classical_gs = np.tile(model.classical_gs, (scale_factor, 1))
