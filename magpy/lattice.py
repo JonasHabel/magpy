@@ -466,6 +466,141 @@ class ReciprocalLattice:
 
 
 
+
+
+
+
+
+
+
+
+def stack(latt: BravaisLattice, num_layers: int,
+          interlayer_edges: list[BravaisLattice.Edge],
+          additional_high_symmetry_points=dict(),
+          distance_between_layers=1.0,
+          sublattice_shifts=None,
+          periodic=True,
+          additional_bravais_vec=None):
+    
+    old_dim = latt.dim
+    old_embedding_dim = latt.embedding_dim
+
+    if periodic:
+        new_dim = latt.dim + 1
+        
+        if old_dim < old_embedding_dim:  
+            # exhaust the extra dimensions of the embedding space
+            new_embedding_dim = old_embedding_dim
+
+            if additional_bravais_vec is None:
+                # auto-choose a vector orthogonal to the lattice plane
+                # as the additional bravais vector along the stacking direction
+                _, _, vh = np.linalg.svd(
+                    latt.bravais_vecs, full_matrices=True)
+                bravais_vecs_ortho_complement = vh[old_dim:]
+                additional_bravais_vec = bravais_vecs_ortho_complement[0] \
+                    * num_layers * distance_between_layers
+                
+            new_bravais_vecs = np.r_[
+                latt.bravais_vecs,
+                additional_bravais_vec,
+            ]
+        else:
+            # extend lattice and embedding space dimension by one
+            new_embedding_dim = old_embedding_dim + 1
+
+            if additional_bravais_vec is None:
+                # choose (0, ..., 0, 1) as the additional bravais vector along
+                # the new dimension
+                additional_bravais_vec = np.zeros(new_embedding_dim)
+                additional_bravais_vec[-1] = num_layers*distance_between_layers
+
+            new_bravais_vecs = np.r_[
+                np.c_[latt.bravais_vecs, np.zeros(old_dim)],
+                np.zeros((1, new_dim)),
+            ]
+            new_bravais_vecs[-1] = additional_bravais_vec
+    
+        if new_bravais_vecs.shape != (new_dim, new_embedding_dim):
+            raise Exception(
+                f"{new_dim} new bravais lattice vectors of dimension " +
+                f"{new_embedding_dim} are required, but instead, " +
+                f"{new_bravais_vecs.shape[0]} vectors of dimension " +
+                f"{new_bravais_vecs.shape[1]} have been supplied.")
+    else:
+        if old_dim < old_embedding_dim:  
+            new_bravais_vecs = latt.bravais_vecs
+        else:
+            new_bravais_vecs = \
+                np.c_[latt.bravais_vecs, np.zeros(old_dim)]
+
+    old_num_sites_unit_cell = latt.num_sites_unit_cell
+    if periodic:
+        pad_subl = \
+            lambda subl: subl if old_dim < old_embedding_dim else np.r_[subl, 0]
+        normlzd_add_bravais_vec = \
+            new_bravais_vecs[-1] / np.linalg.norm(new_bravais_vecs)
+        compute_subl_offset = \
+            lambda layer: normlzd_add_bravais_vec*layer*distance_between_layers
+        new_sublattices = np.array([
+            pad_subl(subl) + compute_subl_offset(layer) \
+            for layer in range(num_layers) \
+            for subl in latt.sublattices
+        ])
+    else:
+        new_sublattices = np.array([
+            np.r_[subl, layer*distance_between_layers] \
+            for layer in range(num_layers) \
+            for subl in latt.sublattices
+        ])
+    if sublattice_shifts is not None:
+        new_sublattices += sublattice_shifts
+
+    new_edges = []
+    for edge in latt.edges:
+        new_edges_for_old_edge = [
+            BravaisLattice.Edge(
+                np.r_[edge.bravais_coords, 0] \
+                    if periodic else edge.bravais_coords,
+                edge.subl_idxs + old_num_sites_unit_cell*layer
+            ) \
+            for layer in range(num_layers)
+        ]
+        new_edges += new_edges_for_old_edge
+    new_edges += interlayer_edges
+
+    old_high_sym_points = latt.reciprocal_lattice.high_symmetry_points
+    if periodic:
+        new_high_sym_points = dict(
+            (k, np.r_[v, 0]) \
+            for k, v in old_high_sym_points.items()
+        )
+    else:
+        new_high_sym_points = dict(**old_high_sym_points)
+
+    new_high_sym_points.update(additional_high_symmetry_points)
+
+    new_lattice = BravaisLattice(
+        new_bravais_vecs, new_sublattices, new_edges,
+        new_high_sym_points
+    )
+
+    return new_lattice
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class SimpleCubicLattice(BravaisLattice):
     def __init__(self):
         super().__init__(

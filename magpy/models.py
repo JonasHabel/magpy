@@ -1,5 +1,6 @@
 import numpy as np
 from .lattice import BravaisLattice, ReciprocalLattice, DotLattice
+from . import lattice
 from .interactions import Interaction, CompositeInteraction
 from . import util
 from typing import List
@@ -118,111 +119,16 @@ def stack(model: Model, num_layers: int,
           sublattice_shifts=None,
           periodic=True,
           additional_bravais_vec=None):
-    
-    old_dim = model.lattice.dim
-    old_embedding_dim = model.lattice.embedding_dim
 
-    if periodic:
-        new_dim = model.lattice.dim + 1
-        
-        if old_dim < old_embedding_dim:  
-            # exhaust the extra dimensions of the embedding space
-            new_embedding_dim = old_embedding_dim
+    new_lattice = lattice.stack(model.lattice, num_layers,
+          interlayer_edges,
+          additional_high_symmetry_points,
+          distance_between_layers,
+          sublattice_shifts,
+          periodic,
+          additional_bravais_vec)
 
-            if additional_bravais_vec is None:
-                # auto-choose a vector orthogonal to the lattice plane
-                # as the additional bravais vector along 
-                _, _, vh = np.linalg.svd(
-                    model.lattice.bravais_vecs, full_matrices=True)
-                bravais_vecs_ortho_complement = vh[old_dim:]
-                additional_bravais_vec = bravais_vecs_ortho_complement[0] \
-                    * num_layers * distance_between_layers
-                
-            new_bravais_vecs = np.r_[
-                model.lattice.bravais_vecs,
-                additional_bravais_vec,
-            ]
-        else:
-            # extend lattice and embedding space dimension by one
-            new_embedding_dim = old_embedding_dim + 1
-
-            if additional_bravais_vec is None:
-                # choose (0, ..., 0, 1) as the additional bravais vector along
-                # the new dimension
-                additional_bravais_vec = np.zeros(new_embedding_dim)
-                additional_bravais_vec[-1] = num_layers*distance_between_layers
-
-            new_bravais_vecs = np.r_[
-                np.c_[model.lattice.bravais_vecs, np.zeros(old_dim)],
-                np.zeros((1, new_dim)),
-            ]
-            new_bravais_vecs[-1] = additional_bravais_vec
-    
-        if new_bravais_vecs.shape != (new_dim, new_embedding_dim):
-            raise Exception(
-                f"{new_dim} new bravais lattice vectors of dimension " +
-                f"{new_embedding_dim} are required, but instead, " +
-                f"{new_bravais_vecs.shape[0]} vectors of dimension " +
-                f"{new_bravais_vecs.shape[1]} have been supplied.")
-    else:
-        if old_dim < old_embedding_dim:  
-            new_bravais_vecs = model.lattice.bravais_vecs
-        else:
-            new_bravais_vecs = \
-                np.c_[model.lattice.bravais_vecs, np.zeros(old_dim)]
-
-    old_num_site_unit_cell = model.lattice.num_sites_unit_cell
-    if periodic:
-        pad_subl = \
-            lambda subl: subl if old_dim < old_embedding_dim else np.r_[subl, 0]
-        normlzd_add_bravais_vec = \
-            new_bravais_vecs[-1] / np.linalg.norm(new_bravais_vecs)
-        compute_subl_offset = \
-            lambda layer: normlzd_add_bravais_vec*layer*distance_between_layers
-        new_sublattices = np.array([
-            pad_subl(subl) + compute_subl_offset(layer) \
-            for layer in range(num_layers) \
-            for subl in model.lattice.sublattices
-        ])
-    else:
-        new_sublattices = np.array([
-            np.r_[subl, layer*distance_between_layers] \
-            for layer in range(num_layers) \
-            for subl in model.lattice.sublattices
-        ])
-    if sublattice_shifts is not None:
-        new_sublattices += sublattice_shifts
-
-    new_edges = []
-    for edge in model.lattice.edges:
-        new_edges_for_old_edge = [
-            BravaisLattice.Edge(
-                np.r_[edge.bravais_coords, 0] \
-                    if periodic else edge.bravais_coords,
-                edge.subl_idxs + old_num_site_unit_cell*layer
-            ) \
-            for layer in range(num_layers)
-        ]
-        new_edges += new_edges_for_old_edge
-    new_edges += interlayer_edges
-
-    old_high_sym_points = model.lattice.reciprocal_lattice.high_symmetry_points
-    if periodic:
-        new_high_sym_points = dict(
-            (k, np.r_[v, 0]) \
-            for k, v in old_high_sym_points.items()
-        )
-    else:
-        new_high_sym_points = dict(**old_high_sym_points)
-
-    new_high_sym_points.update(additional_high_symmetry_points)
-
-    new_lattice = BravaisLattice(
-        new_bravais_vecs, new_sublattices, new_edges,
-        new_high_sym_points
-    )
-
-
+    old_num_sites_unit_cell = model.lattice.num_sites_unit_cell
 
     new_interactions = []
     for inter in model.interactions:
@@ -231,7 +137,7 @@ def stack(model: Model, num_layers: int,
                 BravaisLattice.Site(
                     np.r_[site.bravais_coords, 0] \
                         if periodic else site.bravais_coords,
-                    site.subl_idx + old_num_site_unit_cell*layer
+                    site.subl_idx + old_num_sites_unit_cell*layer
                 ) for site in inter.sites
             ], inter.interaction_tensor.copy()) \
             for layer in range(num_layers)
@@ -244,13 +150,12 @@ def stack(model: Model, num_layers: int,
             model.classical_gs, (num_layers, 1)
         )
 
-    extended_model = Model(
+    new_model = Model(
         new_lattice, new_interactions, new_classical_ground_state
     )
 
 
-
-    return extended_model
+    return new_model
 
 
 """
