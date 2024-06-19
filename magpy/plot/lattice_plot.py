@@ -41,37 +41,51 @@ def plot_unit_cell(lattice: BravaisLattice):
 
 
 def plot_ax_unit_cell(unit_cell_bravais_coords, 
-                      lattice: BravaisLattice, ax, sizes=None):
-    unit_cell_bravais_pos = lattice.bravais_vecs.T @ unit_cell_bravais_coords
-    MAX_SUPPORTED_DIM = 3
+                      lattice: BravaisLattice, ax, sizes=None,
+                      plot_params_for_edge=None):
     for edge in lattice.edges:
-        # truncate at the boundaries to avoid dangling edges
-        if sizes is not None and \
-           (np.any(unit_cell_bravais_coords + edge.bravais_coords >= sizes) or \
-            np.any(unit_cell_bravais_coords + edge.bravais_coords < 0)):
-            continue
-        positions = np.array([
-            lattice.sublattices[int(subl_idx), 0:MAX_SUPPORTED_DIM] \
-            for subl_idx in edge.subl_idxs
-        ]).astype(float)
-        if lattice.dim >= 1:
-            edge_bravais_vec = lattice.bravais_vecs.T @ edge.bravais_coords
-            positions[1, 0:len(edge_bravais_vec)] \
-                += edge_bravais_vec
-            positions[:, 0:len(unit_cell_bravais_pos)] \
-                += unit_cell_bravais_pos
-
-        linestyle = "solid" \
-            if np.all(edge.bravais_coords == 0) \
-            else "dotted"
-        plot_params = dict(color="black", linewidth=2, linestyle=linestyle)
-        if positions.shape[1] == 1:
-            ax.plot(positions[:,0], np.zeros(len(positions)), **plot_params)
-        elif positions.shape[1] == 2:
-            ax.plot(*(positions.T), **plot_params)
-        elif positions.shape[1] == 3:
-            ax.plot3D(*(positions.T), **plot_params)
-        else:
-            raise Exception()
+        plot_ax_edge(edge, unit_cell_bravais_coords, lattice, 
+                     ax, sizes, plot_params_for_edge)
         
     return ax
+    
+
+
+def plot_ax_edge(edge: BravaisLattice.Edge, unit_cell_bravais_coords, 
+                 lattice: BravaisLattice, ax, sizes=None, 
+                 plot_params_for_edge=None):
+    unit_cell_bravais_pos = lattice.bravais_vecs.T @ unit_cell_bravais_coords
+    MAX_SUPPORTED_DIM = 3
+
+    # truncate at the boundaries to avoid dangling edges
+    if sizes is not None and \
+        (np.any(unit_cell_bravais_coords + edge.bravais_coords >= sizes) or \
+        np.any(unit_cell_bravais_coords + edge.bravais_coords < 0)):
+        return
+    
+    positions = np.array([
+        lattice.sublattices[int(subl_idx), 0:MAX_SUPPORTED_DIM] \
+        for subl_idx in edge.subl_idxs
+    ]).astype(float)
+    if lattice.dim >= 1:
+        edge_bravais_vec = lattice.bravais_vecs.T @ edge.bravais_coords
+        positions[1, 0:len(edge_bravais_vec)] \
+            += edge_bravais_vec
+        positions[:, 0:len(unit_cell_bravais_pos)] \
+            += unit_cell_bravais_pos
+
+    linestyle = "solid" \
+        if np.all(edge.bravais_coords == 0) \
+        else "dotted"
+    plot_params = dict(color="black", linewidth=2, linestyle=linestyle)
+    if plot_params_for_edge is not None:
+        plot_params.update(plot_params_for_edge(edge))
+
+    if positions.shape[1] == 1:
+        ax.plot(positions[:,0], np.zeros(len(positions)), **plot_params)
+    elif positions.shape[1] == 2:
+        ax.plot(*(positions.T), **plot_params)
+    elif positions.shape[1] == 3:
+        ax.plot3D(*(positions.T), **plot_params)
+    else:
+        raise Exception()
