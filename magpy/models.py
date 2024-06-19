@@ -2,6 +2,7 @@ import numpy as np
 from .lattice import BravaisLattice, ReciprocalLattice, DotLattice
 from . import lattice
 from .interactions import Interaction, CompositeInteraction
+from . import interactions
 from . import util
 from typing import List
 
@@ -85,19 +86,7 @@ class Model:
     and convert them into a dict {tuple(sites) -> Interaction}
     """
     def group_interactions_by_sites(self):
-        int_tensors_by_site = {}
-
-        for inter in self.interactions:
-            sites = tuple(inter.sites)
-            int_tensor_shape = (3,) * len(sites)
-            int_tensor = int_tensors_by_site.get(
-                sites, np.zeros(int_tensor_shape))
-            int_tensors_by_site[sites] = int_tensor + inter.interaction_tensor
-
-        return {
-            sites: Interaction(sites, int_tensor) \
-            for sites, int_tensor in int_tensors_by_site.items()
-        }
+        return interactions.group_interactions_by_site(self.interactions)
     
 
 """

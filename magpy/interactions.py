@@ -49,6 +49,39 @@ class Interaction:
         return Interaction(self.sites, rotated_interaction_tensor)
 
 
+
+
+
+def group_interactions_by_site(interactions):
+    if len(interactions) == 0:
+        return {}
+
+    int_tensors_by_site = {}
+
+    int_tensor_dim = interactions[0].interaction_tensor.shape[0]
+    assert all(map(
+        lambda inter: all(map(
+            lambda dim: dim == int_tensor_dim,
+            inter.interaction_tensor.shape)), 
+        interactions))
+
+    for inter in interactions:
+        sites = tuple(inter.sites)
+        int_tensor_shape = (int_tensor_dim,) * len(sites)
+        int_tensor = int_tensors_by_site.get(
+            sites, np.zeros(int_tensor_shape))
+        int_tensors_by_site[sites] = int_tensor + inter.interaction_tensor
+
+    return {
+        sites: Interaction(sites, int_tensor) \
+        for sites, int_tensor in int_tensors_by_site.items()
+    }
+
+
+
+
+
+
 class MagneticField(Interaction):
     def __init__(self, lattice: BravaisLattice, sublattice_index: int, B):
         super().__init__(
