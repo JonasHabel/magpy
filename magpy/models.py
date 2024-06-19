@@ -80,7 +80,25 @@ class Model:
         ]
         return rotated_interactions
 
+    """
+    Group interactions acting on the same sites into a single interaction
+    and convert them into a dict {tuple(sites) -> Interaction}
+    """
+    def group_interactions_by_sites(self):
+        int_tensors_by_site = {}
 
+        for inter in self.interactions:
+            sites = tuple(inter.sites)
+            int_tensor_shape = (3,) * len(sites)
+            int_tensor = int_tensors_by_site.get(
+                sites, np.zeros(int_tensor_shape))
+            int_tensors_by_site[sites] = int_tensor + inter.interaction_tensor
+
+        return {
+            sites: Interaction(sites, int_tensor) \
+            for sites, int_tensor in int_tensors_by_site.items()
+        }
+    
 
 """
 Create num_layers copies of the model and link the layers by interlayer edges
