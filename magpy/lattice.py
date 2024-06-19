@@ -32,6 +32,10 @@ class BravaisLattice:
         
         def __str__(self):
             return str(tuple(self.bravais_coords, self.subl_idx))
+        
+        def __repr__(self):
+            return f"Site(bravais_coords={self.bravais_coords}, " \
+                      + f"subl_idx={self.subl_idx})"
 
     """
     Container class for edges
@@ -73,6 +77,10 @@ class BravaisLattice:
         
         def __str__(self):
             return str((self.bravais_coords, self.subl_idxs))
+        
+        def __repr__(self):
+            return f"Edge(bravais_coords={self.bravais_coords}, " \
+                      + f"subl_idxs={self.subl_idxs})"
         
         def undirected_equals(self, other):
             return self == other \
