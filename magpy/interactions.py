@@ -52,7 +52,7 @@ class Interaction:
 
 
 
-def group_interactions_by_site(interactions):
+def group_interactions_by_site(interactions, filter_zero=False):
     if len(interactions) == 0:
         return {}
 
@@ -74,7 +74,8 @@ def group_interactions_by_site(interactions):
 
     return {
         sites: Interaction(sites, int_tensor) \
-        for sites, int_tensor in int_tensors_by_site.items()
+        for sites, int_tensor in int_tensors_by_site.items() \
+        if not (filter_zero and np.allclose(int_tensor, 0))
     }
 
 
