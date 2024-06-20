@@ -1,6 +1,7 @@
 import numpy as np
 from operator import itemgetter
 from functools import reduce
+from . import util
 
 class BravaisLattice:
 
@@ -12,7 +13,7 @@ class BravaisLattice:
     """
     class Site:
         def __init__(self, bravais_coords, sublattice_index):
-            self.bravais_coords = bravais_coords
+            self.bravais_coords = np.array(bravais_coords)
             self.subl_idx = int(sublattice_index)
 
         def translate(self, bravais_coords_delta):
@@ -49,8 +50,8 @@ class BravaisLattice:
     """
     class Edge:
         def __init__(self, bravais_coords, sublattice_indices):
-            self.bravais_coords = bravais_coords
-            self.subl_idxs = sublattice_indices
+            self.bravais_coords = np.array(bravais_coords)
+            self.subl_idxs = np.array(sublattice_indices, dtype=np.int64)
 
         def get_sites(self):
             dim = len(self.bravais_coords)
@@ -98,7 +99,7 @@ class BravaisLattice:
     def __init__(self, bravais_vecs, sublattices, edges,
                  reciprocal_high_symmetry_points,
                  open_bc_configs={}):
-        self.bravais_vecs = bravais_vecs
+        self.bravais_vecs = np.array(bravais_vecs)
         self.dim = self.bravais_vecs.shape[0]
         self.embedding_dim = self.bravais_vecs.shape[1]
         if self.embedding_dim < self.dim:
@@ -106,7 +107,7 @@ class BravaisLattice:
                 f"Dimension of embedding space {self.embedding_dim} must be " +
                 f">= lattice dimension {self.dim}")
         
-        self.sublattices = sublattices
+        self.sublattices = np.array(sublattices)
         if self.sublattices.shape[1] != self.embedding_dim:
             raise Exception(
                 f"Dimension of sublattice coordinate vectors " +
@@ -806,6 +807,38 @@ def delete_dimensions(latt: BravaisLattice, dims, new_bravais_vecs,
     )
 
     return new_lattice
+
+
+
+
+
+
+def rearrange_sublattices(latt: BravaisLattice, permutation):
+    new_sublattices = util.permute(latt.sublattices, permutation)
+
+    new_edges = [
+        BravaisLattice.Edge(
+            bravais_coords=edge.bravais_coords,
+            sublattice_indices=[
+                permutation[subl_idx] for subl_idx in edge.subl_idxs
+            ],
+        ) for edge in latt.edges
+    ]
+
+    new_high_symmetry_points = {
+        k: v.copy() \
+        for k, v in latt.reciprocal_lattice.high_symmetry_points.items()
+    }
+
+    new_lattice = BravaisLattice(
+        latt.bravais_vecs.copy(), new_sublattices,
+        new_edges, new_high_symmetry_points,
+    )
+
+    return new_lattice
+
+
+
 
 
 

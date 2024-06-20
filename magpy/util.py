@@ -1,6 +1,5 @@
 import numpy as np
 from operator import itemgetter
-from .lattice import ReciprocalLattice
 
 
 

@@ -18,13 +18,14 @@ class Model:
     def __init__(self, lattice: BravaisLattice, interactions,
                  classical_ground_state):
         classical_gs_required_shape = (lattice.num_sites_unit_cell, 3)
-        if classical_ground_state.shape != classical_gs_required_shape:
+        self.classical_gs = np.array(classical_ground_state)
+        if self.classical_gs.shape != classical_gs_required_shape:
             raise Exception("classical ground state array has wrong shape " \
                 + f"{classical_ground_state.shape}. Should be " \
                 + f"{classical_gs_required_shape}")
+        
         self.lattice = lattice
         self.interactions = CompositeInteraction(interactions).expand()
-        self.classical_gs = classical_ground_state
 
     """
     The on-site spin quantum number S is characterized by the length of the
@@ -450,3 +451,27 @@ def add_custom_bc(model: Model, slab_sizes, slab_surface_coords,
 
     return strip_model
 
+
+
+
+
+def rearrange_sublattices(model: Model, permutation):
+    new_lattice = lattice.rearrange_sublattices(model.lattice, permutation)
+
+    new_interactions = [
+        Interaction(
+            sites=[
+                BravaisLattice.Site(
+                    bravais_coords=site.bravais_coords,
+                    sublattice_index=permutation[site.subl_idx]
+                ) for site in inter.sites
+            ],
+            interaction_tensor=inter.interaction_tensor,
+        ) for inter in model.interactions
+    ]
+
+    new_classical_ground_state = util.permute(model.classical_gs, permutation)
+
+    new_model = Model(new_lattice, new_interactions, new_classical_ground_state)
+
+    return new_model
