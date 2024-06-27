@@ -65,8 +65,10 @@ def compute_interacting_single_magnon_propagator(
 
 @njit
 def Bose_Einstein(energy, T):
+    EPS = 1e-12
+
     if T == 0:
-        return -1 if energy < 0 else 0
+        return -1 if energy < EPS else 0
     return 1.0 / (np.exp(energy/T) - 1)
 
 

@@ -10,7 +10,7 @@ from .util import *
 def compute_one_magnon_self_energy(
         frequencies,
         energies_BZ,
-        energies_k_minus_BZ,
+        energies_minus_k_minus_BZ,
         cubic_verts,
         T, 
         ph_labels,
@@ -27,24 +27,24 @@ def compute_one_magnon_self_energy(
 
     N_BZ = energies_BZ.shape[:-1]
     num_freqs = len(frequencies)
-    num_ks = int(np.prod(N_BZ))
+    num_ks_BZ = int(np.prod(N_BZ))
     num_bands = energies_BZ.shape[-1] // 2
     cubic_vert_left_flat = cubic_verts[to_binary(ph_idxs_left_vert)] \
-        .reshape((num_ks, *([num_bands]*3)))
+        .reshape((num_ks_BZ, num_bands**2, num_bands))
     cubic_vert_right_flat = cubic_verts[to_binary(ph_idxs_right_vert)] \
-        .reshape((num_ks, *([num_bands]*3))) \
+        .reshape((num_ks_BZ, num_bands**2, num_bands)) \
         .conj()
-    pos_energies_BZ_flat = energies_BZ[..., ::2].reshape(
-        (num_ks, num_bands))
-    pos_energies_k_minus_BZ_flat = energies_k_minus_BZ[..., ::2].reshape(
-        (num_ks, num_bands))
+    pos_energies_BZ_flat = energies_BZ[..., ::2] \
+        .reshape((num_ks_BZ, num_bands))
+    pos_energies_minus_k_minus_BZ_flat = energies_minus_k_minus_BZ[..., ::2] \
+        .reshape((num_ks_BZ, num_bands))
     
     self_energy = np.zeros((num_freqs, num_bands, num_bands),
                             dtype=np.complex128)
     
     compute_one_magnon_self_energy_jit(
         self_energy, frequencies,
-        pos_energies_BZ_flat, pos_energies_k_minus_BZ_flat,
+        pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
         cubic_vert_left_flat, cubic_vert_right_flat,
         intermedate_state_ph_signs, T, reg)
         
@@ -53,7 +53,7 @@ def compute_one_magnon_self_energy(
         ph_idxs_verts=[ph_idxs_left_vert, ph_idxs_right_vert],
         ph_idxs_loops=[ph_idxs[1]],
         num_internal_propagators=2)
-    self_energy /= num_ks
+    self_energy /= num_ks_BZ
     
     return self_energy
     
@@ -62,38 +62,36 @@ def compute_one_magnon_self_energy(
 @njit
 def compute_one_magnon_self_energy_jit(
         out_arr, frequencies,
-        pos_energies_BZ_flat, pos_energies_k_minus_BZ_flat,
+        pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
         cubic_vert_flat1, cubic_vert_flat2,
         ph_signs, T, reg):
     num_ks = pos_energies_BZ_flat.shape[0]
     num_bands = cubic_vert_flat1.shape[-1]
 
-    for nq, pos_energies_at_q, pos_energies_at_k_minus_q, \
+    for nq, pos_energies_at_q, pos_energies_at_minus_k_minus_q, \
         cubic_vert1, cubic_vert2 in zip(
                 np.arange(num_ks), pos_energies_BZ_flat,
-                pos_energies_k_minus_BZ_flat,
+                pos_energies_minus_k_minus_BZ_flat,
                 cubic_vert_flat1,
                 cubic_vert_flat2,
             ):
-        cubic_vert1_reshaped = np.ascontiguousarray(cubic_vert1) \
-            .reshape((num_bands**2, num_bands))
-        cubic_vert2_reshaped = np.ascontiguousarray(cubic_vert2) \
-            .reshape((num_bands**2, num_bands))
+        cubic_vert1 = np.ascontiguousarray(cubic_vert1)
+        cubic_vert2 = np.ascontiguousarray(cubic_vert2)
         compute_one_magnon_self_energy_loop_integral_contribution_jit(
             out_arr,
-            frequencies, pos_energies_at_q, pos_energies_at_k_minus_q,
-            cubic_vert1_reshaped, cubic_vert2_reshaped, ph_signs, T, reg)
+            frequencies, pos_energies_at_q, pos_energies_at_minus_k_minus_q,
+            cubic_vert1, cubic_vert2, ph_signs, T, reg)
     
     
 
 @njit
 def compute_one_magnon_self_energy_loop_integral_contribution_jit(
         out_arr,
-        frequencies, pos_energies_at_q, pos_energies_at_k_minus_q,
+        frequencies, pos_energies_at_q, pos_energies_at_minus_k_minus_q,
         cubic_vert1, cubic_vert2, ph_signs, T, reg):
     pos_energies_in_propagator = np.zeros((2, len(pos_energies_at_q)))
-    pos_energies_in_propagator[0] = pos_energies_at_q
-    pos_energies_in_propagator[1] = pos_energies_at_k_minus_q
+    pos_energies_in_propagator[0] = pos_energies_at_minus_k_minus_q
+    pos_energies_in_propagator[1] = pos_energies_at_q
 
     for nf, freq in enumerate(frequencies):
         G0 = get_free_two_magnon_propagator(

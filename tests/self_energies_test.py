@@ -50,6 +50,150 @@ def test_two_site_quantum_dot_with_DMI():
     assert np.allclose(se_p_pp_p, expected_se_pp)
 
 
+
+
+
+
+def test_honeycomb_FM_Heisenberg_with_DMI_on_slab():
+    latt = HoneycombLatticeA()
+    latt = rearrange_sublattices(latt, (1, 0))
+    D = np.array([0.4, 0, 0.1])
+    inter = [
+        NthNearestNeighborHeisenbergInteraction(latt, n=1, J=-1.0),
+        DMInteraction(BravaisLattice.Edge(np.array([1, 0]), [0, 0]), D=D),
+        DMInteraction(BravaisLattice.Edge(np.array([0, -1]), [0, 0]), D=D),
+        DMInteraction(BravaisLattice.Edge(np.array([-1, 1]), [0, 0]), D=D),
+        DMInteraction(BravaisLattice.Edge(np.array([1, 0]), [1, 1]), D=-D),
+        DMInteraction(BravaisLattice.Edge(np.array([0, -1]), [1, 1]), D=-D),
+        DMInteraction(BravaisLattice.Edge(np.array([-1, 1]), [1, 1]), D=-D),
+    ]
+    mod = models.Model(latt, inter, np.array([[0, 0, 1]]*2))
+
+    N_slab = 2
+    mod = models.add_custom_open_bc(
+        mod, (N_slab,), 
+        slab_surface_coords=np.array([[1, 0]]), 
+        slab_normal_coords=np.array([[0, 1]]))
+    
+    num_ks = 100
+    hisym_points = ["G", "K", "M", "K'", "G'"]
+    momentum_path = mod.lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
+        hisym_points, num_ks, custom_hisym_points={
+            "G": np.array([0.]),
+            "K": np.array([1/3]),
+            "M": np.array([1/2]),
+            "K'": np.array([2/3]),
+            "G'": np.array([1.]),
+        })
+    
+    k_idx = 20
+    k = momentum_path.ks[k_idx]
+
+    # REAL SPACE
+    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
+    verts_real_space_by_sites = group_interactions_by_site(verts_real_space, filter_zero=True)
+    
+    # MOMENTUM SPACE
+    N_BZ = 10
+    momenta_kpath = Momenta.of(momentum_path)
+    momenta_k = Momenta(k)
+    momenta_BZ = Momenta.of_BZ(mod.lattice, (N_BZ,))
+    momenta_minus_k_minus_BZ = Momenta.of_BZ(mod.lattice, (N_BZ,), trans=lambda k_BZ: -k-k_BZ)
+    verts_mom_space = momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
+        mod, Momenta.join(momenta_BZ, momenta_k))
+
+    a = mod.lattice.bravais_vecs[0]
+    nnn = [None for _ in range(2*N_slab)]
+    nnn[0] = ((+1, 0), (-1, +2)) # y = 1
+    for y in range(2, 2*N_slab - 2, 2): # odd y
+        nnn[y] = ((+1, 0), (-1, +2), (0, -2))
+    nnn[2*N_slab - 2] = ((+1, 0), (0, -2)) # y = 2N_slab - 1
+    nnn[1] = ((-1, 0), (0, +2)) # y = 2
+    for y in range(3, 2*N_slab - 1, 2): # even y
+        nnn[y] = ((-1, 0), (1, -2), (0, +2))
+    nnn[2*N_slab - 1] = ((-1, 0), (1, -2)) # y = 2N_slab
+    
+    expected_verts_mom_space_minuskminusq_q_k_cca = np.zeros((N_BZ, *((2*N_slab,)*3)), dtype=complex)
+    expected_verts_mom_space_q_minuskminusq_k_cca = np.zeros((N_BZ, *((2*N_slab,)*3)), dtype=complex)
+
+    for nq, q in enumerate(momenta_BZ.k_arrays[0]):
+        for y in range(2*N_slab):
+            for dx, dy in nnn[y]:
+                expected_verts_mom_space_minuskminusq_q_k_cca[nq, y, y+dy, y+dy] \
+                    += np.exp(1j*(k+q).dot(a)*dx)
+                expected_verts_mom_space_minuskminusq_q_k_cca[nq, y, y+dy, y] \
+                    -= np.exp(1j*q.dot(a)*dx)
+                expected_verts_mom_space_q_minuskminusq_k_cca[nq, y, y+dy, y+dy] \
+                    += np.exp(-1j*q.dot(a)*dx)
+                expected_verts_mom_space_q_minuskminusq_k_cca[nq, y, y+dy, y] \
+                    -= np.exp(-1j*(k+q).dot(a)*dx)
+
+    expected_verts_mom_space_minuskminusq_q_k_cca *= -1j * D[0]/np.sqrt(2)
+    expected_verts_mom_space_q_minuskminusq_k_cca *= -1j * D[0]/np.sqrt(2)
+
+    #assert np.allclose(verts_mom_space.raw_quantity[0, :, 1::2, 1::2, 0::2], expected_verts_mom_space_minuskminusq_q_k_cca)
+    #assert np.allclose(verts_mom_space.raw_quantity[2, :, 1::2, 1::2, 0::2], expected_verts_mom_space_q_minuskminusq_k_cca)
+
+    # EIGENSPACE
+    eigws_k, eigvs_k = LSWT.get_eigensystems_momentum_space(mod, momenta_k)
+    eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(mod, momenta_BZ)
+    eigws_minus_k_minus_BZ, eigvs_minus_k_minus_BZ = LSWT.get_eigensystems_momentum_space(mod, momenta_minus_k_minus_BZ)
+    verts_eigenspace = eigenspace.compute_magnon_Hamiltonians_with_permutations(
+        mod, MSQ.join(eigvs_minus_k_minus_BZ, eigvs_BZ, eigvs_k), verts_mom_space
+    )
+
+    # NORMAL-ORDER AND SYMMETRIZE
+    verts_eigenspace_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(verts_eigenspace)
+    
+    expected_verts_eigenspace_nosym_aaa = np.zeros((N_BZ, 2*N_slab, 2*N_slab, 2*N_slab), dtype=np.complex128)
+    assert np.allclose(verts_eigenspace_nosym.raw_quantity[0b000], expected_verts_eigenspace_nosym_aaa)
+
+    expected_verts_eigenspace_nosym_cca = np.zeros((N_BZ, 2*N_slab, 2*N_slab, 2*N_slab), dtype=complex)
+    for nq, (q, eigvs_minus_k_minus_q, eigvs_q) in enumerate(zip(
+        momenta_BZ.k_arrays[0], eigvs_minus_k_minus_BZ.raw_quantity[0], eigvs_BZ.raw_quantity[0]
+    )):
+        for n in range(2*N_slab):
+            for m in range(2*N_slab):
+                for l in range(2*N_slab):
+                    expected_verts_eigenspace_nosym_cca[nq, n, m, l] = sum(
+                        sum(
+                            + np.exp(1j*(k+q).dot(a)*dx) * eigvs_minus_k_minus_q[2*y+1,2*n+1] * eigvs_q[2*(y+dy)+1,2*m+1] * eigvs_k.raw_quantity[0][2*(y+dy),2*l] \
+                            - np.exp(1j*q.dot(a)*dx) * eigvs_minus_k_minus_q[2*y+1,2*n+1] * eigvs_q[2*(y+dy)+1,2*m+1] * eigvs_k.raw_quantity[0][2*y,2*l] \
+                            + np.exp(-1j*q.dot(a)*dx) * eigvs_minus_k_minus_q[2*(y+dy)+1,2*n+1] * eigvs_q[2*y+1,2*m+1] * eigvs_k.raw_quantity[0][2*(y+dy),2*l] \
+                            - np.exp(-1j*(k+q).dot(a)*dx) * eigvs_minus_k_minus_q[2*(y+dy)+1,2*n+1] * eigvs_q[2*y+1,2*m+1] * eigvs_k.raw_quantity[0][2*y,2*l] \
+                            for dx, dy in nnn[y]
+                        ) for y in range(2*N_slab)
+                    )
+    expected_verts_eigenspace_nosym_cca *= -D[0] * 1j/2/np.sqrt(2)
+
+    assert np.allclose(verts_eigenspace_nosym.raw_quantity[0b110], expected_verts_eigenspace_nosym_cca)
+
+    freqs = np.linspace(0.0, 6.0, 6)
+    T, reg = 0, 0.01
+    se_p_pp_p = bubble.compute_one_magnon_self_energy(
+        freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+        verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "p"], reg)
+    
+    expected_se_p_pp_p = np.zeros((len(freqs), 2*N_slab, 2*N_slab), dtype=complex)
+    for nfreq, freq in enumerate(freqs):
+        for nq, (q, eigws_minus_k_minus_q, eigws_q) in enumerate(zip(
+            momenta_BZ.k_arrays[0], eigws_minus_k_minus_BZ.raw_quantity[0], eigws_BZ.raw_quantity[0]
+        )):
+            for l in range(2*N_slab):
+                for l_ in range(2*N_slab):
+                    for n in range(2*N_slab):
+                        for m in range(2*N_slab):
+                            expected_se_p_pp_p[nfreq, n, m] += \
+                                expected_verts_eigenspace_nosym_cca[nq,l_,l,n] \
+                                * expected_verts_eigenspace_nosym_cca[nq,l_,l,m].conj() \
+                                / (freq - eigws_q[2*l] - eigws_minus_k_minus_q[2*l_] + 1j*reg)
+    expected_se_p_pp_p *= 2 / N_BZ
+
+    assert np.allclose(se_p_pp_p, expected_se_p_pp_p)
+
+
+
+
 def test_field_orthogonal_to_quantization_direction():
     latt = SquareLattice()
     B = np.array([1, 2, 3])
