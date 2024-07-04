@@ -639,10 +639,11 @@ class __TransformUtils:
         
         # filter out all sites that are not inside the parallelogram
         # (parallelepiped) spanned by the new bravais vectors
+        EPS = 1e-12 # to account for floating point inaccuarcies
         new_unit_cell_sites_coords = list(filter(
             lambda site_in_new_coords: 
-                np.all(self.trans_passive @ site_in_new_coords >= 0) and \
-                np.all(self.trans_passive @ site_in_new_coords < 1),
+                np.all(self.trans_passive @ site_in_new_coords >= 0 - EPS) and \
+                np.all(self.trans_passive @ site_in_new_coords < 1 - EPS),
             new_unit_cell_sites_coords
         ))
 
