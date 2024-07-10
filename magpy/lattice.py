@@ -32,7 +32,7 @@ class BravaisLattice:
             return hash(tuple([*self.bravais_coords, self.subl_idx]))
         
         def __str__(self):
-            return str(tuple(self.bravais_coords, self.subl_idx))
+            return str((self.bravais_coords, self.subl_idx))
         
         def __repr__(self):
             return f"Site(bravais_coords={self.bravais_coords}, " \
