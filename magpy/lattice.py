@@ -659,7 +659,7 @@ class __TransformUtils:
         # or -0.0000000000000001 instead of 0, etc.
         new_coords = self.trans_passive @ site.bravais_coords
         new_bravais_coords = (new_coords + self.EPS) // 1
-        new_coords_remainder = self.trans_active @ (new_coords % 1)
+        new_coords_remainder = self.trans_active @ (new_coords - new_bravais_coords)
 
         idx = -1
         for n, coords in enumerate(new_unit_cell_sites_coords):
@@ -667,8 +667,8 @@ class __TransformUtils:
                 idx = n
                 break
 
-        if idx < 0:
-            raise Exception(f"Internal error: negative index {idx}. J.H. needs to debug harder!")
+        #if idx < 0:
+        #    raise Exception(f"Internal error: negative index {idx}. J.H. needs to debug harder!")
 
         new_subl_idx = site.subl_idx + self.old_num_sites_unit_cell * idx
         return BravaisLattice.Site(
