@@ -667,8 +667,8 @@ class __TransformUtils:
                 idx = n
                 break
 
-        #if idx < 0:
-        #    raise Exception(f"Internal error: negative index {idx}. J.H. needs to debug harder!")
+        if idx < 0:
+            raise Exception(f"Internal error: negative index {idx}. J.H. needs to debug harder!")
 
         new_subl_idx = site.subl_idx + self.old_num_sites_unit_cell * idx
         return BravaisLattice.Site(
