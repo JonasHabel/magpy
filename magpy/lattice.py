@@ -616,8 +616,10 @@ class __TransformUtils:
         self.trans_passive = np.linalg.inv(self.trans_active)
         self.dim = bravais_trans.shape[0]
         self.old_num_sites_unit_cell = old_num_sites_unit_cell
+        self.EPS = 1e-12 # to account for floating point inaccuarcies
 
         self.new_unit_cell_sites_coords = self.get_new_unit_cell_sites_coords()
+
 
     def get_new_unit_cell_sites_coords(self):
         pts = np.stack(([0, 1],)*self.dim, 0)
@@ -638,20 +640,25 @@ class __TransformUtils:
             (self.dim, np.prod(new_unit_cell_sites_coords.shape[1:]))).T
         
         # filter out all sites that are not inside the parallelogram
-        # (parallelepiped) spanned by the new bravais vectors
-        EPS = 1e-12 # to account for floating point inaccuarcies
+        # (parallelepiped) spanned by the new bravais vectors.
+        # Note: we need self.EPS here to account for floating point issues, 
+        # e.g. coordinates being e.g. 0.99999999999999999 instead of 1,
+        # or -0.0000000000000001 instead of 0, etc.
         new_unit_cell_sites_coords = list(filter(
             lambda site_in_new_coords: 
-                np.all(self.trans_passive @ site_in_new_coords >= 0 - EPS) and \
-                np.all(self.trans_passive @ site_in_new_coords < 1 - EPS),
+                np.all(self.trans_passive @ site_in_new_coords >= 0 - self.EPS) and \
+                np.all(self.trans_passive @ site_in_new_coords < 1 - self.EPS),
             new_unit_cell_sites_coords
         ))
 
         return new_unit_cell_sites_coords
 
     def map_site_to_enlarged_coord_system(self, site, new_unit_cell_sites_coords):
+        # Note: we need self.EPS here to account for floating point issues, 
+        # e.g. coordinates being e.g. 0.99999999999999999 instead of 1,
+        # or -0.0000000000000001 instead of 0, etc.
         new_coords = self.trans_passive @ site.bravais_coords
-        new_bravais_coords = new_coords // 1
+        new_bravais_coords = (new_coords + self.EPS) // 1
         new_coords_remainder = self.trans_active @ (new_coords % 1)
 
         idx = -1
@@ -659,6 +666,9 @@ class __TransformUtils:
             if np.allclose(coords, new_coords_remainder):
                 idx = n
                 break
+
+        if idx < 0:
+            raise Exception(f"Internal error: negative index {idx}. J.H. needs to debug harder!")
 
         new_subl_idx = site.subl_idx + self.old_num_sites_unit_cell * idx
         return BravaisLattice.Site(
