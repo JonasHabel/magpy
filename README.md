@@ -9,7 +9,8 @@ The following code produces the linear spin-wave band structure along the Gamma-
     from magpy.models import Model
     from magpy.lattice import SquareLattice
     from magpy.interactions import NthNearestNeighborHeisenbergInteraction
-    from magpy import LSWT
+    from magpy.largeS import LSWT
+    from magpy.momenta_utils import Momenta
     from magpy.plot import LSWT_plot
 
     lattice = SquareLattice()
@@ -22,8 +23,8 @@ The following code produces the linear spin-wave band structure along the Gamma-
         lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
             ["Gamma", "X", "M", "Gamma"], 50)
 
-    eigws, eigvs = LSWT.get_eigensystem_along_momentum_path(model, momentum_path)
-    LSWT_plot.plot_energies_along_momentum_path(momentum_path, eigws)
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(model, Momenta.of(momentum_path))
+    LSWT_plot.plot_energies_along_momentum_path(momentum_path, eigws.raw_quantity[0])
 
 Features
 --------
