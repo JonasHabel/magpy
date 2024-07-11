@@ -83,7 +83,14 @@ class FileIO:
             (k, v) for k, v in meta_data.items() \
             if k in param_fields and k not in excluded_param_fields \
             and v is not None)
-   
+    
+    def abbreviate(meta_data, key_abbreviations):
+        abbreviated_meta_data = dict(
+            (key_abbreviations.getdefault(k, k), v) \
+            for k, v in meta_data.items()
+        )
+        return abbreviated_meta_data
+    
 
     def save_data(self, data, quantity_name: str, meta_data: dict,
                   param_fields=None, excluded_param_fields=[]):
