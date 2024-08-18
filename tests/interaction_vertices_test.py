@@ -6,6 +6,7 @@ from magpy.interaction_vertices import momentum_space as momentum_space_old    #
 from magpy.interaction_vertices import eigenspace as eigenspace_old            # refactor this old dependency
 from magpy.interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from magpy import LSWT as LSWT_old # refactor this old dependency
+from magpy.largeS import real_space, momentum_space, LSWT, eigenspace
 import numpy as np
 from magpy.momenta_utils import MSQ, Momenta
 from magpy.util import permute
@@ -18,9 +19,9 @@ def test_two_site_quantum_dot_with_DMI():
     ], classical_ground_state=np.array([[0, 0, 1], [0, 0, 1]]))
 
     # REAL SPACE
-    verts_real_space = real_space_old.compute_interaction_Hamiltonian(mod, order=3)
+    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
 
-    # expect 1/sqrt(2) [a_2^† a_1 a_2 - a_1^† a_1 a_2 + h.c.] 
+    # expect 1/sqrt(2) [a_1 a_2^† a_2 - a_1^† a_1 a_2 + h.c.] 
     #      + 1/sqrt(8) [a_1^† a_1 a_1 - a_2^† a_2 a_2 + h.c.]
     expected_int_tensor_111 = 1/(2*np.sqrt(8)) * np.array([
         [[0, 0], [0, 0]],
@@ -30,51 +31,51 @@ def test_two_site_quantum_dot_with_DMI():
         [[0, 0], [0, 0]],
         [[1j, 0], [-1j, 0]],
     ])
-    expected_int_tensor_212 = 1/(np.sqrt(2)) * np.array([
-        [[0, 0], [0, 0]],
-        [[1j, 0], [0, 0]],
-    ])
     expected_int_tensor_122 = 1/(np.sqrt(2)) * np.array([
+        [[0, 0], [1j, 0]],
         [[0, 0], [0, 0]],
-        [[0, 0], [-1j, 0]],
     ])
-    expected_int_tensor_112 = -1/(np.sqrt(2)) * np.array([
+    expected_int_tensor_112 = 1/(np.sqrt(2)) * np.array([
         [[0, 0], [0, 0]],
-        [[1j, 0], [0, 0]],
+        [[-1j, 0], [0, 0]],
     ])
-    expected_int_tensor_121 = -1/(np.sqrt(2)) * np.array([
+    expected_int_tensor_221 = 1/(np.sqrt(2)) * np.array([
         [[0, 0], [0, 0]],
-        [[0, 0], [-1j, 0]],
+        [[0, -1j], [0, 0]],
+    ])
+    expected_int_tensor_211 = 1/(np.sqrt(2)) * np.array([
+        [[0, 0], [0, 0]],
+        [[0, 0], [1j, 0]],
     ])
 
     assert len(verts_real_space) == 6
 
     assert np.allclose(expected_int_tensor_111, verts_real_space[0].interaction_tensor)
     assert np.allclose(expected_int_tensor_222, verts_real_space[1].interaction_tensor)
-    assert np.allclose(expected_int_tensor_212, verts_real_space[2].interaction_tensor)
-    assert np.allclose(expected_int_tensor_122, verts_real_space[3].interaction_tensor)
-    assert np.allclose(expected_int_tensor_112, verts_real_space[4].interaction_tensor)
-    assert np.allclose(expected_int_tensor_121, verts_real_space[5].interaction_tensor)
+    assert np.allclose(expected_int_tensor_122, verts_real_space[2].interaction_tensor)
+    assert np.allclose(expected_int_tensor_112, verts_real_space[3].interaction_tensor)
+    assert np.allclose(expected_int_tensor_221, verts_real_space[4].interaction_tensor)
+    assert np.allclose(expected_int_tensor_211, verts_real_space[5].interaction_tensor)
 
     # MOMENTUM SPACE
-    vert_mom_space = momentum_space_old.compute_interaction_Hamiltonian(
-        mod, 3, np.array([[]]), verts_real_space)
+    vert_mom_space = momentum_space.compute_magnon_Hamiltonian(
+        mod, np.array([[0], [0], [0]]), verts_real_space)
     
-    expected_vert_mom_space = -1/(2*np.sqrt(8)) * np.array([
+    expected_vert_mom_space = 1/(2*np.sqrt(8)) * np.array([
+        [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 4j, 0]],
+        [[1j, 0, -4j, 0], [-1j, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
         [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        [[-1j, 0, 4j, 0], [1j, 0, 0, 0], [0, 0, 0, 0], [-4j, 0, 4j, 0]],
-        [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        [[0, 0, -4j, 0], [0, 0, 0, 0], [0, 0, 1j, 0], [0, 0, -1j, 0]],
+        [[0, 0, 0, 0], [4j, 0, 0, 0], [0, -4j, -1j, 0], [0, 0, 1j, 0]],
     ])
 
     assert np.allclose(vert_mom_space, expected_vert_mom_space)
 
     # LSWT EIGENSPACE
-    _, eigvs = LSWT_old.get_eigensystem_momentum_space(mod, np.array([0]))
+    _, eigvs = LSWT.get_eigensystem_momentum_space(mod, np.array([0]))
     eigvs = np.array([eigvs, eigvs, eigvs])
     
-    vert_eigenspace = eigenspace_old.compute_interaction_Hamiltonian(
-        mod, 3, eigvs, vert_mom_space)
+    vert_eigenspace = eigenspace.compute_magnon_Hamiltonian(
+        eigvs, vert_mom_space)
     
     assert np.allclose(vert_eigenspace, expected_vert_mom_space)
 
