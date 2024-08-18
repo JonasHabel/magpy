@@ -141,3 +141,33 @@ class FileIO:
             data = pickle.load(f)
         
         return (data, meta_data, parameter_fields, )
+
+
+    def update_custom(self, file_name: str, quantity_name: str, update_meta_data,
+               new_param_fields=None, remove_old_file=False):
+        data, meta_data, parameter_fields = FileIO.load_data_from_file(file_name)
+
+        update_meta_data(meta_data)
+        if new_param_fields is None:
+            new_param_fields = parameter_fields
+
+        if remove_old_file:
+            # need to remove old file first before saving the new file
+            # if old and new file have the same file name
+            os.remove(file_name)
+
+        file_name = self.save_data(
+            data, quantity_name, meta_data, new_param_fields)
+
+        return file_name
+
+
+    def update(self, file_name: str, quantity_name: str, updated_meta_data,
+               new_param_fields=None, remove_old_file=False):
+        def update_meta_data(meta_data):
+            meta_data.update(updated_meta_data)
+
+        return self.update_custom(
+            file_name, quantity_name, update_meta_data,
+            new_param_fields, remove_old_file)
+
