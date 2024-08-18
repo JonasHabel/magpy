@@ -6,7 +6,7 @@ from magpy.interaction_vertices import momentum_space as momentum_space_old    #
 from magpy.interaction_vertices import eigenspace as eigenspace_old            # refactor this old dependency
 from magpy.interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from magpy import LSWT as LSWT_old # refactor this old dependency
-from magpy.largeS import real_space, momentum_space, LSWT, eigenspace
+from magpy.largeS import real_space, momentum_space, LSWT, eigenspace, normal_order
 import numpy as np
 from magpy.momenta_utils import MSQ, Momenta
 from magpy.util import permute
@@ -407,3 +407,158 @@ def test_normal_order_and_symmetrize_one_band_cubic_vertex():
     nosym_vertices = eigenspace_old.normal_order_and_symmetrize_cubic_interaction_Hamiltonian_loop_jit(vertices)
 
     assert np.allclose(expected_nosym_vertices, nosym_vertices)
+
+
+def test_normal_order_and_symmetrize_quartic_vertex():
+    latt = ChainLattice(2)
+    inter = [
+        NthNearestNeighborHeisenbergInteraction(latt, 1, J=1),
+        MagneticField(latt, 0, np.array([0, 0, 0.1])),
+        MagneticField(latt, 1, np.array([0, 0, -0.1])),
+    ]
+    mod = models.Model(latt, inter, np.array([[0, 0, 1], [0, 0, -1]]))
+
+    # REAL SPACE
+    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, 4)
+    vert_aabb = verts_real_space[9]    # from the S^z S^z term
+    
+    assert np.allclose(
+        np.array([site.bravais_coords for site in vert_aabb.sites]),
+        np.array([[0], [0], [-1], [-1]]),
+    )
+    assert [site.subl_idx for site in vert_aabb.sites] == [0, 0, 1, 1]
+    assert np.allclose(
+        vert_aabb.interaction_tensor,
+        np.array([
+            [
+                [[0, 0], [0, 0]],
+                [[0, 0], [0, 0]],
+            ], [
+                [[0, 0], [-1., 0]],
+                [[0, 0], [0, 0]],
+            ],
+        ]),
+    )
+
+    # MOMENTUM SPACE
+    np.random.seed(2)
+    ks = np.random.rand(3, 1)   # q, p, k
+    vert_aabb_mom_space = lambda ks: momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
+        mod, ks, interaction_Hamiltonian_real_space=[vert_aabb],
+    )
+
+    expected_vert_aabb_mom_space_base = np.zeros((4, 4, 4, 4), dtype=np.complex128)
+    expected_vert_aabb_mom_space_base[1, 0, 3, 2] = -1.
+    expected_vert_aabb_mom_space = lambda q, p, k: np.einsum(
+        "i,...->i...",
+        np.exp(-1j*np.array([
+            p+k,    # -k-p-q, q, p, k
+            k+p,    # -k-p-q, q, k, p
+            q+k,    # -k-p-q, p, q, k
+            k+q,    # -k-p-q, p, k, q
+            q+p,    # -k-p-q, k, q, p
+            p+q,    # -k-p-q, k, p, q
+            p+k,    # q, -k-p-q, p, k
+            k+p,    # q, -k-p-q, k, p
+            (-k-p-q)+k,    # q, p, -k-p-q, k
+            k+(-k-p-q),    # q, p, k, -k-p-q
+            (-k-p-q)+p,    # q, k, -k-p-q, p
+            p+(-k-p-q),    # q, k, p, -k-p-q
+            q+k,    # p, -k-p-q, q, k
+            k+q,    # p, -k-p-q, k, q
+            (-k-p-q)+k,    # p, q, -k-p-q, k
+            k+(-k-p-q),    # p, q, k, -k-p-q
+            (-k-p-q)+q,    # p, k, -k-p-q, q
+            q+(-k-p-q),    # p, k, q, -k-p-q
+            q+p,    # k, -k-p-q, q, p
+            p+q,    # k, -k-p-q, p, q
+            (-k-p-q)+p,    # k, q, -k-p-q, p
+            p+(-k-p-q),    # k, q, p, -k-p-q
+            (-k-p-q)+q,    # k, p, -k-p-q, q
+            q+(-k-p-q),    # k, p, q, -k-p-q
+        ])),
+        expected_vert_aabb_mom_space_base,
+    )
+    assert np.allclose(vert_aabb_mom_space(ks), expected_vert_aabb_mom_space(*ks[:, 0]))
+
+    # EIGENSPACE
+    vert_aabb_eigenspace = lambda ks, eigvs: eigenspace.compute_magnon_Hamiltonian(
+        eigvs, vert_aabb_mom_space(ks)[0b0000],
+    )
+    
+    # COMMUTATOR TERMS EIGENSPACE
+    N_BZ = 10
+    ks_BZ = mod.lattice.reciprocal_lattice.sample_inverse_unit_cell((N_BZ,), as_meshgrid=False)
+    eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(mod, [ks_BZ])
+    K = np.random.rand(1)
+    eigws_K, eigvs_K = LSWT.get_eigensystem_momentum_space(mod, K)
+    eigws_minus_K, eigvs_minus_K = LSWT.get_eigensystem_momentum_space(mod, -K)
+    vert_aabb_nosym = normal_order.compute_commutator_term_with_permutations(
+        mod, [K], [eigvs_minus_K, eigvs_K], ks_BZ, eigvs_BZ[0],
+        interaction_Hamiltonian_real_space=[vert_aabb],
+    )
+
+    H, P = 0, 1
+    sigma_x_ph = np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))
+    eigvs = lambda k: LSWT.get_eigensystem_momentum_space(mod, k)[1]
+    eigvs_minus = lambda k: sigma_x_ph @ eigvs(k).conj() @ sigma_x_ph
+    expected_vert_aabb_nosym = np.sum([
+        np.trace(vert_aabb_eigenspace(
+            [-K, K, p],
+            [eigvs_minus(p), eigvs_minus_K, eigvs_K, eigvs(p)],
+        )[H::2, P::2, H::2, P::2], axis1=0, axis2=3) +
+        np.trace(vert_aabb_eigenspace(
+            [K, -p, p],
+            [eigvs_minus_K, eigvs_K, eigvs_minus(p), eigvs(p)],
+        )[P::2, H::2, H::2, P::2], axis1=2, axis2=3) +
+        np.trace(vert_aabb_eigenspace(
+            [-p, K, p],
+            [eigvs_minus_K, eigvs_minus(p), eigvs_K, eigvs(p)],
+        )[P::2, H::2, H::2, P::2], axis1=1, axis2=3) +
+        np.trace(vert_aabb_eigenspace(
+            [p, -K, K],
+            [eigvs_minus(p), eigvs(p), eigvs_minus_K, eigvs_K],
+        )[H::2, P::2, P::2, H::2], axis1=0, axis2=1) +
+        np.trace(vert_aabb_eigenspace(
+            [-K, p, K],
+            [eigvs_minus(p), eigvs_minus_K, eigvs(p), eigvs_K],
+        )[H::2, P::2, P::2, H::2], axis1=0, axis2=2) +
+        np.trace(vert_aabb_eigenspace(
+            [-p, p, K],
+            [eigvs_minus_K, eigvs_minus(p), eigvs(p), eigvs_K],
+        )[P::2, H::2, P::2, H::2], axis1=1, axis2=2)
+        for p in ks_BZ
+    ], axis=0)
+    
+    assert np.allclose(vert_aabb_nosym[0b0, P::2, H::2], expected_vert_aabb_nosym)
+
+    # COMMUTATOR TERMS MOMENTUM SPACE
+    verts_aabb_nosym_eigenspace = np.zeros((N_BZ, 2, 4, 4), dtype=np.complex128)
+    verts_aabb_nosym_mom_space = np.zeros((N_BZ, 2, 4, 4), dtype=np.complex128)
+    for nk, K in enumerate(ks_BZ):
+        _, eigvs_K = LSWT.get_eigensystem_momentum_space(mod, K)
+        _, eigvs_minus_K = LSWT.get_eigensystem_momentum_space(mod, -K)
+        verts_aabb_nosym_eigenspace[nk] = normal_order.compute_commutator_term_with_permutations(
+            mod, [K], [eigvs_minus_K, eigvs_K], ks_BZ, eigvs_BZ[0],
+            interaction_Hamiltonian_real_space=[vert_aabb],
+        )
+
+        eigvs_K_inv = np.linalg.inv(eigvs_K)
+        eigvs_minus_K_inv = np.linalg.inv(eigvs_minus_K)
+        verts_aabb_nosym_mom_space[nk] = np.einsum(
+            "pmn,pmi,pnj->pij",
+            verts_aabb_nosym_eigenspace[nk],
+            [eigvs_minus_K_inv, eigvs_K_inv],
+            [eigvs_K_inv, eigvs_minus_K_inv],
+        )
+
+    # COMMUTATOR TERMS REAL SPACE
+    N_sites = N_BZ
+    vert_aabb_nosym_real_space = np.zeros((N_sites, 4, 4), dtype=np.complex128)
+    for i in range(N_sites):
+        for nk, K in enumerate(ks_BZ):
+            vert_aabb_nosym_real_space[i] += \
+                1./N_BZ * np.exp(-1j*K.dot(np.array([i]))) * verts_aabb_nosym_mom_space[nk, 0b0]
+            
+    # result looks correct when debugging. TODO implement assert
+    assert True
