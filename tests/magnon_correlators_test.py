@@ -54,28 +54,35 @@ def test_correlators_AFM_Heisenberg_chain():
 
     # BdG Hamiltonian of the form [[epsilon, gamma*], [gamma, epsilon]]
     epsilon = J*(S_A + S_B)
-    gamma = lambda k: J*np.sqrt(S_A*S_B) * (1 + np.exp(1j*k[0]))
+    gamma = lambda k: -J*np.sqrt(S_A*S_B) * (1 + np.exp(1j*k[0]))
     # BdG transformation of the form U_k = [[u_k, v_k], [v_k*, u_k*]]
     # where u_k = cosh(beta) and v_k = e^(i*phi)*sinh(beta) (up to global phase)
     beta = lambda k: 0.5 * np.arctanh(-np.abs(gamma(k)) / epsilon)
     phi = lambda k: -np.angle(gamma(k))
-    u, v = BdG_coeffs_u, BdG_coeffs_v = np.array([
+    BdG_coeffs_u_k, BdG_coeffs_v_k = np.array([
         [np.cosh(beta(k)), np.exp(1j*phi(k)) * np.sinh(beta(k))]
         for k in ks_BZ.k_arrays[0]
-    ]).T    # u, v is a short-hand for the BdG coefficients
+    ]).T
+    BdG_coeffs_u_minus_k, BdG_coeffs_v_minus_k = np.array([
+        [np.cosh(beta(-k)), np.exp(1j*phi(-k)) * np.sinh(beta(-k))]
+        for k in ks_BZ.k_arrays[0]
+    ]).T
 
     assert correlators_mom_space.shape == (*N_BZ, 4, 4)
-    # assert np.allclose(
-    #     correlators_mom_space, 
-    #     np.array([
-    #         [
-    #             [0, ..., ..., 0],   # <aa>   <aa^†>,  <ab>   <ab^†>
-    #             [..., 0, 0, ...],   # <a^†a> <a^†a^†> <a^†b> <a^†b^†>
-    #             [..., 0, 0, ...],   # <ba>   <ba^†>   <bb>   <bb^†>
-    #             [0, ..., ..., 0],   # <b^†a> <b^†a^†> <b^†b> <b^†b^†>
-    #         ] for nk, k in enumerate(ks_BZ.k_arrays[0])
-    #     ]),
-    # )
+    assert np.allclose(
+        correlators_mom_space, 
+        np.array([
+            [
+                [0,                          u_k*u_k.conj(),        u_k*v_k,        0],                                   # <aa>   <aa^†>,  <ab>   <ab^†>
+                [v_minus_k*v_minus_k.conj(), 0,                     0,              u_minus_k.conj()*v_minus_k.conj()],   # <a^†a> <a^†a^†> <a^†b> <a^†b^†>
+                [u_minus_k*v_minus_k,        0,                     0,              u_minus_k*u_minus_k.conj()],          # <ba>   <ba^†>   <bb>   <bb^†>
+                [0,                          v_k.conj()*u_k.conj(), v_k*v_k.conj(), 0],                                   # <b^†a> <b^†a^†> <b^†b> <b^†b^†>
+            ] for u_k, u_minus_k, v_k, v_minus_k in zip(
+                BdG_coeffs_u_k, BdG_coeffs_u_minus_k, 
+                BdG_coeffs_v_k, BdG_coeffs_v_minus_k
+            )
+        ]),
+    )
     
     # REAL SPACE
     N_sites = N_BZ
@@ -85,7 +92,7 @@ def test_correlators_AFM_Heisenberg_chain():
             ks_BZ, eigvs_BZ, bravais_coords
         )
     
-    expected_correlators_real_space = np.zeros((*N_sites, 4, 4))
+    # expected_correlators_real_space = np.zeros((*N_sites, 4, 4))
     # expected_correlators_real_space[0] = np.array([
     #     [0, ..., ..., 0],
     #     [..., 0, 0, ...],
