@@ -75,27 +75,41 @@ class FileIO:
             self.file_naming_convention.create_file_name(
                 quantity_name, parameters))
     
-    def __get_file_name_params(meta_data, param_fields,
-                               excluded_param_fields=()):
+    def __get_file_name_params(
+        meta_data, param_fields, excluded_param_fields=(),
+        abbreviate_params=None,
+    ):
         param_fields = param_fields if param_fields is not None \
             else meta_data.keys()
-        return dict(
-            (k, v) for k, v in meta_data.items() \
-            if k in param_fields and k not in excluded_param_fields \
-            and v is not None)
+
+        params = {
+            k: v \
+            for k, v in meta_data.items() \
+            if k in param_fields and \
+               k not in excluded_param_fields and \
+               v is not None
+        }
+
+        if abbreviate_params is not None:
+            params = abbreviate_params(params)
+
+        return params
+
     
     def abbreviate(meta_data, key_abbreviations):
         abbreviated_meta_data = dict(
-            (key_abbreviations.getdefault(k, k), v) \
+            (key_abbreviations.get(k, k), v) \
             for k, v in meta_data.items()
         )
         return abbreviated_meta_data
     
 
     def save_data(self, data, quantity_name: str, meta_data: dict,
-                  param_fields=None, excluded_param_fields=[]):
+                  param_fields=None, excluded_param_fields=[],
+                  abbreviate_params=None):
         params = FileIO.__get_file_name_params(
-            meta_data, param_fields, excluded_param_fields)
+            meta_data, param_fields, excluded_param_fields,
+            abbreviate_params)
         file_name = self.__compose_file_path(quantity_name, params)
         return FileIO.save_data_to_file(file_name, data, meta_data,
                                         list(params.keys()))
@@ -112,9 +126,11 @@ class FileIO:
     
     
     def load_data(self, quantity_name: str, meta_data: dict,
-                  param_fields=None, excluded_param_fields=()):
+                  param_fields=None, excluded_param_fields=(),
+                  abbreviate_params=None):
         parameters = FileIO.__get_file_name_params(
-            meta_data, param_fields, excluded_param_fields)
+            meta_data, param_fields, excluded_param_fields,
+            abbreviate_params)
         file_name = self.__compose_file_path(quantity_name, parameters)
         return FileIO.load_data_from_file(file_name)
     
