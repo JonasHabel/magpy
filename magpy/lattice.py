@@ -429,13 +429,12 @@ class ReciprocalLattice:
         momenta = np.zeros((N_k, 2))
         for n, t in enumerate(np.linspace(0, 1, N_k)):
             section_idx = (cumulative_dist > t).argmax() - 1
-            print(section_idx, t, cumulative_dist)
             momenta[n] = self._interpolate_momentum_path_section(
                 t, point_coords[section_idx], point_coords[section_idx+1],
                 cumulative_dist[section_idx], cumulative_dist[section_idx+1]
             )
-
-        high_sym_point_idxs = list(N_k*cumulative_dist) + [N_k]
+        
+        high_sym_point_idxs = list(N_k*cumulative_dist)
         momentum_path = ReciprocalLattice.MomentumPath(momenta, point_labels,
                                                        point_coords,
                                                        high_sym_point_idxs)
