@@ -7,6 +7,7 @@ from magpy.interaction_vertices import eigenspace as eigenspace_old            #
 from magpy.interaction_vertices.util import GET_CUBIC_PERMUTATIONS
 from magpy import LSWT as LSWT_old # refactor this old dependency
 from magpy.largeS import real_space, momentum_space, LSWT, eigenspace, normal_order
+from magpy.correlators.magnon_correlators import compute_real_space_correlator_LSWT
 import numpy as np
 from magpy.momenta_utils import MSQ, Momenta
 from magpy.util import permute
@@ -559,6 +560,21 @@ def test_normal_order_and_symmetrize_quartic_vertex():
         for nk, K in enumerate(ks_BZ):
             vert_aabb_nosym_real_space[i] += \
                 1./N_BZ * np.exp(-1j*K.dot(np.array([i]))) * verts_aabb_nosym_mom_space[nk, 0b0]
-            
+    
+    corr_real_space = compute_real_space_correlator_LSWT(
+        [ks_BZ], eigvs_BZ, np.array([[0.], [-1.]]),
+    )
+    A, A_DAGGER, B, B_DAGGER = range(4)
+    expected_vert_aabb_nosym_real_space = np.zeros((N_sites, 4, 4), dtype=np.complex128)
+    expected_vert_aabb_nosym_real_space[0, A_DAGGER, A] = -N_BZ * corr_real_space[0, B_DAGGER, B] # decoupling in the a^†a <b^†b> density channel
+    expected_vert_aabb_nosym_real_space[0, B_DAGGER, B] = -N_BZ * corr_real_space[0, A_DAGGER, A] # decoupling in the b^†b <a^†a> density channel
+    expected_vert_aabb_nosym_real_space[-1, A_DAGGER, B] = -N_BZ * corr_real_space[-1, B_DAGGER, A] # decoupling in the a^†b <b^†a> exchange channel
+    expected_vert_aabb_nosym_real_space[-1, B_DAGGER, A] = -N_BZ * corr_real_space[1, A_DAGGER, B] # decoupling in the b^†a <a^†b> exchange channel
+    expected_vert_aabb_nosym_real_space[-1, A_DAGGER, B_DAGGER] = -N_BZ * corr_real_space[1, A, B] # decoupling in the a^†ba^† <ab> pairing channel
+    expected_vert_aabb_nosym_real_space[-1, A, B] = -N_BZ * corr_real_space[1, A_DAGGER, B_DAGGER] # decoupling in the ab <a^†b^†> pairing channel
+    
     # result looks correct when debugging. TODO implement assert
-    assert True
+    assert  np.allclose(
+        vert_aabb_nosym_real_space,
+        expected_vert_aabb_nosym_real_space,
+    )
