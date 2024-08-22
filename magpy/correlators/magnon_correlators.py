@@ -17,10 +17,11 @@ def compute_real_space_correlator_LSWT(
 
     dims_real_space = bravais_coords.shape[:-1]
     num_bravais_coords = int(np.prod(dims_real_space))
+    num_ks_BZ = len(ks_BZ)
     subl_shape = eigvs_BZ.shape[-2:]
     bravais_coords_flat = bravais_coords.reshape((num_bravais_coords,))
     correlators_real_space = np.zeros(
-        (num_bravais_coords, *subl_shape), 
+        (num_bravais_coords, *subl_shape),
         dtype=np.complex128,
     )
 
@@ -32,7 +33,7 @@ def compute_real_space_correlator_LSWT(
             correlators_real_space[nx] += \
                 np.exp(-1j*k.dot(x)) * correlators_mom_space
         
-    correlators_real_space /= num_bravais_coords   # Fourier trafo normalization
+    correlators_real_space /= num_ks_BZ   # Fourier trafo normalization
 
     return correlators_real_space.reshape((*dims_real_space, *subl_shape))
         
@@ -40,7 +41,7 @@ def compute_real_space_correlator_LSWT(
 
 def compute_momentum_space_correlator_LSWT(eigvs_k):
     # ensure right shape (sublattice idx, band idx)
-    assert len(eigvs_k.shape) == 2        
+    assert len(eigvs_k.shape) == 2   
     # ensure equal number of particle and hole states
     assert np.all(np.array(eigvs_k.shape) % 2 == 0)
 
@@ -51,13 +52,13 @@ def compute_momentum_space_correlator_LSWT(eigvs_k):
         return sigma_z_ph @ U.T.conj() @ sigma_z_ph
     eigvs_k_inv = invert(eigvs_k)
     eigvs_minus_k = sigma_x_ph @ eigvs_k.conj() @ sigma_x_ph
-    eigvs_minus_k_inv = invert(eigvs_minus_k)
+    # eigvs_minus_k_inv = invert(eigvs_minus_k)
 
     return np.einsum(
-        "mn,mi,nj->ij",
+        "mn,im,jn->ij",
         compute_eigenspace_correlator_LSWT(num_bands),
-        eigvs_minus_k_inv,
-        eigvs_k_inv,
+        eigvs_k,
+        eigvs_minus_k,
     )
 
 
