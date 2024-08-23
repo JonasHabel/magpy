@@ -34,7 +34,7 @@ def test_two_site_quantum_dot_with_DMI():
     # NORMAL-ORDER AND SYMMETRIZE
     verts_eigenspace_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonian(verts_eigenspace)
 
-    # SELF-ENERGY
+    # SELF-ENERGY (AND 1st DERIVATIVE WRT FREQUENCY)
     freqs = np.array([0.0]) # np.linspace(0, 5, 11)
     reg = 0.05
     expected_se_pp = np.array([
@@ -43,11 +43,20 @@ def test_two_site_quantum_dot_with_DMI():
             [-1., 9./8],
         ]) for freq in freqs
     ])
-    se_p_pp_p = bubble.compute_one_magnon_self_energy(
+    expected_se_pp_deriv = np.array([
+        -0.5/(freq - 2. + 1j*reg)**2 * np.array([
+            [9./8, -1.],
+            [-1., 9./8],
+        ]) for freq in freqs
+    ])
+    se_p_pp_p_and_deriv = bubble.compute_one_magnon_self_energy(
         freqs, np.array([1., 1., 1., 1.]), np.array([1., 1., 1., 1.]),
-        verts_eigenspace_nosym, 0.0, ["p", "pp", "p"], reg)
+        verts_eigenspace_nosym, 0.0, ["p", "pp", "p"], reg,
+        freq_derivatives=[0, 1])
     
-    assert np.allclose(se_p_pp_p, expected_se_pp)
+    assert np.allclose(
+        se_p_pp_p_and_deriv, 
+        np.array([expected_se_pp, expected_se_pp_deriv]))
 
 
 
