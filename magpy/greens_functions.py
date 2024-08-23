@@ -79,3 +79,85 @@ def Bose_Einstein_vectorized(energies, T):
         Bose_weights[n] = Bose_Einstein(energies[n], T)
 
     return Bose_weights
+
+
+
+
+class pole_equation:
+
+    def solve_by_gradient_descent(
+        init_freq, LSWT_energies, compute_self_energies_and_derivative_at_freq,
+        reg, num_steps=10, step_size=0.1, eps=1e-3,
+    ):
+        omega = init_freq
+        eps_squared = eps * eps
+
+        for n in range(num_steps):
+            self_energies, self_energies_derivative = \
+                compute_self_energies_and_derivative_at_freq(omega)
+            cost_func, precomputed_values = \
+                pole_equation.cost_function(
+                    omega, LSWT_energies, self_energies, reg,
+                    return_precomputed_values=True,
+                )
+            
+            if cost_func < eps_squared:
+                return {"freq": omega, "converged": True, "num_steps": n, "error": cost_func}
+            
+            cost_func_gradient = pole_equation.cost_function_gradient(
+                omega, LSWT_energies, self_energies, self_energies_derivative,
+                reg, precomputed_values,
+            )
+            omega -= step_size * 2*np.conj(cost_func_gradient)
+                
+        return {"freq": omega, "converged": False, "num_steps": num_steps, "error": cost_func}
+
+
+
+    # returns the cost function f(w) = |det G^{-1}(w)|^2
+    # which is to be minimized.
+    def cost_function(
+        omega, LSWT_energies, self_energies, reg,
+        return_precomputed_values=False,
+    ):
+        G_inv = np.diag(omega + 1j*reg - LSWT_energies) - self_energies
+        det_G_inv = np.linalg.det(G_inv)
+        cost_func = det_G_inv * np.conj(det_G_inv)
+
+        if return_precomputed_values:
+            return cost_func, {"G_inv": G_inv, "cost_func": cost_func}
+        
+        return cost_func
+
+
+    # Returns the gradient of the cost function f(w):
+    #    df/dw = |det G^{-1}(w)|^2 * Tr(G(w)(1 - dΣ*/dw))
+    def cost_function_gradient(
+        omega, LSWT_energies, self_energies, self_energies_derivative, reg,
+        precomputed_values=None,
+    ):
+        # def get_or_else(key, dct, func):
+        #     if dct is not None and key in dct:
+        #         return dct[key]
+        #     return func()
+        
+        # G_inv = get_or_else(
+        #     "G_inv", precomputed_values,
+        #     lambda: np.diag(omega + 1j*reg - LSWT_energies) - self_energies,
+        # )
+        G_inv = np.diag(omega + 1j*reg - LSWT_energies) - self_energies
+        det_G_inv = np.linalg.det(G_inv)
+        
+        G = np.linalg.inv(G_inv)
+        identity = np.eye(len(LSWT_energies))
+
+        # cost_func = get_or_else(
+        #     "cost_func", precomputed_values,
+        #     lambda: pole_equation.cost_function(
+        #         omega, LSWT_energies, self_energies, reg),
+        cost_func = det_G_inv * np.conj(det_G_inv)
+        cost_func_gradient = cost_func * np.trace(G @ (identity - self_energies_derivative))
+
+        return cost_func_gradient
+        
+    
