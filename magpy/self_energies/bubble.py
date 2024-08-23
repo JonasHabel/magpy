@@ -4,6 +4,7 @@ from numba import njit
 from ..models import *
 from ..greens_functions import get_free_two_magnon_propagator
 from .util import *
+from ..util_jit import factorial
 
 
 
@@ -14,7 +15,8 @@ def compute_one_magnon_self_energy(
         cubic_verts,
         T, 
         ph_labels,
-        reg):
+        reg,
+        freq_derivatives=None):
     
     # 1 for particle, 0 for hole
     ph_idxs = convert_ph_labels_to_indices(ph_labels)
@@ -39,14 +41,17 @@ def compute_one_magnon_self_energy(
     pos_energies_minus_k_minus_BZ_flat = energies_minus_k_minus_BZ[..., ::2] \
         .reshape((num_ks_BZ, num_bands))
     
-    self_energy = np.zeros((num_freqs, num_bands, num_bands),
+    freq_derivatives
+    num_derivatives = len(freq_derivatives) if freq_derivatives else 1
+    self_energy = np.zeros((num_derivatives, num_freqs, num_bands, num_bands),
                             dtype=np.complex128)
     
     compute_one_magnon_self_energy_jit(
         self_energy, frequencies,
         pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
         cubic_vert_left_flat, cubic_vert_right_flat,
-        intermedate_state_ph_signs, T, reg)
+        intermedate_state_ph_signs, T, reg,
+        freq_derivatives if freq_derivatives else [0])
         
 
     self_energy *= compute_diagram_prefactor(
@@ -55,7 +60,7 @@ def compute_one_magnon_self_energy(
         num_internal_propagators=2)
     self_energy /= num_ks_BZ
     
-    return self_energy
+    return self_energy if freq_derivatives else self_energy[0]
     
 
 
@@ -64,7 +69,7 @@ def compute_one_magnon_self_energy_jit(
         out_arr, frequencies,
         pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
         cubic_vert_flat1, cubic_vert_flat2,
-        ph_signs, T, reg):
+        ph_signs, T, reg, freq_derivatives):
     num_ks = pos_energies_BZ_flat.shape[0]
     num_bands = cubic_vert_flat1.shape[-1]
 
@@ -80,7 +85,7 @@ def compute_one_magnon_self_energy_jit(
         compute_one_magnon_self_energy_loop_integral_contribution_jit(
             out_arr,
             frequencies, pos_energies_at_q, pos_energies_at_minus_k_minus_q,
-            cubic_vert1, cubic_vert2, ph_signs, T, reg)
+            cubic_vert1, cubic_vert2, ph_signs, T, reg, freq_derivatives)
     
     
 
@@ -88,14 +93,15 @@ def compute_one_magnon_self_energy_jit(
 def compute_one_magnon_self_energy_loop_integral_contribution_jit(
         out_arr,
         frequencies, pos_energies_at_q, pos_energies_at_minus_k_minus_q,
-        cubic_vert1, cubic_vert2, ph_signs, T, reg):
+        cubic_vert1, cubic_vert2, ph_signs, T, reg, freq_derivatives):
     pos_energies_in_propagator = np.zeros((2, len(pos_energies_at_q)))
     pos_energies_in_propagator[0] = pos_energies_at_minus_k_minus_q
     pos_energies_in_propagator[1] = pos_energies_at_q
 
     for nf, freq in enumerate(frequencies):
-        G0 = get_free_two_magnon_propagator(
-            freq, pos_energies_in_propagator, ph_signs, T, reg)
-        out_arr[nf] += (cubic_vert1.T * G0) @ cubic_vert2
+        for nderiv, deriv_order in enumerate(freq_derivatives):
+            G0_deriv = get_free_two_magnon_propagator(
+                freq, pos_energies_in_propagator, ph_signs, T, reg, deriv_order)
+            out_arr[nderiv, nf] += (cubic_vert1.T * G0_deriv) @ cubic_vert2
 
 

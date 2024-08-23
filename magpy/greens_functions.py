@@ -22,18 +22,23 @@ def get_free_two_magnon_propagator_finite_T(omega, energies, ph_signs, T, reg):
 
 
 @njit
-def get_free_two_magnon_propagator(omega, energies, ph_signs, T, reg):
+def get_free_two_magnon_propagator(
+        omega, energies, ph_signs, T, reg, freq_derivative_order=0):
     signed_energies = energies.copy()   # sign is +1/-1 depending on p/h
     for n in range(len(signed_energies)):
         signed_energies[n] *= ph_signs[n]
+    E = kron_sum(signed_energies)
 
     thermal_factors = np.zeros((2, energies.shape[1]))
     thermal_factors[0] = Bose_Einstein_vectorized(signed_energies[0], T)
     thermal_factors[1] = -Bose_Einstein_vectorized(-signed_energies[1], T)
     thermal_factor = kron_sum(thermal_factors)
     
-    return -prod(ph_signs) * thermal_factor \
-         / (omega - kron_sum(signed_energies) + 1j*reg)
+    derivative_prefactor = \
+        (-1)**freq_derivative_order * factorial(freq_derivative_order)
+
+    return -prod(ph_signs) * thermal_factor * derivative_prefactor \
+        / (omega - E + 1j*reg)**(freq_derivative_order+1)
 
 
 @njit
