@@ -34,3 +34,88 @@ def test_two_band_interacting_greens_functions_multiple_frequencies():
         for freq in freqs
     ])
     assert np.allclose(GF, expected_GF)
+
+
+
+def test_pole_equation_gradient_descent_non_interacting():
+    LSWT_energies = np.array([1., 3.,])
+    num_energies = len(LSWT_energies)
+    reg = 0.01
+    close_enough = 1e-3
+    def se_and_deriv(omega):
+        return np.zeros((num_energies,)*2), np.zeros((num_energies,)*2)
+
+    for init_freq in (0.4, 1.5, 2.3, 4.5, 20.0):
+        solution = pole_equation.solve_by_gradient_descent(
+            init_freq=init_freq, LSWT_energies=LSWT_energies,
+            compute_self_energies_and_derivative_at_freq=se_and_deriv,
+            reg=reg, num_steps=100, step_size=0.2, eps=1e-5,
+        )
+        if solution["converged"]:
+            assert np.any(np.abs(solution["freq"] - (LSWT_energies - 1j*reg)) < close_enough)
+        else:
+            print("not converged")
+        
+
+
+
+def test_pole_equation_gradient_descent_band_hybridization():
+    LSWT_energies = np.array([1., 3.,])
+    num_energies = len(LSWT_energies)
+    V = 0.1
+    E_renormalized = np.sum(LSWT_energies)/2 + np.array([1, -1]) * np.sqrt((LSWT_energies[1] - LSWT_energies[0])**2 / 4 + V*np.conj(V))
+    reg = 0.01
+    close_enough = 1e-3
+    def se_and_deriv(omega):
+        return np.array([[0, np.conj(V)], [V, 0]]), \
+               np.zeros((num_energies,)*2)
+
+    for init_freq in (0.0, 0.4, 1.5, 2.3, 4.5, 20.0):
+        solution = pole_equation.solve_by_gradient_descent(
+            init_freq=init_freq, LSWT_energies=LSWT_energies,
+            compute_self_energies_and_derivative_at_freq=se_and_deriv,
+            reg=reg, num_steps=500, step_size=0.1, eps=1e-3,
+        )
+        if solution["converged"]:
+            assert np.any(np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough)
+        else:
+            print("not converged")
+
+
+    def se_and_deriv(omega):
+        return np.diag(V*np.conj(V) / (omega - LSWT_energies[::-1] + 1j*reg)), \
+               np.diag(V*np.conj(V) / (omega - LSWT_energies[::-1] + 1j*reg)**2),
+    
+    for init_freq in (0.0, 0.4, 1.5, 2.3, 4.5, 20.0):
+        solution = pole_equation.solve_by_gradient_descent(
+            init_freq=init_freq, LSWT_energies=LSWT_energies,
+            compute_self_energies_and_derivative_at_freq=se_and_deriv,
+            reg=reg, num_steps=600, step_size=0.1, eps=1e-4,
+        )
+        if solution["converged"]:
+            assert np.any(np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough)
+        else:
+            print("not converged")
+
+
+
+def test_pole_equation_gradient_descent_BdG_interaction():
+    E = 1.
+    V = 0.1
+    E_renormalized = np.sqrt(E*E - V*np.conj(V))
+    reg = 0.01
+    close_enough = 1e-3
+    def se_and_deriv(omega):
+        return np.array([[V*np.conj(V)/(-omega - E + 1j*reg)]]), \
+               np.array([[V*np.conj(V)/(-omega - E + 1j*reg)**2]]),
+
+    for init_freq in (-1.0, 0.0, 1.0, 2.1):
+        solution = pole_equation.solve_by_gradient_descent(
+            init_freq=init_freq, LSWT_energies=np.array([E]),
+            compute_self_energies_and_derivative_at_freq=se_and_deriv,
+            reg=reg, num_steps=100, step_size=0.2, eps=1e-5,
+        )
+        if solution["converged"]:
+            assert np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough
+        else:
+            print("not converged")
