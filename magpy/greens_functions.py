@@ -90,13 +90,36 @@ def Bose_Einstein_vectorized(energies, T):
 
 class pole_equation:
 
-    def solve_by_gradient_descent(
+    class gradient_descent:
+        def step(omega, cost_func, cost_func_gradient, **args):
+            return omega - args["step_size"] * 2*np.conj(cost_func_gradient)
+        
+    class newton:
+        def step(omega, cost_func, cost_func_gradient, **args):
+            return omega - cost_func / (2*cost_func_gradient)
+
+
+    def solve(
         init_freq, LSWT_energies, compute_self_energies_and_derivative_at_freq,
-        reg, num_steps=10, step_size=0.1, eps=1e-3,
+        reg, num_steps=10, eps=1e-3, method=gradient_descent, track_steps=False,
+        **args,
     ):
+        def result_dict(freq, converged, num_steps, error, tracked_freqs=None):
+            result = {
+                "freq": freq, 
+                "converged": converged, 
+                "num_steps": num_steps, 
+                "error": error,
+            }
+            if tracked_freqs is not None:
+                result["tracked_freqs"] = np.array(tracked_freqs)
+            return result
+
         omega = init_freq
         eps_squared = eps * eps
         pos_LSWT_energies = LSWT_energies[::2]
+
+        tracked_freqs = [omega] if track_steps else None
 
         for n in range(num_steps):
             self_energies, self_energies_derivative = \
@@ -108,25 +131,24 @@ class pole_equation:
                 )
             
             if cost_func < eps_squared:
-                return {
-                    "freq": omega, 
-                    "converged": True, 
-                    "num_steps": n, 
-                    "error": cost_func,
-                }
+                return result_dict(
+                    omega, converged=True, num_steps=n, error=cost_func, 
+                    tracked_freqs=tracked_freqs,
+                )
             
             cost_func_gradient = pole_equation.cost_function_gradient(
                 omega, pos_LSWT_energies, self_energies,
                 self_energies_derivative, reg, precomputed_values,
             )
-            omega -= step_size * 2*np.conj(cost_func_gradient)
+            omega = method.step(omega, cost_func, cost_func_gradient, **args)
+
+            if track_steps:
+                tracked_freqs.append(omega)
                 
-        return {
-            "freq": omega, 
-            "converged": False, 
-            "num_steps": num_steps, 
-            "error": cost_func,
-        }
+        return result_dict(
+            omega, converged=False, num_steps=num_steps, error=cost_func, 
+            tracked_freqs=tracked_freqs,
+        )
 
 
 
@@ -176,4 +198,3 @@ class pole_equation:
 
         return cost_func_gradient
         
-    
