@@ -103,7 +103,7 @@ class pole_equation:
                 compute_self_energies_and_derivative_at_freq(omega)
             cost_func, precomputed_values = \
                 pole_equation.cost_function(
-                    omega, LSWT_energies, self_energies, reg,
+                    omega, pos_LSWT_energies, self_energies, reg,
                     return_precomputed_values=True,
                 )
             
