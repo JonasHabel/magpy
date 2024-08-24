@@ -41,7 +41,6 @@ def compute_one_magnon_self_energy(
     pos_energies_minus_k_minus_BZ_flat = energies_minus_k_minus_BZ[..., ::2] \
         .reshape((num_ks_BZ, num_bands))
     
-    freq_derivatives
     num_derivatives = len(freq_derivatives) if freq_derivatives else 1
     self_energy = np.zeros((num_derivatives, num_freqs, num_bands, num_bands),
                             dtype=np.complex128)
