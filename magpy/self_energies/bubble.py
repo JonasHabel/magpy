@@ -50,7 +50,7 @@ def compute_one_magnon_self_energy(
         pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
         cubic_vert_left_flat, cubic_vert_right_flat,
         intermedate_state_ph_signs, T, reg,
-        freq_derivatives if freq_derivatives else [0])
+        freq_derivatives if freq_derivatives else (0,))
         
 
     self_energy *= compute_diagram_prefactor(
