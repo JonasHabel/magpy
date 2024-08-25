@@ -73,10 +73,10 @@ def test_correlators_AFM_Heisenberg_chain():
         correlators_mom_space, 
         np.array([
             [
-                [0,                          u_k*u_k.conj(),        u_k*v_k,        0],                                   # <aa>   <aa^†>,  <ab>   <ab^†>
-                [v_minus_k*v_minus_k.conj(), 0,                     0,              u_minus_k.conj()*v_minus_k.conj()],   # <a^†a> <a^†a^†> <a^†b> <a^†b^†>
-                [u_minus_k*v_minus_k,        0,                     0,              u_minus_k*u_minus_k.conj()],          # <ba>   <ba^†>   <bb>   <bb^†>
-                [0,                          v_k.conj()*u_k.conj(), v_k*v_k.conj(), 0],                                   # <b^†a> <b^†a^†> <b^†b> <b^†b^†>
+                [0,                          u_k*u_k.conj(),        u_k*v_k,        0],                                  # <aa>   <aa^†>,  <ab>   <ab^†>
+                [v_minus_k*v_minus_k.conj(), 0,                     0,              u_minus_k.conj()*v_minus_k.conj()],  # <a^†a> <a^†a^†> <a^†b> <a^†b^†>
+                [u_minus_k*v_minus_k,        0,                     0,              u_minus_k*u_minus_k.conj()],         # <ba>   <ba^†>   <bb>   <bb^†>
+                [0,                          v_k.conj()*u_k.conj(), v_k*v_k.conj(), 0],                                  # <b^†a> <b^†a^†> <b^†b> <b^†b^†>
             ] for u_k, u_minus_k, v_k, v_minus_k in zip(
                 BdG_coeffs_u_k, BdG_coeffs_u_minus_k, 
                 BdG_coeffs_v_k, BdG_coeffs_v_minus_k
