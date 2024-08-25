@@ -16,10 +16,12 @@ def compute_real_space_correlator_LSWT(
     ks_BZ, eigvs_BZ = ks_BZ[0], eigvs_BZ[0]
 
     dims_real_space = bravais_coords.shape[:-1]
+    lattice_dim = bravais_coords.shape[-1]
     num_bravais_coords = int(np.prod(dims_real_space))
     num_ks_BZ = len(ks_BZ)
     subl_shape = eigvs_BZ.shape[-2:]
-    bravais_coords_flat = bravais_coords.reshape((num_bravais_coords,))
+    bravais_coords_flat = \
+        bravais_coords.reshape((num_bravais_coords, lattice_dim))
     correlators_real_space = np.zeros(
         (num_bravais_coords, *subl_shape),
         dtype=np.complex128,
@@ -52,7 +54,7 @@ def compute_momentum_space_correlator_LSWT(eigvs_k):
         return sigma_z_ph @ U.T.conj() @ sigma_z_ph
     eigvs_k_inv = invert(eigvs_k)
     eigvs_minus_k = sigma_x_ph @ eigvs_k.conj() @ sigma_x_ph
-    # eigvs_minus_k_inv = invert(eigvs_minus_k)
+    eigvs_minus_k_inv = invert(eigvs_minus_k)
 
     return np.einsum(
         "mn,im,jn->ij",
