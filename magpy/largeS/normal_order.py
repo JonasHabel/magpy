@@ -1,10 +1,12 @@
 import numpy as np
+from magpy.interactions import Interaction
 from magpy.momenta_utils import CollapseMomenta, RestoreMomenta, Target
 from ..models import Model
 from .util import *
 from numba import njit
 from magpy.largeS.util import get_permutations, permute
 from magpy.largeS import momentum_space, eigenspace
+from magpy.correlators import magnon_correlators
 
 
 
@@ -181,6 +183,98 @@ def compute_commutator_term_with_permutations(
             )
         
     return commutator_term
+
+
+
+
+def compute_commutator_term_with_permutations_Hartree_Fock(
+        model: Model, ks, eigvs, ks_BZ, eigvs_BZ, 
+        interaction_Hamiltonian_real_space=None):
+    order = len(eigvs)
+    num_ks_BZ = len(ks_BZ)
+
+    magnon_Hs_real_space = get_real_space_magnon_Hamiltonian(
+        interaction_Hamiltonian_real_space, model, order+2)
+
+    commutator_terms_real_space = []
+    
+    decoupling_channels = tuple(
+        (a, b) for a in range(order+2) for b in range(a+1, order+2)
+    )
+
+    for interaction in magnon_Hs_real_space:
+        bravais_coords_for_inter = np.array([
+            site.bravais_coords for site in interaction.sites
+        ])
+        subl_idxs_for_inter = np.array([
+            site.subl_idx for site in interaction.sites
+        ])
+
+        for decoupling_channel in decoupling_channels:
+            decoupled_idx1, decoupled_idx2 = decoupling_channel
+            bravais_coords_delta = \
+                bravais_coords_for_inter[decoupled_idx2] \
+                - bravais_coords_for_inter[decoupled_idx1]
+            Hartree_Fock_average = \
+                magnon_correlators.compute_real_space_correlator_LSWT(
+                    [ks_BZ], [eigvs_BZ], np.array([bravais_coords_delta]),
+                )[0]
+            
+            decoupled_subl_idx1, decoupled_subl_idx2 = \
+                subl_idxs_for_inter[np.r_[decoupling_channel]]
+            Hartree_Fock_average = Hartree_Fock_average[
+                2*decoupled_subl_idx1:2*(decoupled_subl_idx1+1),
+                2*decoupled_subl_idx2:2*(decoupled_subl_idx2+1),
+            ]
+
+            remaining_idxs = tuple(
+                c for c in range(order) if c not in decoupling_channel
+            )
+            int_tensor_slice = (
+                *(slice(None),) * decoupled_idx1,
+                slice(2*decoupled_subl_idx1, 2*(decoupled_subl_idx1+1)),
+                *(slice(None),) * (decoupled_idx2 - decoupled_idx1 - 1),
+                slice(2*decoupled_subl_idx2, 2*(decoupled_subl_idx2+1)),
+            )
+            decoupled_int_tensor = np.tensordot(
+                Hartree_Fock_average,
+                interaction.interaction_tensor,
+                axes=[[0, 1], [decoupled_idx1, decoupled_idx2]],
+            )
+            commutator_term_real_space = Interaction(
+                [interaction.sites[idx] for idx in remaining_idxs],
+                decoupled_int_tensor,
+            )
+            commutator_terms_real_space.append(commutator_term_real_space)
+
+
+    if order == 0:
+        assert all([
+            len(term.sites) == 0 for term in commutator_terms_real_space
+        ])
+        return np.array([num_ks_BZ * np.sum(
+            term.interaction_tensor for term in commutator_terms_real_space
+        )])
+
+
+    commutator_terms_mom_space = \
+        momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
+            model, ks, commutator_terms_real_space)
+    
+    commutator_terms_eigenspace = \
+        eigenspace.compute_magnon_Hamiltonian_with_permutations(
+            eigvs, commutator_terms_mom_space)
+    
+    commutator_terms_eigenspace *= num_ks_BZ
+
+    H_dim = 2*model.lattice.num_sites_unit_cell
+    commutator_term_shape = (np.math.factorial(order), *((H_dim,) * order))
+    assert commutator_terms_eigenspace.shape == commutator_term_shape
+    
+    return commutator_terms_eigenspace
+
+
+
 
 
 
