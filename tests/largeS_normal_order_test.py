@@ -2,6 +2,7 @@ import numpy as np
 from magpy.largeS import normal_order
 from magpy.largeS import eigenspace
 from magpy.largeS import momentum_space
+from magpy.largeS import real_space
 from magpy.largeS import LSWT
 from magpy.lattice import BravaisLattice
 from magpy.interactions import Interaction
@@ -22,7 +23,9 @@ def assert_all_nosym_eigenspace_Hamiltonians_terms_equal(magnon_Hs_eigenspace, e
 def assert_all_commutator_terms_equal(model, ks, eigvs, ks_BZ, eigvs_BZ, expected_commutator_terms):
     for order, expected_commutator_term in enumerate(expected_commutator_terms):
         commutator_term = normal_order.compute_commutator_term_with_permutations(model, ks[:max(order-1, 0)], eigvs[order], ks_BZ, eigvs_BZ)
+        commutator_term_HF = normal_order.compute_commutator_term_with_permutations_Hartree_Fock(model, ks[:max(order-1, 0)], eigvs[order], ks_BZ, eigvs_BZ)
         assert np.allclose(commutator_term, expected_commutator_term)
+        assert np.allclose(commutator_term_HF, expected_commutator_term)
 
 
 def assert_all_nosym_commutator_terms_equal(commutator_terms, expected_commutator_terms_nosym):
@@ -50,7 +53,7 @@ def sum_over_idxs(arr, idxs):
 def test_normal_order_AFM_Heisenberg_chain():
     model, (J, S_A, S_B) = test_models.AFM_Heisenberg_chain()
 
-    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
+    ks_BZ = np.linspace(0, 2*np.pi, 10, endpoint=False).reshape(10, 1)
     eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
 
     np.random.seed(1)
@@ -121,7 +124,7 @@ def test_normal_order_FM_Heisenberg_chain():
     model, (J, S) = test_models.FM_Heisenberg_chain()
 
     # COMMUTATOR TERMS
-    ks_BZ = np.linspace(0, 1, 10).reshape(10, 1)    # not really the BZ, just a mock
+    ks_BZ = np.linspace(0, 2*np.pi, 10, endpoint=False).reshape(10, 1)
     _, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, Momenta(ks_BZ), strip=True)
 
     np.random.seed(1)
@@ -394,7 +397,12 @@ def test_commutator_terms_AFM_Heisenberg_chain_with_magnetic_field():
 
     comm_terms = normal_order.compute_commutator_terms_with_permutations(
         model, ks, eigvs, ks_BZ, eigvs_BZ)
+    comm_terms_HF = normal_order.compute_commutator_term_with_permutations_Hartree_Fock(
+        model, np.array(ks.k_arrays).reshape((0, model.lattice.dim)),
+        eigvs.raw_quantity[0], ks_BZ.k_arrays[0], eigvs_BZ.raw_quantity)
     assert comm_terms.raw_quantity.shape == (1, *(), 4)   # 1 permutation, 0 momenta, 4 BdG bands
+    assert comm_terms_HF.shape == (1, *(), 4)
+    assert np.allclose(comm_terms.raw_quantity, comm_terms_HF)
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
 
@@ -406,16 +414,37 @@ def test_commutator_terms_AFM_Heisenberg_chain_with_magnetic_field():
 
 
 def test_commutator_terms_KH_model_2d():
+    np.set_printoptions(suppress=True, precision=6)
+    # model, (S, J, K, Gamma, Gamma_prime, J_3, B) = test_models.KH_model_2d({
+    #     "S": 0.5, "J": -1.53, "K": -29.29, 
+    #     "Gamma": 0, "Gamma'": -1.33, 
+    #     "J_3": 0, "g_ab": 2.5, "B": 50.0
+    # })
     model, (S, J, K, Gamma, Gamma_prime, J_3, B) = test_models.KH_model_2d()
+    model.interactions = [
+        inter for inter in model.interactions \
+        if not np.allclose(inter.interaction_tensor, 0)
+    ]
 
     ks = Momenta()     # order 3
     eigws_Gamma, eigvs_Gamma = LSWT.get_eigensystems_momentum_space(model, Momenta(np.zeros((1, model.lattice.dim))))
-    ks_BZ = Momenta.of_BZ(model.lattice, (2, 1,))
+    N_BZ = 2, 1
+    num_ks_BZ = int(np.prod(N_BZ))
+    ks_BZ = Momenta.of_BZ(model.lattice, N_BZ)
     eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(model, ks_BZ, strip=True)
 
+    magnon_Hs_real_space = real_space.compute_magnon_Hamiltonian(model, order=3)
     comm_terms = normal_order.compute_commutator_terms_with_permutations(
-        model, ks, eigvs_Gamma, ks_BZ, eigvs_BZ)
+        model, ks, eigvs_Gamma, ks_BZ, eigvs_BZ, magnon_Hs_real_space)
+    comm_terms_HF = normal_order.compute_commutator_term_with_permutations_Hartree_Fock(
+        model, np.array(ks.k_arrays).reshape((0, model.lattice.dim)), 
+        eigvs_Gamma.raw_quantity[0], 
+        ks_BZ.k_arrays[0].reshape((num_ks_BZ, 2)), 
+        eigvs_BZ.raw_quantity.reshape((num_ks_BZ, 4, 4)),
+        magnon_Hs_real_space)
     assert comm_terms.raw_quantity.shape == (1, *(), 4)   # 1 permutation, 0 momenta, 4 BdG bands
+    assert comm_terms_HF.shape == (1, *(), 4)
+    assert np.allclose(comm_terms.raw_quantity, comm_terms_HF)
 
     comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(comm_terms)
     assert comm_terms_nosym.raw_quantity.shape == (2, *(), 2) # 2 permutations, 0 momenta, 2 particle bands
