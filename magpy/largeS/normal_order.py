@@ -215,9 +215,12 @@ def compute_commutator_term_with_permutations_Hartree_Fock(
             bravais_coords_delta = \
                 bravais_coords_for_inter[decoupled_idx2] \
                 - bravais_coords_for_inter[decoupled_idx1]
+            bravais_coords_delta_canonical_coords = \
+                model.lattice.to_canonical_basis(bravais_coords_delta)
             Hartree_Fock_average = \
                 magnon_correlators.compute_real_space_correlator_LSWT(
-                    [ks_BZ], [eigvs_BZ], np.array([bravais_coords_delta]),
+                    [ks_BZ], [eigvs_BZ],
+                    np.array([bravais_coords_delta_canonical_coords]),
                 )[0]
             
             decoupled_subl_idx1, decoupled_subl_idx2 = \
@@ -228,14 +231,14 @@ def compute_commutator_term_with_permutations_Hartree_Fock(
             ]
 
             remaining_idxs = tuple(
-                c for c in range(order) if c not in decoupling_channel
+                c for c in range(order+2) if c not in decoupling_channel
             )
-            int_tensor_slice = (
-                *(slice(None),) * decoupled_idx1,
-                slice(2*decoupled_subl_idx1, 2*(decoupled_subl_idx1+1)),
-                *(slice(None),) * (decoupled_idx2 - decoupled_idx1 - 1),
-                slice(2*decoupled_subl_idx2, 2*(decoupled_subl_idx2+1)),
-            )
+            # int_tensor_slice = (
+            #     *(slice(None),) * decoupled_idx1,
+            #     slice(2*decoupled_subl_idx1, 2*(decoupled_subl_idx1+1)),
+            #     *(slice(None),) * (decoupled_idx2 - decoupled_idx1 - 1),
+            #     slice(2*decoupled_subl_idx2, 2*(decoupled_subl_idx2+1)),
+            # )
             decoupled_int_tensor = np.tensordot(
                 Hartree_Fock_average,
                 interaction.interaction_tensor,
