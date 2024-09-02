@@ -51,7 +51,7 @@ def test_pole_equation_gradient_descent_non_interacting():
                 init_freq=init_freq, LSWT_energies=LSWT_energies,
                 compute_self_energies_and_derivative_at_freq=se_and_deriv,
                 reg=reg, num_steps=100, step_size=0.2, eps=1e-5,
-                method=method,
+                method=method, track_steps=True,
             )
             if solution["converged"]:
                 assert np.any(np.abs(solution["freq"] - (LSWT_energies - 1j*reg)) < close_enough)

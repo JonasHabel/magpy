@@ -127,7 +127,7 @@ class pole_equation:
 
         tracked_quantities = {
             "freq": [], "self_energies": [], "self_energies_deriv": [], 
-            "cost_func": [], "cost_func_deriv": []
+            "G_inv": [], "cost_func": [], "cost_func_deriv": []
         } if track_steps else None
 
         for n in range(num_steps):
@@ -155,7 +155,9 @@ class pole_equation:
                 track(tracked_quantities,
                       freq=omega, self_energies=self_energies, 
                       self_energies_deriv=self_energies_derivative,
-                      cost_func=cost_func, cost_func_deriv=cost_func_gradient)
+                      G_inv=precomputed_values["G_inv"],
+                      cost_func=cost_func,
+                      cost_func_deriv=cost_func_gradient)
                 
         return result_dict(
             omega, converged=False, num_steps=num_steps, error=cost_func, 
