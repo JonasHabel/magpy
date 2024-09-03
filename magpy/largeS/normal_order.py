@@ -296,7 +296,8 @@ def compute_commutator_term_with_permutations_Hartree_Fock(
 )
 def compute_commutator_terms_with_permutations(
         model: Model, k_arrays, eigvs, ks_BZ, eigvs_BZ, 
-        interaction_Hamiltonian_real_space=None):
+        interaction_Hamiltonian_real_space=None,
+        method="commutators"):
     assert len(ks_BZ.shape) == 2 # 1st index: pos in BZ; 2nd index: momentum component (kx/ky/kz/...)
     assert len(eigvs[0]) == np.prod([len(eigv) for eigv in eigvs[1:]])
 
@@ -315,9 +316,16 @@ def compute_commutator_terms_with_permutations(
     commutator_terms = \
         np.zeros(commutator_terms_shape, dtype=np.complex128)
     
+    if method in ["c", "comm", "commutators"]:
+        compute_func = compute_commutator_term_with_permutations
+    elif method in ["HF", "Hartree-Fock"]:
+        compute_func = compute_commutator_term_with_permutations_Hartree_Fock
+    else:
+        raise Exception(f"unknown computation method {method}.")
+    
     def compute_commutator_term(k_multiidx, k_flat_idx, ks):
         eigv_multiidx = np.array([k_flat_idx, *k_multiidx], dtype=np.int64)
-        return compute_commutator_term_with_permutations(
+        return compute_func(
             model,
             ks, get_quantities_at_multiidx(eigvs, eigv_multiidx),
             ks_BZ, eigvs_BZ,
