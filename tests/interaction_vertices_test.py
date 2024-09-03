@@ -498,6 +498,11 @@ def test_normal_order_and_symmetrize_quartic_vertex():
         mod, [K], [eigvs_minus_K, eigvs_K], ks_BZ, eigvs_BZ[0],
         interaction_Hamiltonian_real_space=[vert_aabb],
     )
+    vert_aabb_nosym_HF = normal_order.compute_commutator_term_with_permutations_Hartree_Fock(
+        mod, [K], [eigvs_minus_K, eigvs_K], ks_BZ, eigvs_BZ[0],
+        interaction_Hamiltonian_real_space=[vert_aabb],
+    )
+    assert np.allclose(vert_aabb_nosym, vert_aabb_nosym_HF)
 
     H, P = 0, 1
     sigma_x_ph = np.kron(np.eye(2), np.array([[0, 1], [1, 0]]))
@@ -543,6 +548,11 @@ def test_normal_order_and_symmetrize_quartic_vertex():
             mod, [K], [eigvs_minus_K, eigvs_K], ks_BZ, eigvs_BZ[0],
             interaction_Hamiltonian_real_space=[vert_aabb],
         )
+        verts_aabb_nosym_HF_eigenspace_for_k = normal_order.compute_commutator_term_with_permutations_Hartree_Fock(
+            mod, [K], [eigvs_minus_K, eigvs_K], ks_BZ, eigvs_BZ[0],
+            interaction_Hamiltonian_real_space=[vert_aabb],
+        )
+        assert np.allclose(verts_aabb_nosym_eigenspace[nk], verts_aabb_nosym_HF_eigenspace_for_k)
 
         eigvs_K_inv = np.linalg.inv(eigvs_K)
         eigvs_minus_K_inv = np.linalg.inv(eigvs_minus_K)
