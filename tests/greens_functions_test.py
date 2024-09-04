@@ -37,7 +37,7 @@ def test_two_band_interacting_greens_functions_multiple_frequencies():
 
 
 
-def test_pole_equation_gradient_descent_non_interacting():
+def test_pole_equation_non_interacting():
     LSWT_energies = np.array([1., -1., 3., -3.])
     num_bands = len(LSWT_energies) // 2
     reg = 0.01
@@ -61,14 +61,14 @@ def test_pole_equation_gradient_descent_non_interacting():
 
 
 
-def test_pole_equation_gradient_descent_band_hybridization():
+def test_pole_equation_band_hybridization():
     LSWT_energies = np.array([1., -1., 3., -3.])
     pos_LSWT_energies = LSWT_energies[::2]
     num_bands = len(LSWT_energies) // 2
     V = 0.1
     E_renormalized = np.sum(pos_LSWT_energies)/2 + np.array([1, -1]) * np.sqrt((pos_LSWT_energies[1] - pos_LSWT_energies[0])**2 / 4 + V*np.conj(V))
     reg = 0.01
-    close_enough = 1e-3
+    close_enough = 1e-6
     def se_and_deriv(omega):
         return np.array([[0, np.conj(V)], [V, 0]]), \
                np.zeros((num_bands,)*2)
@@ -78,13 +78,14 @@ def test_pole_equation_gradient_descent_band_hybridization():
             solution = pole_equation.solve(
                 init_freq=init_freq, LSWT_energies=LSWT_energies,
                 compute_self_energies_and_derivative_at_freq=se_and_deriv,
-                reg=reg, num_steps=500, step_size=0.1, eps=1e-3,
+                reg=reg, num_steps=500, step_size=0.1, eps=1e-10,
                 method=method,
             )
             if solution["converged"]:
                 assert np.any(np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough)
             else:
                 print("not converged")
+
 
 
     def se_and_deriv(omega):
@@ -134,21 +135,26 @@ def test_pole_equation_gradient_descent_band_hybridization():
             solution = pole_equation.solve(
                 init_freq=init_freq, LSWT_energies=LSWT_energies,
                 compute_self_energies_and_derivative_at_freq=se_and_deriv,
-                reg=reg, num_steps=600, step_size=0.1, eps=1e-4,
+                reg=reg, num_steps=600, step_size=0.1, eps=1e-10,
                 method=method,
             )
             if solution["converged"]:
-                assert np.any(np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough)
+                w = solution["freq"]
+                e1, e2 = pos_LSWT_energies
+                # solving the equation
+                #   0 = w - e1 + i*reg - |V|^2/(w* - e2 + i*reg)
+                assert np.any((w - e1 + 1j*reg)*(np.conj(w) - e2 + 1j*reg) - V*np.conj(V) < close_enough) \
+                    or np.any((w - e2 + 1j*reg)*(np.conj(w) - e1 + 1j*reg) - V*np.conj(V) < close_enough)
             else:
                 print("not converged")
 
 
 
-def test_pole_equation_gradient_descent_BdG_interaction():
+def test_pole_equation_BdG_interaction():
     E = 1.
     V = 0.1
-    E_renormalized = np.sqrt(E*E - V*np.conj(V))
     reg = 0.01
+    E_renormalized = np.sqrt((E - 1j*reg)*(E - 1j*reg) - V*np.conj(V)) + 1j*reg
     close_enough = 1e-3
     def se_and_deriv(omega):
         return np.array([[V*np.conj(V)/(-omega - E + 1j*reg)]]), \
@@ -166,3 +172,32 @@ def test_pole_equation_gradient_descent_BdG_interaction():
                 assert np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough
             else:
                 print("not converged")
+
+
+                
+
+
+def test_pole_equation_decay():
+    LSWT_energies = np.array([1., -1.])
+    pos_LSWT_energies = LSWT_energies[::2]
+    V = 0.1
+    E_renormalized = pos_LSWT_energies[0] - 1j*V
+    reg = 0.01
+    close_enough = 1e-3
+    def se_and_deriv(omega):
+        return np.array([[-1j*V]]), \
+               np.array([[0.0]])
+
+    for init_freq in (-20.0, 0.0, 0.4, 1.5, 2.3, 4.5, 20.0):
+        for method in (pole_equation.gradient_descent, pole_equation.newton):
+            solution = pole_equation.solve(
+                init_freq=init_freq, LSWT_energies=LSWT_energies,
+                compute_self_energies_and_derivative_at_freq=se_and_deriv,
+                reg=reg, num_steps=500, step_size=0.1, eps=1e-3,
+                method=method,
+            )
+            if solution["converged"]:
+                assert np.any(np.abs(solution["freq"] - (E_renormalized - 1j*reg)) < close_enough)
+            else:
+                print("not converged")
+
