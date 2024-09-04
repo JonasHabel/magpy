@@ -132,7 +132,7 @@ class pole_equation:
 
         for n in range(num_steps):
             self_energies, self_energies_derivative = \
-                compute_self_energies_and_derivative_at_freq(omega)
+                compute_self_energies_and_derivative_at_freq(np.conj(omega))
             cost_func, precomputed_values = \
                 pole_equation.cost_function(
                     omega, pos_LSWT_energies, self_energies, reg,
@@ -208,7 +208,7 @@ class pole_equation:
         #     lambda: pole_equation.cost_function(
         #         omega, LSWT_energies, self_energies, reg),
         cost_func = det_G_inv * np.conj(det_G_inv)
-        cost_func_gradient = cost_func * np.trace(G @ (identity - self_energies_derivative))
+        cost_func_gradient = cost_func * np.trace(G - G.conj() @ self_energies_derivative.conj())
 
         return cost_func_gradient
         
