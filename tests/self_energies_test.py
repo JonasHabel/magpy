@@ -885,7 +885,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     linear_comm_terms_HF = normal_order.compute_commutator_terms_with_permutations(
         mod, [], [np.array([eigv_Gamma])], momenta_BZ, eigvs_BZ,
         interaction_Hamiltonian_real_space=cubic_verts_real_space,
-        method="HF")
+        method="Hartree-Fock")
     assert np.allclose(linear_comm_terms, linear_comm_terms_HF)
     linear_comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(linear_comm_terms.reshape((1, 1, 2)))[:, 0]
     self_energies_tadpole_p = tadpole.compute_one_magnon_self_energy(
