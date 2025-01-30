@@ -2,7 +2,7 @@ import numpy as np
 from operator import itemgetter
 
 
-
+ENERGY_EPS = 1e-12
 
 
 def tensor_rotate(tensor, rot_matrices):

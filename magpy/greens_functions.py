@@ -1,6 +1,7 @@
 import numpy as np
 from numba import njit, complex128
 from .util_jit import *
+from magpy.util import ENERGY_EPS
 
 @njit
 def get_free_propagator_zero_T(omega, energies, ph_signs, reg):
@@ -70,10 +71,8 @@ def compute_interacting_single_magnon_propagator(
 
 @njit
 def Bose_Einstein(energy, T):
-    EPS = 1e-12
-
     if T == 0:
-        return -1 if energy < EPS else 0
+        return -1 if energy < ENERGY_EPS else 0
     return 1.0 / (np.exp(energy/T) - 1)
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from magpy.util import LARGE_S_EXPANSION_COEFF
+from magpy.util import LARGE_S_EXPANSION_COEFF, ENERGY_EPS
 from magpy.models import Model
 from magpy.interactions import Interaction
 
@@ -154,8 +154,7 @@ def compute_magnon_Hamiltonian(model: Model, order: int):
                 ] 
     
     Hamiltonians = list(filter(
-        lambda H: not np.allclose(
-            H.interaction_tensor, np.zeros(H.interaction_tensor.shape)),
+        lambda H: np.any(np.abs(H.interaction_tensor) > ENERGY_EPS), # np.zeros(H.interaction_tensor.shape)),
         Hamiltonians))
 
     return Hamiltonians

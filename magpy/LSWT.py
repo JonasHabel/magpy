@@ -6,7 +6,7 @@ from operator import itemgetter
 from .models import Model
 from .lattice import ReciprocalLattice
 from .interactions import Interaction
-from .util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF
+from .util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF, ENERGY_EPS
 
 
 
@@ -204,7 +204,7 @@ This routine sorts the eigenvalues and corresponding eigenvectors in the order
 def __sort_eigensystem(eigw, eigv):
     # isolate blocks of positive, negative and zero eigenvalues and eigenvectors
     eigw_rounded = eigw.copy()
-    eigw_rounded[np.abs(np.real(eigw_rounded)) < 1e-12] = 0
+    eigw_rounded[np.abs(np.real(eigw_rounded)) < ENERGY_EPS] = 0
     pos_idx = np.where(eigw_rounded > 0)[0]
     zero_idx = np.where(eigw_rounded == 0)[0]
     neg_idx = np.where(eigw_rounded < 0)[0]

@@ -4,7 +4,7 @@ from magpy.models import Model
 from magpy.lattice import ReciprocalLattice
 from magpy.interactions import Interaction
 from magpy.momenta_utils import MSQ, CollapseMomenta, Momenta, RestoreMomenta, Target
-from magpy.util import BOGO_METRIC, LARGE_S_EXPANSION_COEFF
+from magpy.util import BOGO_METRIC, ENERGY_EPS
 from magpy.largeS import momentum_space
 from magpy.largeS.util import get_real_space_magnon_Hamiltonian
 
@@ -129,7 +129,7 @@ This routine sorts the eigenvalues and corresponding eigenvectors in the order
 def __sort_eigensystem(eigw, eigv):
     # isolate blocks of positive, negative and zero eigenvalues and eigenvectors
     eigw_rounded = eigw.copy()
-    eigw_rounded[np.abs(np.real(eigw_rounded)) < 1e-12] = 0
+    eigw_rounded[np.abs(np.real(eigw_rounded)) < ENERGY_EPS] = 0
     pos_idx = np.where(eigw_rounded > 0)[0]
     zero_idx = np.where(eigw_rounded == 0)[0]
     neg_idx = np.where(eigw_rounded < 0)[0]
@@ -149,6 +149,12 @@ def __sort_eigensystem(eigw, eigv):
     eigw_sorted = np.zeros(eigw.shape, dtype=float)
     eigv_sorted = np.zeros(eigv.shape, dtype=complex)
     zero_block_idx = len(zero_eigw)
+
+    if zero_block_idx > 0:
+        print("!!! WARNING: THERE ARE GAPLESS MODES. THIS CAN LEAD TO NUMERICAL ISSUES "
+              "WITH THE BDG TRAFO, E.G. PARTICLE-LIKE EIGENVECTORS WITH TINY NEGATIVE "
+              "ENERGY. CONSIDER ADDING A SMALL GAP (LARGER THAN THE GLOBAL ENERGY EPSILON "
+              f"{ENERGY_EPS}) !!!")
     
     if pos_eigw.shape[0] != neg_eigw.shape[0]:
         print(eigw)
