@@ -9,13 +9,14 @@ from ..util import PAULI_MATRICES
 
 
 def compute_one_magnon_self_energy(
-        frequencies,
-        eigvs_k,
-        quadratic_commutator_terms,
-        eigvs_commutator_terms,
-        num_ks_BZ,
-        T, 
-        ph_labels):
+    frequencies,
+    eigvs_k,
+    quadratic_commutator_terms,
+    eigvs_commutator_terms,
+    num_ks_BZ,
+    T, 
+    ph_labels
+):
     np.set_printoptions(suppress=True, precision=3) 
     # SETUP
     # 1 for particle, 0 for hole

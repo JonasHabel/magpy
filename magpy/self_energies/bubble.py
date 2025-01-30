@@ -9,14 +9,15 @@ from ..util_jit import factorial
 
 
 def compute_one_magnon_self_energy(
-        frequencies,
-        energies_BZ,
-        energies_minus_k_minus_BZ,
-        cubic_verts,
-        T, 
-        ph_labels,
-        reg,
-        freq_derivatives=None):
+    frequencies,
+    energies_BZ,
+    energies_minus_k_minus_BZ,
+    cubic_verts,
+    T, 
+    ph_labels,
+    reg,
+    freq_derivatives=None
+):
     
     # 1 for particle, 0 for hole
     ph_idxs = convert_ph_labels_to_indices(ph_labels)
@@ -65,10 +66,11 @@ def compute_one_magnon_self_energy(
 
 @njit
 def compute_one_magnon_self_energy_jit(
-        out_arr, frequencies,
-        pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
-        cubic_vert_flat1, cubic_vert_flat2,
-        ph_signs, T, reg, freq_derivatives):
+    out_arr, frequencies,
+    pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
+    cubic_vert_flat1, cubic_vert_flat2,
+    ph_signs, T, reg, freq_derivatives
+):
     num_ks = pos_energies_BZ_flat.shape[0]
     num_bands = cubic_vert_flat1.shape[-1]
 
@@ -90,9 +92,10 @@ def compute_one_magnon_self_energy_jit(
 
 @njit
 def compute_one_magnon_self_energy_loop_integral_contribution_jit(
-        out_arr,
-        frequencies, pos_energies_at_q, pos_energies_at_minus_k_minus_q,
-        cubic_vert1, cubic_vert2, ph_signs, T, reg, freq_derivatives):
+    out_arr,
+    frequencies, pos_energies_at_q, pos_energies_at_minus_k_minus_q,
+    cubic_vert1, cubic_vert2, ph_signs, T, reg, freq_derivatives
+):
     pos_energies_in_propagator = np.zeros((2, len(pos_energies_at_q)))
     pos_energies_in_propagator[0] = pos_energies_at_minus_k_minus_q
     pos_energies_in_propagator[1] = pos_energies_at_q

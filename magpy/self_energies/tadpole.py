@@ -10,16 +10,17 @@ from ..util import PAULI_MATRICES
 
 def compute_one_magnon_self_energy(
         frequencies,
-        energies_Gamma,
-        eigvs_k,
-        cubic_verts,
-        eigvs_verts,
-        linear_commutator_terms,
-        eigvs_commutator_terms,
-        num_ks_BZ,
-        T, 
-        ph_labels,
-        reg):
+    energies_Gamma,
+    eigvs_k,
+    cubic_verts,
+    eigvs_verts,
+    linear_commutator_terms,
+    eigvs_commutator_terms,
+    num_ks_BZ,
+    T, 
+    ph_labels,
+    reg
+):
     
     # SETUP
     # 1 for particle, 0 for hole
