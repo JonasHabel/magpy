@@ -35,28 +35,56 @@ def test_two_site_quantum_dot_with_DMI():
     verts_eigenspace_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonian(verts_eigenspace)
 
     # SELF-ENERGY (AND 1st DERIVATIVE WRT FREQUENCY)
-    freqs = np.array([0.0]) # np.linspace(0, 5, 11)
+    freqs = np.linspace(-5, 5, 11)  # !! must be symmetric about zero !!
     reg = 0.05
-    expected_se_pp = np.array([
+    expected_se_p_pp_p = np.array([
         0.5/(freq - 2. + 1j*reg) * np.array([
             [9./8, -1.],
             [-1., 9./8],
         ]) for freq in freqs
     ])
-    expected_se_pp_deriv = np.array([
+    expected_se_p_pp_p_deriv = np.array([
         -0.5/(freq - 2. + 1j*reg)**2 * np.array([
             [9./8, -1.],
             [-1., 9./8],
         ]) for freq in freqs
     ])
+    expected_se_p_pp_p_and_deriv = np.array([
+        expected_se_p_pp_p, expected_se_p_pp_p_deriv
+    ])
+    expected_se_h_hh_h_and_deriv = np.array([
+        expected_se_p_pp_p[::-1].conj(), -1 * expected_se_p_pp_p_deriv[::-1].conj()
+    ])  # invert omega and complex conjugate; ONLY WORKS FOR INVERSION-SYMMETRIC MODELS
+    expected_se_full_pp_and_deriv = np.zeros(
+        (2, len(freqs), 4, 4), dtype=np.complex128
+    )
+    expected_se_full_pp_and_deriv[:, :, 0::2, 0::2] = expected_se_p_pp_p_and_deriv
+    expected_se_full_hh_and_deriv = np.zeros(
+        (2, len(freqs), 4, 4), dtype=np.complex128
+    )
+    expected_se_full_hh_and_deriv[:, :, 1::2, 1::2] = expected_se_h_hh_h_and_deriv
+
     se_p_pp_p_and_deriv = bubble.compute_one_magnon_self_energy(
         freqs, np.array([1., 1., 1., 1.]), np.array([1., 1., 1., 1.]),
         verts_eigenspace_nosym, 0.0, ["p", "pp", "p"], reg,
         freq_derivatives=[0, 1])
+    se_h_hh_h_and_deriv = bubble.compute_one_magnon_self_energy(
+        freqs, np.array([1., 1., 1., 1.]), np.array([1., 1., 1., 1.]),
+        verts_eigenspace_nosym, 0.0, ["h", "hh", "h"], reg,
+        freq_derivatives=[0, 1])
+    se_full_pp_and_deriv = bubble.compute_full_one_magnon_self_energy(
+        freqs, np.array([1., 1., 1., 1.]), np.array([1., 1., 1., 1.]),
+        verts_eigenspace_nosym, 0.0, "pp", reg,
+        freq_derivatives=[0, 1])
+    se_full_hh_and_deriv = bubble.compute_full_one_magnon_self_energy(
+        freqs, np.array([1., 1., 1., 1.]), np.array([1., 1., 1., 1.]),
+        verts_eigenspace_nosym, 0.0, "hh", reg,
+        freq_derivatives=[0, 1])
     
-    assert np.allclose(
-        se_p_pp_p_and_deriv, 
-        np.array([expected_se_pp, expected_se_pp_deriv]))
+    assert np.allclose(se_p_pp_p_and_deriv, expected_se_p_pp_p_and_deriv)
+    assert np.allclose(se_h_hh_h_and_deriv, expected_se_h_hh_h_and_deriv)
+    assert np.allclose(se_full_pp_and_deriv, expected_se_full_pp_and_deriv)
+    assert np.allclose(se_full_hh_and_deriv, expected_se_full_hh_and_deriv)
 
 
 
@@ -75,6 +103,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI_on_slab():
         DMInteraction(BravaisLattice.Edge(np.array([1, 0]), [1, 1]), D=-D),
         DMInteraction(BravaisLattice.Edge(np.array([0, -1]), [1, 1]), D=-D),
         DMInteraction(BravaisLattice.Edge(np.array([-1, 1]), [1, 1]), D=-D),
+        UniformMagneticField(latt, B=np.array([0, 0, 1e-8])),  # add a numerical gap to avoid goldstone modes
     ]
     mod = models.Model(latt, inter, np.array([[0, 0, 1]]*2))
 
@@ -103,7 +132,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI_on_slab():
     verts_real_space_by_sites = group_interactions_by_site(verts_real_space, filter_zero=True)
     
     # MOMENTUM SPACE
-    N_BZ = 10
+    N_BZ = 1
     momenta_kpath = Momenta.of(momentum_path)
     momenta_k = Momenta(k)
     momenta_BZ = Momenta.of_BZ(mod.lattice, (N_BZ,))
@@ -177,11 +206,21 @@ def test_honeycomb_FM_Heisenberg_with_DMI_on_slab():
 
     assert np.allclose(verts_eigenspace_nosym.raw_quantity[0b110], expected_verts_eigenspace_nosym_cca)
 
-    freqs = np.linspace(0.0, 6.0, 6)
-    T, reg = 0, 0.01
+    #freqs = np.linspace(-6.0, 6.0, 13)  # !! must be symmetric about zero !!
+    freqs = np.linspace(-1.0, 1.0, 2)  # !! must be symmetric about zero !!
+    T, reg = 0, 0.1
     se_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
         verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "p"], reg)
+    se_h_hh_h = bubble.compute_one_magnon_self_energy(
+        freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+        verts_eigenspace_nosym.raw_quantity, T, ["h", "hh", "h"], reg)
+    se_full_pp = bubble.compute_full_one_magnon_self_energy(
+        freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+        verts_eigenspace_nosym.raw_quantity, T, "pp", reg)
+    se_full_hh = bubble.compute_full_one_magnon_self_energy(
+        freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+        verts_eigenspace_nosym.raw_quantity, T, "hh", reg)
     
     expected_se_p_pp_p = np.zeros((len(freqs), 2*N_slab, 2*N_slab), dtype=complex)
     for nfreq, freq in enumerate(freqs):
@@ -197,8 +236,16 @@ def test_honeycomb_FM_Heisenberg_with_DMI_on_slab():
                                 * expected_verts_eigenspace_nosym_cca[nq,l_,l,m].conj() \
                                 / (freq - eigws_q[2*l] - eigws_minus_k_minus_q[2*l_] + 1j*reg)
     expected_se_p_pp_p *= 2 / N_BZ
+    expected_se_h_hh_h = expected_se_p_pp_p[::-1].conj()  # invert omega and complex conjugate; ONLY WORKS FOR INVERSION-SYMMETRIC MODELS
+    expected_se_full_pp = np.zeros((len(freqs), 4*N_slab, 4*N_slab), dtype=complex)
+    expected_se_full_pp[:, 0::2, 0::2] = expected_se_p_pp_p
+    expected_se_full_hh = np.zeros((len(freqs), 4*N_slab, 4*N_slab), dtype=complex)
+    expected_se_full_hh[:, 1::2, 1::2] = expected_se_h_hh_h
 
     assert np.allclose(se_p_pp_p, expected_se_p_pp_p)
+    assert np.allclose(se_h_hh_h, expected_se_h_hh_h)
+    assert np.allclose(se_full_pp, expected_se_full_pp)
+    assert np.allclose(se_full_hh, expected_se_full_hh)
 
 
 
@@ -244,15 +291,19 @@ def test_field_orthogonal_to_quantization_direction():
     #     .reshape((len(freqs), 1, 1))
     # expected_se_hh = np.array(1/16 * (n_B(-B[2], T) - n_B(B[2], T)) * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
     #     .reshape((len(freqs), 1, 1))
-    expected_se_pp = np.array(1/16 * B_xy_sq / (freqs - 2*B[2] + 1j*reg)) \
+    expected_se_p_pp_p = np.array(1/16 * B_xy_sq / (freqs - 2*B[2] + 1j*reg)) \
         .reshape((len(freqs), 1, 1))
-    expected_se_hh = -np.array(1/16 * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
+    expected_se_h_hh_h = -np.array(1/16 * B_xy_sq / (freqs + 2*B[2] + 1j*reg)) \
         .reshape((len(freqs), 1, 1))
+    expected_se_full_pp = np.zeros((len(freqs), 2, 2), dtype=complex)
+    expected_se_full_pp[:, 0::2, 0::2] = expected_se_p_pp_p
+    expected_se_full_hh = np.zeros((len(freqs), 2, 2), dtype=complex)
+    expected_se_full_hh[:, 1::2, 1::2] = expected_se_h_hh_h
     
     se_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["p", "pp", "p"], reg)
-    assert np.allclose(se_p_pp_p, expected_se_pp)
+    assert np.allclose(se_p_pp_p, expected_se_p_pp_p)
     
     se_p_ph_p = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
@@ -282,9 +333,17 @@ def test_field_orthogonal_to_quantization_direction():
     se_h_hh_h = bubble.compute_one_magnon_self_energy(
         freqs, energies_BZ, energies_minus_k_minus_BZ,
         verts_eigenspace_nosym.raw_quantity, T, ["h", "hh", "h"], reg)
-    assert np.allclose(se_h_hh_h, expected_se_hh)
+    assert np.allclose(se_h_hh_h, expected_se_h_hh_h)
 
-
+    se_full_pp = bubble.compute_full_one_magnon_self_energy(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, "pp", reg)
+    assert np.allclose(se_full_pp, expected_se_full_pp)
+    
+    se_full_hh = bubble.compute_full_one_magnon_self_energy(
+        freqs, energies_BZ, energies_minus_k_minus_BZ,
+        verts_eigenspace_nosym.raw_quantity, T, "hh", reg)
+    assert np.allclose(se_full_hh, expected_se_full_hh)
 
 
 
@@ -863,7 +922,7 @@ def test_1D_BdG_chain_with_cubic_interaction():
     eigws_minus_k_minus_BZ = eigws_se.raw_quantity[0]
     eigws_BZ = eigws_se.raw_quantity[1]
     eigvs_BZ = eigvs_se.raw_quantity[1]
-    self_energies_bubble_pp = bubble.compute_one_magnon_self_energy(
+    self_energies_bubble_p_pp_p = bubble.compute_one_magnon_self_energy(
         freqs, eigws_BZ, eigws_minus_k_minus_BZ,
         cubic_verts_eigenspace_nosym.raw_quantity,
         0, particle_hole_states, reg)
@@ -874,7 +933,29 @@ def test_1D_BdG_chain_with_cubic_interaction():
             for p_idx, p in enumerate(momenta_BZ)
         ], dtype=complex)) for freq in freqs
     ], dtype=complex).reshape(len(freqs), 1, 1)
-    assert np.allclose(self_energies_bubble_pp, expected_self_energies)
+    assert np.allclose(self_energies_bubble_p_pp_p, expected_self_energies)
+
+    # check full pp bubble self-energies
+    self_energies_bubble_p_pp_h = bubble.compute_one_magnon_self_energy(
+        freqs, eigws_BZ, eigws_minus_k_minus_BZ,
+        cubic_verts_eigenspace_nosym.raw_quantity,
+        0, ["p", "pp", "h"], reg)
+    self_energies_bubble_h_pp_p = bubble.compute_one_magnon_self_energy(
+        freqs, eigws_BZ, eigws_minus_k_minus_BZ,
+        cubic_verts_eigenspace_nosym.raw_quantity,
+        0, ["h", "pp", "p"], reg)
+    self_energies_bubble_h_pp_h = bubble.compute_one_magnon_self_energy(
+        freqs, eigws_BZ, eigws_minus_k_minus_BZ,
+        cubic_verts_eigenspace_nosym.raw_quantity,
+        0, ["h", "pp", "h"], reg)
+    self_energies_full_bubble_pp = bubble.compute_full_one_magnon_self_energy(
+        freqs, eigws_BZ, eigws_minus_k_minus_BZ,
+        cubic_verts_eigenspace_nosym.raw_quantity,
+        0, "pp", reg)
+    assert np.allclose(self_energies_full_bubble_pp[:, 0::2, 0::2], self_energies_bubble_p_pp_p)
+    assert np.allclose(self_energies_full_bubble_pp[:, 1::2, 0::2], self_energies_bubble_h_pp_p)
+    assert np.allclose(self_energies_full_bubble_pp[:, 0::2, 1::2], self_energies_bubble_p_pp_h)
+    assert np.allclose(self_energies_full_bubble_pp[:, 1::2, 1::2], self_energies_bubble_h_pp_h)
 
     # check tadpole self-energies
     eigw_Gamma, eigv_Gamma = eigws_BZ[0], eigvs_BZ[0]
