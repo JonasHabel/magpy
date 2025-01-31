@@ -28,13 +28,18 @@ def to_binary(bits):
 
 
 
-def conjugate_if(eigvs, condition):
+def BdG_conjugate_if(eigvs, condition):
     num_bands = eigvs.shape[-1] // 2
     assert 2*num_bands == eigvs.shape[-2]
     identity = np.eye(num_bands)
     sigma_x = np.kron(identity, PAULI_MATRICES[0])
 
     return sigma_x @ eigvs.conj() @ sigma_x if condition() else eigvs
+
+
+
+def BdG_conjugate(eigvs):
+    return BdG_conjugate_if(eigvs, lambda: True)
 
 
 

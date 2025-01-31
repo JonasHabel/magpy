@@ -31,8 +31,8 @@ def compute_one_magnon_self_energy(
     # COMPUTE BDG GAUGE PHASES FOR THE CONTRACTED LEGS
     HOLE, PARTICLE = 0, 1
     
-    eigvs_in = conjugate_if(eigvs_k, lambda: ph_idxs[0][0] == PARTICLE)
-    eigvs_out = conjugate_if(eigvs_k, lambda: ph_idxs[1][0] == HOLE)
+    eigvs_in = BdG_conjugate_if(eigvs_k, lambda: ph_idxs[0][0] == PARTICLE)
+    eigvs_out = BdG_conjugate_if(eigvs_k, lambda: ph_idxs[1][0] == HOLE)
     gauge_phase_in = compute_gauge_phase(eigvs_commutator_terms[1], eigvs_in)[1-ph_idxs[0][0]::2, 1-ph_idxs[0][0]::2]
     gauge_phase_out = compute_gauge_phase(eigvs_commutator_terms[0], eigvs_out)[ph_idxs[1][0]::2, ph_idxs[1][0]::2]
     
