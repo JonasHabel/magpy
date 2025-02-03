@@ -54,7 +54,7 @@ class Interaction:
 
 def group_interactions_by_sites(interactions):
     if len(interactions) == 0:
-        return {}
+        return []
 
     int_tensors_by_sites = {}
 
@@ -68,7 +68,10 @@ def group_interactions_by_sites(interactions):
     for inter in interactions:
         sites = tuple(inter.sites)
         if sites in int_tensors_by_sites:
-            int_tensors_by_sites[sites] += inter.interaction_tensor
+            # NOTE: int_tensors_by_sites[sites] += inter.interaction_tensor
+            # does not work for some reason.
+            int_tensors_by_sites[sites] = \
+                int_tensors_by_sites[sites] + inter.interaction_tensor
         else:
             int_tensors_by_sites[sites] = inter.interaction_tensor
 
