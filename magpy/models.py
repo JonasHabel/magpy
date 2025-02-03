@@ -87,7 +87,7 @@ class Model:
     and convert them into a dict {tuple(sites) -> Interaction}
     """
     def group_interactions_by_sites(self):
-        return interactions.group_interactions_by_site(self.interactions)
+        return interactions.group_interactions_by_sites(self.interactions)
     
 
 """

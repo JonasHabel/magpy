@@ -56,7 +56,7 @@ def plot_ax_unit_cell_internal(unit_cell_bravais_coords, model: Model,
         if interactions_by_sites is not None \
         else model.group_interactions_by_sites()
     
-    for sites, interaction in interactions_by_sites.items():
+    for interaction in interactions_by_sites:
         plot_ax_interaction(
             interaction, unit_cell_bravais_coords, model, ax, sizes)
 

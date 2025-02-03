@@ -52,11 +52,11 @@ class Interaction:
 
 
 
-def group_interactions_by_site(interactions, filter_zero=False):
+def group_interactions_by_sites(interactions):
     if len(interactions) == 0:
         return {}
 
-    int_tensors_by_site = {}
+    int_tensors_by_sites = {}
 
     int_tensor_dim = interactions[0].interaction_tensor.shape[0]
     assert all(map(
@@ -67,16 +67,15 @@ def group_interactions_by_site(interactions, filter_zero=False):
 
     for inter in interactions:
         sites = tuple(inter.sites)
-        int_tensor_shape = (int_tensor_dim,) * len(sites)
-        int_tensor = int_tensors_by_site.get(
-            sites, np.zeros(int_tensor_shape))
-        int_tensors_by_site[sites] = int_tensor + inter.interaction_tensor
+        if sites in int_tensors_by_sites:
+            int_tensors_by_sites[sites] += inter.interaction_tensor
+        else:
+            int_tensors_by_sites[sites] = inter.interaction_tensor
 
-    return {
-        sites: Interaction(sites, int_tensor) \
-        for sites, int_tensor in int_tensors_by_site.items() \
-        if not (filter_zero and np.allclose(int_tensor, 0))
-    }
+    return [
+        Interaction(sites, int_tensor) \
+        for sites, int_tensor in int_tensors_by_sites.items()
+    ]
 
 
 

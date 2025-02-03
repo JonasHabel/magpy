@@ -129,7 +129,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI_on_slab():
 
     # REAL SPACE
     verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
-    verts_real_space_by_sites = group_interactions_by_site(verts_real_space, filter_zero=True)
+    verts_real_space_by_sites = group_interactions_by_sites(verts_real_space)
     
     # MOMENTUM SPACE
     N_BZ = 1
