@@ -1,7 +1,7 @@
 import numpy as np
 from .lattice import BravaisLattice, ReciprocalLattice, DotLattice
 from . import lattice
-from .interactions import Interaction, CompositeInteraction
+from .interactions import Interaction, CompositeInteraction, compute_rotated_interactions
 from . import interactions
 from . import util
 from typing import List
@@ -69,18 +69,9 @@ class Model:
         T'_{ij...} = T_{ij...} RH_{ii'} RH_{jj'} ...
     """
     def compute_rotated_interactions(self):
-        Rs = self.compute_ground_state_rotation_matrices()
-        H = np.array([
-            [0.5, 0.5, 0],
-            [-0.5j, 0.5j, 0],
-            [0, 0, 1]
-        ])
-        RH = np.einsum("ijk,kl", Rs, H)
-        
-        rotated_interactions = [
-            inter.rotate_spin_coord_system(RH) for inter in self.interactions
-        ]
-        return rotated_interactions
+        return compute_rotated_interactions(
+            self.interactions, self.compute_ground_state_rotation_matrices()
+        )
 
     """
     Group interactions acting on the same sites into a single interaction

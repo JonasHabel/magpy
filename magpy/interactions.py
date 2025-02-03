@@ -78,6 +78,20 @@ def group_interactions_by_sites(interactions):
     ]
 
 
+def compute_rotated_interactions(interactions, ground_state_rotation_matrices):
+    Rs = ground_state_rotation_matrices
+    H = np.array([
+        [0.5, 0.5, 0],
+        [-0.5j, 0.5j, 0],
+        [0, 0, 1]
+    ])
+    RH = np.einsum("ijk,kl", Rs, H)
+    
+    rotated_interactions = [
+        inter.rotate_spin_coord_system(RH) for inter in interactions
+    ]
+    return rotated_interactions
+
 
 
 
