@@ -1,7 +1,7 @@
 import numpy as np
 from magpy.util import LARGE_S_EXPANSION_COEFF, ENERGY_EPS
 from magpy.models import Model
-from magpy.interactions import Interaction
+from magpy.interactions import Interaction, group_interactions_by_sites, compute_rotated_interactions
 
 
 
@@ -20,7 +20,10 @@ def compute_magnon_Hamiltonian(model: Model, order: int):
     ANNIHILATOR, CREATOR = 0, 1
     C = LARGE_S_EXPANSION_COEFF # rename for brevity
     S = model.get_onsite_spin_quantum_numbers()
-    rotated_spin_interactions = model.compute_rotated_interactions()
+    inter_by_sites = group_interactions_by_sites(model.interactions)
+    rotated_spin_interactions = compute_rotated_interactions(
+        inter_by_sites, model.compute_ground_state_rotation_matrices()
+    )
 
     Hamiltonians = []
     for inter in rotated_spin_interactions:
