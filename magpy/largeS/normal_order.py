@@ -154,16 +154,19 @@ def compute_commutator_term_with_permutations(
         eigvs_conserved = [*eigvs, eigv_BZ, eigv_minus_BZ]
 
         for nperm, (permutation, inv_permutation) in enumerate(permutations_and_inv_permutations):
+            #print(f"    permutation: {nperm} / {permutation} -- {datetime.now()}")
             ks_permuted = permute(ks_conserved, permutation)
             eigvs_permuted = permute(eigvs_conserved, permutation, as_np_array=False)
             # TODO speed up using precomputed interaction_Hamiltonian_real_space
             commutator_term_loop_contrib_mom_space = \
                 momentum_space.compute_magnon_Hamiltonian(
                     model, ks_permuted, interaction_Hamiltonian_real_space)
+            #print(f"        momentum space: done -- {datetime.now()}")
             commutator_term_loop_contrib_eigenspace = \
                 eigenspace.compute_magnon_Hamiltonian(
                     eigvs_permuted, 
                     commutator_term_loop_contrib_mom_space)
+            #print(f"        eigenspace: done -- {datetime.now()}")
             
             commuted_operator_idx_1 = inv_permutation[-2]
             commuted_operator_idx_2 = inv_permutation[-1]
@@ -201,8 +204,11 @@ def compute_commutator_term_with_permutations_Hartree_Fock(
     decoupling_channels = tuple(
         (a, b) for a in range(order+2) for b in range(a+1, order+2)
     )
+    
+    from datetime import datetime
+    for ninter, interaction in enumerate(magnon_Hs_real_space):
+        print(f"{ninter} / {len(magnon_hs_real_space)} -- {datetime.now()}")
 
-    for interaction in magnon_Hs_real_space:
         bravais_coords_for_inter = np.array([
             site.bravais_coords for site in interaction.sites
         ])
