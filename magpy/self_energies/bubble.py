@@ -22,15 +22,15 @@ def compute_full_one_magnon_self_energy(
         [ph_labels_intermediate_state]
     )[0]
     
-    HOLE, PARTICLE = 0, 1
+    ANNIHILATOR, CREATOR = 0, 1
     cubic_vert = np.zeros(
         (*cubic_verts.shape[1:-1], 2*cubic_verts.shape[-1]), 
         dtype=np.complex128,
     )
-    cubic_vert[..., HOLE::2] = \
-        cubic_verts[to_binary([*ph_idxs_intermediate_state, HOLE])]
-    cubic_vert[..., PARTICLE::2] = \
-        cubic_verts[to_binary([*ph_idxs_intermediate_state, PARTICLE])]
+    cubic_vert[..., 0::2] = \
+        cubic_verts[to_binary([*ph_idxs_intermediate_state, ANNIHILATOR])]
+    cubic_vert[..., 1::2] = \
+        cubic_verts[to_binary([*ph_idxs_intermediate_state, CREATOR])]
     cubic_vert_left = cubic_vert
     cubic_vert_right = cubic_vert.conj()
 
@@ -45,11 +45,11 @@ def compute_full_one_magnon_self_energy(
         freq_derivatives)
 
     # apply diagram prefactor for each particle/hole sector separately
-    for ph_idx_in in (HOLE, PARTICLE):
+    for ph_idx_in in (ANNIHILATOR, CREATOR):
         ph_idxs_left_vert = \
             np.array([*ph_idxs_intermediate_state, ph_idx_in])
         
-        for ph_idx_out in (HOLE, PARTICLE):
+        for ph_idx_out in (ANNIHILATOR, CREATOR):
             ph_idxs_right_vert = \
                 np.array([*ph_idxs_intermediate_state, ph_idx_out])
             
