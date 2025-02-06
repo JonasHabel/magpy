@@ -1,7 +1,7 @@
 import numpy as np
 from magpy.util import LARGE_S_EXPANSION_COEFF, ENERGY_EPS
 from magpy.models import Model
-from magpy.interactions import Interaction, group_interactions_by_sites, compute_rotated_interactions
+from magpy.interactions import Interaction, compress, compute_rotated_interactions
 
 
 
@@ -13,14 +13,14 @@ def __hc(multi_idx):
 Returns all terms within the large-S expansion of order O(S^(2-{order}/2)).
 These terms all contain {order} magnon operators.
 """
-def compute_magnon_Hamiltonian(model: Model, order: int):
+def compute_magnon_Hamiltonian(model: Model, order: int, output_compression=None):
     if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
         raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
     
     ANNIHILATOR, CREATOR = 0, 1
     C = LARGE_S_EXPANSION_COEFF # rename for brevity
     S = model.get_onsite_spin_quantum_numbers()
-    inter_by_sites = group_interactions_by_sites(model.interactions)
+    inter_by_sites = compress(model.interactions)
     rotated_spin_interactions = compute_rotated_interactions(
         inter_by_sites, model.compute_ground_state_rotation_matrices()
     )
@@ -159,5 +159,8 @@ def compute_magnon_Hamiltonian(model: Model, order: int):
     Hamiltonians = list(filter(
         lambda H: np.any(np.abs(H.interaction_tensor) > ENERGY_EPS), # np.zeros(H.interaction_tensor.shape)),
         Hamiltonians))
+    
+    if output_compression:
+        Hamiltonians = compress(Hamiltonians, **output_compression)
 
     return Hamiltonians

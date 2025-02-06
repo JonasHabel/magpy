@@ -77,8 +77,8 @@ class Model:
     Group interactions acting on the same sites into a single interaction
     and convert them into a dict {tuple(sites) -> Interaction}
     """
-    def group_interactions_by_sites(self):
-        return interactions.group_interactions_by_sites(self.interactions)
+    def compress_interactions(self):
+        return interactions.compress(self.interactions)
     
 
 """

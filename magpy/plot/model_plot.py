@@ -27,7 +27,7 @@ def plot_ax_model(model: Model, sizes, ax):
     
     sizes = np.array(sizes)
     grid = model.lattice.sample_Bravais_lattice_in_Bravais_coords(sizes)
-    interactions_by_sites = model.group_interactions_by_sites()
+    interactions_by_sites = model.compress_interactions()
 
     for unit_cell_bravais_coords in grid:
         plot_ax_unit_cell_internal(
@@ -54,7 +54,7 @@ def plot_ax_unit_cell_internal(unit_cell_bravais_coords, model: Model,
                                ax, sizes=None, interactions_by_sites=None):
     interactions_by_sites = interactions_by_sites \
         if interactions_by_sites is not None \
-        else model.group_interactions_by_sites()
+        else model.compress_interactions()
     
     for interaction in interactions_by_sites:
         plot_ax_interaction(

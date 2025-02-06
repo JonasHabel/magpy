@@ -2,7 +2,7 @@ import numpy as np
 from .lattice import BravaisLattice, HoneycombLatticeA, HoneycombLatticeB
 from . import util
 from .util import LEVI_CIVITA
-from collections import deque
+from collections import Counter
 
 class Interaction:
     """
@@ -51,34 +51,91 @@ class Interaction:
 
 
 
+"""
+Associate an "ID" to each interaction such that physically equivalent
+interactions have the same ID. Then, merge the interaction tensors of 
+interactions with the same ID.
 
-def group_interactions_by_sites(interactions):
+The ID of an interaction is determined by the list of sites on which it acts.
+We have some freedom in choosing the function that computes the IDs, as long
+as interactions with the same ID are physically equivalent.
+We may choose it such that the ID of two interactions a and b is equal IFF
+1. a.sites == b.sites, i.e., the sites are exactly the same and in the 
+   same order,
+2. a.sites is related to b.sites by a permutation (requires appropriate
+   transposition of the axes of the interaction tensor),
+3. there is a bravais lattice vector V such that moving a.sites[i] by V
+   yields b.sites[i] for all i,
+4. both 2 and 3 combined, i.e., there is a bravais lattice vector V and a
+   permutation p such that moving a.sites[i] by V yields b.sites[p(i)] for all i
+The compression ratio increases from 1. through 4.
+"""
+def compress(interactions, /, permute=False, translate=False):
     if len(interactions) == 0:
         return []
 
-    int_tensors_by_sites = {}
-
-    int_tensor_dim = interactions[0].interaction_tensor.shape[0]
     assert all(map(
         lambda inter: all(map(
-            lambda dim: dim == int_tensor_dim,
+            lambda dim: dim == interactions[0].interaction_tensor.shape[0],
             inter.interaction_tensor.shape)), 
         interactions))
 
-    for inter in interactions:
-        sites = tuple(inter.sites)
-        if sites in int_tensors_by_sites:
-            # NOTE: int_tensors_by_sites[sites] += inter.interaction_tensor
-            # does not work for some reason.
-            int_tensors_by_sites[sites] = \
-                int_tensors_by_sites[sites] + inter.interaction_tensor
-        else:
-            int_tensors_by_sites[sites] = inter.interaction_tensor
+    def get_id(inter):
+        x = tuple(inter.sites)
+        if translate and len(inter.sites) >= 1:
+            center = np.sum(np.array([site.bravais_coords for site in x]), axis=0) / len(x)
+            center_bravais_offset = np.floor(center).astype(np.int64)
+            x = tuple(site.translate(-center_bravais_offset) for site in x)
+        if permute:
+            x = frozenset(Counter(x).items())
+        return hash(x)
 
-    return [
-        Interaction(sites, int_tensor) \
-        for sites, int_tensor in int_tensors_by_sites.items()
-    ]
+    interactions_by_id = {}
+    
+    def sort_interaction_tensor_axes(inter, reference_inter):
+        sites_hashes = np.array([hash(site) for site in inter.sites])
+        ref_sites_hashes = np.array([hash(site) for site in reference_inter.sites])
+        sites_sorting_idxs = sites_hashes.argsort()
+        ref_sites_sorting_idxs = ref_sites_hashes.argsort()
+        sorted_int_tensor = np.moveaxis(
+            inter.interaction_tensor,
+            source=sites_sorting_idxs,
+            destination=ref_sites_sorting_idxs,
+        )
+
+        return sorted_int_tensor
+
+    for inter in interactions:
+        # sites_hashes = np.array([hash(site) for site in inter.sites])
+        # sites_sorting_idxs = sites_hashes.argsort()
+        # sorted_site_hashes = tuple(sites_hashes[sites_sorting_idxs])
+        # sorted_int_tensor = inter.interaction_tensor.transpose(sites_sorting_idxs)
+        # 
+        # if sorted_site_hashes in interactions_by_id:
+        #     # NOTE: int_tensors_by_sites[sites] += inter.interaction_tensor
+        #     # does not work for some reason.
+        #     interactions_by_id[sorted_site_hashes].interaction_tensor \
+        #         += sorted_int_tensor
+        # else:
+        #     sorted_sites = tuple(inter.sites[i] for i in sites_sorting_idxs)
+        #     interactions_by_id[sorted_site_hashes] = Interaction(
+        #         sites=sorted_sites,
+        #         interaction_tensor=inter.interaction_tensor,
+        #     )
+        inter_id = get_id(inter)
+        if inter_id in interactions_by_id:
+            reference_inter = interactions_by_id[inter_id]
+            sorted_int_tensor = sort_interaction_tensor_axes(inter, reference_inter)
+            reference_inter.interaction_tensor += sorted_int_tensor
+        else:
+            interactions_by_id[inter_id] = inter.copy()
+
+    return list(interactions_by_id.values())
+
+
+
+
+
 
 
 def compute_rotated_interactions(interactions, ground_state_rotation_matrices):
