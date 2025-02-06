@@ -228,7 +228,7 @@ def test_honeycomb_FM_Heisenberg_with_DMI():
 
 
     # REAL SPACE
-    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
+    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3, output_compression=None)
 
 
     # FM interaction does not yield any cubic terms
