@@ -5,9 +5,16 @@ from magpy.largeS import real_space
 
 def get_real_space_magnon_Hamiltonian(
         interaction_Hamiltonian_real_space, model, order):
-    return interaction_Hamiltonian_real_space \
-        if interaction_Hamiltonian_real_space is not None \
-        else real_space.compute_magnon_Hamiltonian(model, order)
+    if interaction_Hamiltonian_real_space is not None \
+    or type(interaction_Hamiltonian_real_space) == list:
+        return interaction_Hamiltonian_real_space
+    
+    if type(interaction_Hamiltonian_real_space) is dict:
+        return real_space.compute_magnon_Hamiltonian(
+            model, order, output_compression=interaction_Hamiltonian_real_space
+        )
+    
+    return real_space.compute_magnon_Hamiltonian(model, order)
 
 
 def flat_iterator(quantity_arrs, default_shape, func, iteration_dim=0):
