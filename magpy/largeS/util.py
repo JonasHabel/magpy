@@ -5,8 +5,7 @@ from magpy.largeS import real_space
 
 def get_real_space_magnon_Hamiltonian(
         interaction_Hamiltonian_real_space, model, order):
-    if interaction_Hamiltonian_real_space is not None \
-    or type(interaction_Hamiltonian_real_space) == list:
+    if type(interaction_Hamiltonian_real_space) is list:
         return interaction_Hamiltonian_real_space
     
     if type(interaction_Hamiltonian_real_space) is dict:
