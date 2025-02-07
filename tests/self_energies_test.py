@@ -19,11 +19,12 @@ def test_two_site_quantum_dot_with_DMI():
     ], classical_ground_state=np.array([[0, 0, 1], [0, 0, 1]]))
 
     # VERTICES REAL SPACE
-    verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
+    # verts_real_space = real_space.compute_magnon_Hamiltonian(mod, order=3)
 
     # VERTICES MOMENTUM SPACE
+    compression = {"permute": True, "translate": True}
     verts_mom_space = momentum_space.compute_magnon_Hamiltonian_with_momentum_conservation_and_permutations(
-        mod, np.zeros((2, 1)), verts_real_space)
+        mod, np.zeros((2, 1)), compression)
 
     # VERTICES EIGENSPACE
     _, eigvs = LSWT.get_eigensystem_momentum_space(mod, np.zeros((1, 1)))
