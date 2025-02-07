@@ -160,7 +160,7 @@ def compute_magnon_Hamiltonian(model: Model, order: int, output_compression=None
         lambda H: np.any(np.abs(H.interaction_tensor) > ENERGY_EPS), # np.zeros(H.interaction_tensor.shape)),
         Hamiltonians))
     
-    if output_compression:
+    if output_compression is not None:
         Hamiltonians = compress(Hamiltonians, **output_compression)
 
     return Hamiltonians
