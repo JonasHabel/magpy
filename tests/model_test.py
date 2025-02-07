@@ -610,3 +610,36 @@ def test_FM_Heisenberg_honeycomb_lattice_open_bc_zigzag():
     #assert set(mod_1D.lattice.edges) == set([
     #    lattice.BravaisLattice.Edge(np.array([[0, 0]]), np.array([n, n+1]))
     #])
+
+
+def test_compression():
+    latt = lattice.HoneycombLatticeA()
+    inter = [   # some random interactions
+        interactions.KitaevInteraction(latt, K=1.0),
+        interactions.Interaction([
+            lattice.BravaisLattice.Site(np.array([0, 0]), 1), 
+            lattice.BravaisLattice.Site(np.array([-1, 0]), 0),
+        ], interaction_tensor=np.array([
+            [-5, 0, 2],
+            [0, -6, 0],
+            [-2, 0, 0],
+        ])),
+        interactions.GammaInteraction(latt, Gamma=-1.5),
+        interactions.GammaInteraction(latt, Gamma=-2.5, prime=True),
+        interactions.UniformMagneticField(latt, B=np.array([0, 0, 20.0])),
+    ]
+
+    mod = models.Model(latt, inter, np.array([[0, 0, 1], [0, 0, 1]]))
+    mod_compressed = models.Model(latt, inter, np.array([[0, 0, 1], [0, 0, 1]]), 
+        interaction_compression={"permute": True, "translate": True})
+    assert len(mod_compressed.interactions) < len(mod.interactions)
+
+    k_path = latt.reciprocal_lattice.get_momentum_path_approx_equally_spaced(["Gamma", "K", "X", "Gamma"], 10)
+    eigws, eigvs = LSWT.get_eigensystems_momentum_space(mod, np.array([k_path.ks]))
+    eigws_compr, eigvs_compr = LSWT.get_eigensystems_momentum_space(mod_compressed, np.array([k_path.ks]))
+
+    assert np.allclose(eigws, eigws_compr)
+    for k_idx in range(len(k_path.ks)): # check eigenvector equivalence up to a gauge phase
+        assert np.allclose(np.abs(eigvs[0][k_idx] / eigvs_compr[0][k_idx]), 1.0)
+
+    
