@@ -1,7 +1,7 @@
 import numpy as np
 from .lattice import BravaisLattice, ReciprocalLattice, DotLattice
 from . import lattice
-from .interactions import Interaction, CompositeInteraction, compute_rotated_interactions
+from .interactions import Interaction, CompositeInteraction, compute_rotated_interactions, compress
 from . import interactions
 from . import util
 from typing import List
@@ -16,7 +16,7 @@ class Model:
         limit. Their lengths specify the on-site spin quantum number S
     """
     def __init__(self, lattice: BravaisLattice, interactions,
-                 classical_ground_state):
+                 classical_ground_state, interaction_compression=None):
         classical_gs_required_shape = (lattice.num_sites_unit_cell, 3)
         self.classical_gs = np.array(classical_ground_state)
         if self.classical_gs.shape != classical_gs_required_shape:
@@ -26,6 +26,11 @@ class Model:
         
         self.lattice = lattice
         self.interactions = CompositeInteraction(interactions).expand()
+
+        if interaction_compression is not None:
+            self.interactions = compress(
+                self.interactions, **interaction_compression
+            )
 
     """
     The on-site spin quantum number S is characterized by the length of the
@@ -78,7 +83,7 @@ class Model:
     and convert them into a dict {tuple(sites) -> Interaction}
     """
     def compress_interactions(self):
-        return interactions.compress(self.interactions)
+        return compress(self.interactions)
     
 
 """
