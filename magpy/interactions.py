@@ -79,21 +79,36 @@ def compress(interactions, /, permute=False, translate=False):
             lambda dim: dim == interactions[0].interaction_tensor.shape[0],
             inter.interaction_tensor.shape)), 
         interactions))
+    
+    # get the Bravais coordinates of the unit cell where the center of mass
+    # of sites is located
+    def get_center_of_mass_Bravais_offset(sites):
+        center = np.sum(np.array([site.bravais_coords for site in sites]), axis=0) / len(sites)
+        center_bravais_offset = np.floor(center).astype(np.int64)
+        return center_bravais_offset
 
     def get_id(inter):
         x = tuple(inter.sites)
         if translate and len(inter.sites) >= 1:
-            center = np.sum(np.array([site.bravais_coords for site in x]), axis=0) / len(x)
-            center_bravais_offset = np.floor(center).astype(np.int64)
+            center_bravais_offset = get_center_of_mass_Bravais_offset(x)
             x = tuple(site.translate(-center_bravais_offset) for site in x)
         if permute:
             x = frozenset(Counter(x).items())
         return hash(x)
 
-    interactions_by_id = {}
+    # translate sites of inter so that their center of mass is in the same
+    # unit cell as the center of mass of the sites of reference_inter
+    def get_translated_sites(inter, reference_inter):
+        center_bravais_offset = get_center_of_mass_Bravais_offset(inter.sites)
+        ref_center_bravais_offset = get_center_of_mass_Bravais_offset(reference_inter.sites)
+        return tuple(
+            site.translate(ref_center_bravais_offset - center_bravais_offset) \
+            for site in inter.sites
+        )
     
     def sort_interaction_tensor_axes(inter, reference_inter):
-        sites_hashes = np.array([hash(site) for site in inter.sites])
+        translated_sites = get_translated_sites(inter, reference_inter)
+        sites_hashes = np.array([hash(site) for site in translated_sites])
         ref_sites_hashes = np.array([hash(site) for site in reference_inter.sites])
         sites_sorting_idxs = sites_hashes.argsort()
         ref_sites_sorting_idxs = ref_sites_hashes.argsort()
@@ -104,6 +119,8 @@ def compress(interactions, /, permute=False, translate=False):
         )
 
         return sorted_int_tensor
+
+    interactions_by_id = {}
 
     for inter in interactions:
         # sites_hashes = np.array([hash(site) for site in inter.sites])
