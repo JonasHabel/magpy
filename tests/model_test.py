@@ -643,3 +643,19 @@ def test_compression():
         assert np.allclose(np.abs(eigvs[0][k_idx] / eigvs_compr[0][k_idx]), 1.0)
 
     
+def test_compression_DMI():
+    J = interactions.HeisenbergInteraction(
+        lattice.BravaisLattice.Edge(np.array([0, -1, 0]), np.array([0, 1])),
+        J = 4.96,
+    )
+    DMI = interactions.DMInteraction(
+        lattice.BravaisLattice.Edge(np.array([0, 1, 0]), np.array([1, 0])),
+        D=np.array([0, 0.11, 0]),
+    )
+
+    compressed_interactions = interactions.compress([J, DMI], permute=True, translate=True)
+    
+    expected_interaction_tensor = J.interaction_tensor + DMI.interaction_tensor.T
+    assert len(compressed_interactions) == 1
+    assert compressed_interactions[0].sites == J.sites
+    assert np.all(compressed_interactions[0].interaction_tensor == expected_interaction_tensor)
