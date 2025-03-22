@@ -139,15 +139,41 @@ def compute_effective_field(model: Model, spin_config,
     return eff_field
 
 
+class SpinLengthFluctCompensators:
+    def harmonic(stiffness):
+        def compensator(target_spin_lengths, num_unit_cells):
+            num_sites_unit_cell = len(target_spin_lengths)
+            def compute_compensation_force(spin_config):
+                spin_lengths = np.linalg.norm(spin_config, axis=-1)
+                spin_unit_vecs = spin_config / spin_lengths[..., np.newaxis]
+                return -stiffness * (spin_lengths - target_spin_lengths[np.newaxis])[..., np.newaxis] * spin_unit_vecs
+            return compute_compensation_force
+        return compensator
+    
+    def none():
+        def compensator(target_spin_lengths, num_unit_cells):
+            num_sites_unit_cell = len(target_spin_lengths)
+            zeros = np.zeros((num_unit_cells, num_sites_unit_cell, 3))
+            def compute_compensation_force(spin_config):
+                return zeros
+            return compute_compensation_force
+        return compensator
+
 
 
 def simulate_LLG(model: Model, sizes, time_span, num_times, init_spin_config,
-                 damping=0.0, boundary_conditions={}, use_jit=True):
+                 damping=0.0, boundary_conditions={}, use_jit=True,
+                 spin_length_fluct_compensator=SpinLengthFluctCompensators.none(),
+                 solver_options=None):
     sizes = np.array(sizes, dtype=int)
     num_sites_unit_cell = model.lattice.num_sites_unit_cell
     num_unit_cells = np.prod(sizes)
     num_sites_total = num_unit_cells * num_sites_unit_cell
     bc_dS_dt = boundary_conditions.get("dS/dt")
+    onsite_spin_lengths = model.get_onsite_spin_quantum_numbers()
+    compute_spin_length_fluct_compensation_force = \
+        spin_length_fluct_compensator(onsite_spin_lengths, num_unit_cells)
+    solver_options = solver_options or dict()
 
     def spin_config_time_derivative(time, spin_config):
         # do LLG step
@@ -155,7 +181,13 @@ def simulate_LLG(model: Model, sizes, time_span, num_times, init_spin_config,
         effective_field = compute_effective_field(
             model, spin_config, sizes, num_sites_unit_cell, use_jit)
         S_cross_B_eff = np.cross(spin_config, effective_field)
-        dS_dt = S_cross_B_eff - damping*np.cross(spin_config, S_cross_B_eff)
+        spin_length_fluct_compensation_force = \
+            compute_spin_length_fluct_compensation_force(
+                spin_config.reshape(num_unit_cells, num_sites_unit_cell, 3)
+            ).reshape((num_sites_total, 3))
+        
+        dS_dt = S_cross_B_eff - damping*np.cross(spin_config, S_cross_B_eff) \
+            + spin_length_fluct_compensation_force
 
         # apply dS/dt boundary conditions
         if bc_dS_dt is not None:
@@ -178,7 +210,7 @@ def simulate_LLG(model: Model, sizes, time_span, num_times, init_spin_config,
     init_spin_config = init_spin_config.reshape((num_sites_total*3))
     solution = solve_ivp(
         spin_config_time_derivative, time_span, init_spin_config,
-        t_eval=np.linspace(*time_span, num_times))
+        t_eval=np.linspace(*time_span, num_times), **solver_options)
     
     solution["y"] = solution["y"] \
         .reshape((*sizes, num_sites_unit_cell, 3, num_times))

@@ -28,6 +28,19 @@ def test_quantum_dot():
                                             len(latt.sublattices), use_jit=True)
     assert np.allclose(eff_field, np.array([[1, 3.0, -0.5], [-0.5, 0, 1]]))
 
+    times, S = LLG.simulate_LLG(mod, (), time_span=(0, 100), num_times=100,
+        init_spin_config=np.array([[0, 0, 1], [1, 0, 0]]), damping=0.1, use_jit=True)
+
+    times, S = LLG.simulate_LLG(mod, (), time_span=(0, 100), num_times=100,
+        init_spin_config=np.array([[0, 0, 1], [1, 0, 0]]), damping=0.1, use_jit=True,
+        solver_options=dict(atol=1e-6, rtol=1e-6))
+    
+    times, S = LLG.simulate_LLG(mod, (), time_span=(0, 100), num_times=100,
+        init_spin_config=np.array([[0, 0, 1], [1, 0, 0]]), damping=0.1, use_jit=True,
+        spin_length_fluct_compensator=LLG.SpinLengthFluctCompensators.harmonic(0.1))
+    
+    pass
+
 
 def test_FM_Heisenberg_chain():
     latt = lattice.ChainLattice()
