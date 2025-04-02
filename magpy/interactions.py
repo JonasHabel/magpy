@@ -32,7 +32,14 @@ class Interaction:
         return np.allclose(self.interaction_tensor, other.interaction_tensor)
 
     def __hash__(self):
-        return hash(tuple([*self.sites, self.interaction_tensor]))
+        return hash(tuple([
+            *self.sites, 
+            tuple([
+                len(self.interaction_tensor.shape),
+                *self.interaction_tensor.shape,
+                *self.interaction_tensor.flatten(),
+            ]),
+        ]))
 
     """
     See doc of Model.compute_rotated_interactions
