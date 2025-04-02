@@ -318,6 +318,7 @@ def test_FM_Heisenberg_transform():
             lattice.SquareLattice(),
             lattice.SquareLattice(),
             lattice.SquareLattice(),
+            lattice.SquareLattice(),
         ],
         "transf": np.array([
             np.identity(1),
@@ -334,6 +335,7 @@ def test_FM_Heisenberg_transform():
             np.array([[0, 1], [1, 0]]),
             np.array([[0, -1], [1, 0]]),
             np.array([[-2, 2], [3, 2]]),
+            np.array([[2, 0], [2, 2]]),
         ]),
         "expected_sublattices": np.array([
             [[0]],
@@ -350,7 +352,8 @@ def test_FM_Heisenberg_transform():
             [[0, 0]],
             [[0, 0]],
             [[0, 0], [-1, 1], [0, 1], [1, 1], [-1, 2],
-             [0, 2], [1, 2], [2, 2], [0, 3], [1, 3]]
+             [0, 2], [1, 2], [2, 2], [0, 3], [1, 3]],
+            [[0, 0], [1, 0], [1, 1], [2, 1]],
         ]),
         "expected_edges": [
             [
@@ -447,13 +450,23 @@ def test_FM_Heisenberg_transform():
                 lattice.BravaisLattice.Edge(np.array([0, 1]), np.array([9, 1])),
                 lattice.BravaisLattice.Edge(np.array([1, 1]), np.array([9, 0])),
             ],
+            [
+                lattice.BravaisLattice.Edge(np.array([0, 0]), np.array([0, 1])),
+                lattice.BravaisLattice.Edge(np.array([0, 0]), np.array([1, 2])),
+                lattice.BravaisLattice.Edge(np.array([0, 0]), np.array([2, 3])),
+                lattice.BravaisLattice.Edge(np.array([1, 0]), np.array([1, 0])),
+                lattice.BravaisLattice.Edge(np.array([1, 0]), np.array([3, 2])),
+                lattice.BravaisLattice.Edge(np.array([-1, 0]), np.array([0, 3])),
+                lattice.BravaisLattice.Edge(np.array([-1, 1]), np.array([2, 1])),
+                lattice.BravaisLattice.Edge(np.array([0, 1]), np.array([3, 0])),
+            ],
         ]
     }
 
     for x in test_params.values():
         print(len(x))
 
-    for latt, transf, exp_subl, exp_edges in zip(*test_params.values()):
+    for n, (latt, transf, exp_subl, exp_edges) in enumerate(zip(*test_params.values())):
         inter = [
             interactions.NthNearestNeighborHeisenbergInteraction(
                 latt, n=1, J=-1.0)
