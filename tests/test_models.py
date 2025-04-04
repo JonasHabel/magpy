@@ -34,12 +34,10 @@ def AFM_Heisenberg_chain(B=None):
     ), (J, S_A, S_B)
 
 
-def FM_Heisenberg_with_DMI_honeycomb():
+def FM_Heisenberg_with_DMI_honeycomb(S_A=5/2, S_B=2):
     J = -1.0
     D = 0.1
     D_vec = np.array([0, 0, D])
-    S_A = 5/2
-    S_B = 2
     theta = 0.1 * np.pi/2
     lattice = HoneycombLatticeA()
 
