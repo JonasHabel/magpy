@@ -1134,6 +1134,132 @@ def test_1D_BdG_chain_with_cubic_interaction():
         sigma_x[np.newaxis] @ self_energies_full_tadpole_h.conj() @ sigma_x[np.newaxis]
     )
 
+
+
+
+def test_Kitaev_model_in_field():
+    lattice = HoneycombLatticeA()
+    model = models.Model(
+        lattice,
+        [
+            KitaevInteraction(lattice, K=2.0, order=("z", "x", "y")),
+            UniformMagneticField(lattice, 2.01 * np.array([1, 1, 1]) / np.sqrt(3)),
+        ],
+        0.5 * np.array([[1, 1, 1], [1, 1, 1]]) / np.sqrt(3),
+    )
+    kpath = lattice.reciprocal_lattice.get_momentum_path_approx_equally_spaced(
+        ["Gamma'", "M"], 50, custom_hisym_points={
+            "Gamma'": np.array([0, 1]),
+            "M": np.array([0, 1/2]),
+        }
+    )
+    kpath = kpath.slice((24, 25))
+
+    momenta_kpath = Momenta.of(kpath)
+    eigws_kpath, eigvs_kpath = LSWT.get_eigensystems_momentum_space(
+        model, momenta_kpath,
+    )
+    momenta_BZ = Momenta.of_BZ(lattice, (20, 20))
+    eigws_BZ, eigvs_BZ = LSWT.get_eigensystems_momentum_space(
+        model, momenta_BZ,
+    )
+    
+    gauges = np.array([
+        [np.eye(4), np.diag([np.exp(1j*2*np.pi/3), np.exp(1j*3*np.pi/5), 1, np.exp(-1j*np.pi/7)])] \
+        for _ in range(len(kpath.ks))
+    ])
+    num_gauges = gauges.shape[1]
+    freqs = np.array([np.linspace(0, 4, 120)[40]])
+    ses_bubble_pp = np.zeros((len(kpath.ks), num_gauges, len(freqs), 4, 4), dtype=np.complex128)
+    ses_bubble_mom_space = np.zeros((len(kpath.ks), num_gauges, len(freqs), 4, 4), dtype=np.complex128)
+    ses_qbubble = np.zeros((len(kpath.ks), num_gauges, len(freqs), 4, 4), dtype=np.complex128)
+    ses_qbubble_mom_space = np.zeros((len(kpath.ks), num_gauges, len(freqs), 4, 4), dtype=np.complex128)
+    gfs_eigenspace = np.zeros((len(kpath.ks), num_gauges, len(freqs), 4, 4), dtype=np.complex128)
+    gfs_mom_space = np.zeros((len(kpath.ks), num_gauges, len(freqs), 4, 4), dtype=np.complex128)
+    BdG_metric = np.diag([1, -1, 1, -1])
+
+    for nk, k in enumerate(kpath.ks):
+        k = kpath.ks[0]
+        momenta_minus_k_minus_BZ = Momenta.of_BZ(lattice, (20, 20), trans=lambda q: -k - q)
+        for ngauge, gauge in enumerate(gauges[nk]):
+            eigvs_k = eigvs_kpath.raw_quantity[0][nk] @ gauge
+            eigws_minus_k_minus_BZ, eigvs_minus_k_minus_BZ = LSWT.get_eigensystems_momentum_space(
+                model, momenta_minus_k_minus_BZ,
+            )
+            cubic_verts_mom_space_k = momentum_space.compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
+                model, Momenta(momenta_BZ.k_arrays[0], k),
+            )
+            cubic_verts_eigenspace_k = eigenspace.compute_magnon_Hamiltonians_with_permutations(
+                models, MSQ(
+                    [eigvs_minus_k_minus_BZ.raw_quantity[0], eigvs_BZ.raw_quantity[0], eigvs_k], 
+                    Momenta(-k-momenta_BZ.k_arrays[0], momenta_BZ.k_arrays[0], k)
+                ), cubic_verts_mom_space_k,
+            )
+            cubic_verts_nosym_k = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(cubic_verts_eigenspace_k)
+            se_bubble_p_pp_p = bubble.compute_one_magnon_self_energy(
+                freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+                cubic_verts_nosym_k.raw_quantity, T=0.0, ph_labels=["p", "pp", "p"], reg=0.05)
+            se_bubble_p_pp_h = bubble.compute_one_magnon_self_energy(
+                freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+                cubic_verts_nosym_k.raw_quantity, T=0.0, ph_labels=["p", "pp", "h"], reg=0.05)
+            se_bubble_h_pp_p = bubble.compute_one_magnon_self_energy(
+                freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+                cubic_verts_nosym_k.raw_quantity, T=0.0, ph_labels=["h", "pp", "p"], reg=0.05)
+            se_bubble_h_pp_h = bubble.compute_one_magnon_self_energy(
+                freqs, eigws_BZ.raw_quantity[0], eigws_minus_k_minus_BZ.raw_quantity[0],
+                cubic_verts_nosym_k.raw_quantity, T=0.0, ph_labels=["h", "pp", "h"], reg=0.05)
+            ses_bubble_pp[nk, ngauge, :, ::2, ::2] = se_bubble_p_pp_p
+            ses_bubble_pp[nk, ngauge, :, ::2, 1::2] = se_bubble_p_pp_h
+            ses_bubble_pp[nk, ngauge, :, 1::2, ::2] = se_bubble_h_pp_p
+            ses_bubble_pp[nk, ngauge, :, 1::2, 1::2] = se_bubble_h_pp_h
+            
+            quadratic_comm_terms_eigenspace = normal_order.compute_commutator_terms_with_permutations(
+                model, Momenta(k), 
+                MSQ(
+                    [eigvs_minus_k_minus_BZ.raw_quantity[0][0, 0], eigvs_k],
+                    Momenta(-k, k),
+                ),
+                momenta_BZ, MSQ(eigvs_BZ.raw_quantity[0], momenta_BZ)
+            )
+            quadratic_comm_terms_nosym = normal_order.normal_order_and_symmetrize_magnon_Hamiltonians(
+                quadratic_comm_terms_eigenspace)
+            se_qbubble_pp = quartic_bubble.compute_one_magnon_self_energy(
+                freqs, eigvs_k, quadratic_comm_terms_nosym.raw_quantity,
+                [eigvs_minus_k_minus_BZ.raw_quantity[0][0, 0], eigvs_k],
+                20*20, T=0.0, ph_labels=["p", "p"])
+            se_qbubble_ph = quartic_bubble.compute_one_magnon_self_energy(
+                freqs, eigvs_k, quadratic_comm_terms_nosym.raw_quantity,
+                [eigvs_minus_k_minus_BZ.raw_quantity[0][0, 0], eigvs_k],
+                20*20, T=0.0, ph_labels=["p", "h"])
+            se_qbubble_hp = quartic_bubble.compute_one_magnon_self_energy(
+                freqs, eigvs_k, quadratic_comm_terms_nosym.raw_quantity,
+                [eigvs_minus_k_minus_BZ.raw_quantity[0][0, 0], eigvs_k],
+                20*20, T=0.0, ph_labels=["h", "p"])
+            se_qbubble_hh = quartic_bubble.compute_one_magnon_self_energy(
+                freqs, eigvs_k, quadratic_comm_terms_nosym.raw_quantity,
+                [eigvs_minus_k_minus_BZ.raw_quantity[0][0, 0], eigvs_k],
+                20*20, T=0.0, ph_labels=["h", "h"])
+            ses_qbubble[nk, ngauge, :, ::2, ::2] = se_qbubble_pp
+            ses_qbubble[nk, ngauge, :, ::2, 1::2] = se_qbubble_ph
+            ses_qbubble[nk, ngauge, :, 1::2, ::2] = se_qbubble_hp
+            ses_qbubble[nk, ngauge, :, 1::2, 1::2] = se_qbubble_hh
+
+            for nfreq, freq in enumerate(freqs):
+                ses_bubble_mom_space[nk, ngauge, nfreq] = \
+                    (BdG_metric @ eigvs_k @ BdG_metric @ ses_bubble_pp[nk, ngauge, nfreq].T @ np.linalg.inv(eigvs_k)).T
+                ses_qbubble_mom_space[nk, ngauge, nfreq] = \
+                    (BdG_metric @ eigvs_k @ BdG_metric @ ses_qbubble[nk, ngauge, nfreq].T @ np.linalg.inv(eigvs_k)).T
+                gfs_eigenspace[nk, ngauge, nfreq] = \
+                    np.linalg.inv((freq + 0.05j)*BdG_metric - np.diag(np.abs(eigws_kpath.raw_quantity[0][nk])) - ses_bubble_pp[nk, ngauge, nfreq] - ses_qbubble[nk, ngauge, nfreq])
+                gfs_mom_space[nk, ngauge, nfreq] = \
+                    (eigvs_k @ gfs_eigenspace[nk, ngauge, nfreq].T @ eigvs_k.T.conj()).T
+                    #np.linalg.inv((freq + 0.05j)*BdG_metric - BdG_metric @ eigvs_k @ BdG_metric @ (np.diag(np.abs(eigws_kpath.raw_quantity[0][nk])) + ses_bubble_pp[nk, ngauge, nfreq].T) @ np.linalg.inv(eigvs_k)).T
+
+    # in (momentum, sublattice) space, the self-energies and greens functions must be gauge invariant
+    for n in range(1, len(gauges)):
+        assert np.allclose(ses_bubble_mom_space[:, n], ses_bubble_mom_space[:, 0])
+        assert np.allclose(ses_qbubble_mom_space[:, n], ses_qbubble_mom_space[:, 0])
+        assert np.allclose(gfs_mom_space[:, n], gfs_mom_space[:, 0])
     
 
 
