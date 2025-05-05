@@ -165,7 +165,7 @@ def compute_one_magnon_self_energy_from_vertices_without_prefactor(
     
 
 
-#@njit
+@njit
 def compute_one_magnon_self_energy_jit(
     out_arr, frequencies,
     pos_energies_BZ_flat, pos_energies_minus_k_minus_BZ_flat,
