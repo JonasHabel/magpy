@@ -1585,34 +1585,39 @@ def test_diagram_signs():
 def test_num_Wick_contractions():
     PARTICLE, HOLE = 1, 0
 
-    # particle-particle bubble
+    # bubble particle -> particle-particle -> particle
     assert util.compute_num_Wick_contractions(
         ph_idxs_verts=[[PARTICLE, HOLE, HOLE], [PARTICLE, PARTICLE, HOLE]],
         ph_idxs_loops=[[PARTICLE, PARTICLE]],
     ) == 2
-    # particle-hole bubble
+    # bubble particle -> particle-particle -> hole
+    # assert util.compute_num_Wick_contractions(
+    #     ph_idxs_verts=[[PARTICLE, HOLE, HOLE], [PARTICLE, PARTICLE, PARTICLE]],
+    #     ph_idxs_loops=[[PARTICLE, PARTICLE]],
+    # ) == 2
+    # bubble particle -> particle-hole -> particle
     assert util.compute_num_Wick_contractions(
         ph_idxs_verts=[[PARTICLE, HOLE, PARTICLE], [PARTICLE, HOLE, HOLE]],
         ph_idxs_loops=[[PARTICLE, HOLE]],
     ) == 4
-    # hole-hole bubble
+    # bubble particle -> hole-hole -> particle
     assert util.compute_num_Wick_contractions(
         ph_idxs_verts=[[PARTICLE, PARTICLE, PARTICLE], [HOLE, HOLE, HOLE]],
         ph_idxs_loops=[[HOLE, HOLE]],
     ) == 18
 
-    # particle stub
+    # tadpole particle -> particle -> particle
     assert util.compute_num_Wick_contractions(
         ph_idxs_verts=[[PARTICLE, HOLE, HOLE]],
         ph_idxs_loops=[],
     ) == 2
-    # hole stub
+    # tadpole particle -> hole -> particle
     assert util.compute_num_Wick_contractions(
         ph_idxs_verts=[[PARTICLE, PARTICLE, HOLE]],
         ph_idxs_loops=[],
     ) == 2
 
-    # quadratic insertion
+    # quartic bubble particle -> particle
     assert util.compute_num_Wick_contractions(
         ph_idxs_verts=[[PARTICLE, HOLE]],
         ph_idxs_loops=[],
