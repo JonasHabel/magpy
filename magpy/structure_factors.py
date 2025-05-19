@@ -20,10 +20,12 @@ def compute_structure_factor(magnon_greens_functions, momentum, eigvs, model: Mo
     assert magnon_greens_functions.shape[2] == 2*num_bands
     assert eigvs.shape[0] == eigvs.shape[1] == 2*num_bands
 
-    sigma_z_BdG = np.kron(np.eye(num_bands), np.array([[1, 0], [0, -1]]))
     eigvs_conj = eigvs.T.conj()
     Hadamard = np.kron(np.eye(num_bands), np.array([[1, 1], [-1j, 1j]]))
-    GF_eigenspace_basis = magnon_greens_functions
+    # we need to transpose here because we accidentally chose a suboptimal
+    # convention for the indices of the Green's function: G[..., in, out]
+    # where the "standard" convention is G[..., out, in]
+    GF_eigenspace_basis = magnon_greens_functions.transpose((0, 2, 1))
     GF_sublattice_basis = \
         np.einsum("sn,...nm,mt->...st", eigvs, GF_eigenspace_basis, eigvs_conj)
     GF_spin_basis = \
