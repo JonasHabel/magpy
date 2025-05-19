@@ -51,3 +51,10 @@ def compute_structure_factor(magnon_greens_functions, momentum, eigvs, model: Mo
         )   # sum over sublattices
 
     return structure_factor
+
+
+
+def apply_kinetic_projector(structure_factor, momentum):
+    kinetic_projector = np.eye(2) - np.outer(momentum[0:2], momentum[0:2]) / momentum.dot(momentum)
+
+    return np.einsum("...ab,ab", structure_factor, kinetic_projector)
