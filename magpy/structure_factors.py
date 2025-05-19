@@ -58,3 +58,11 @@ def apply_kinetic_projector(structure_factor, momentum):
     kinetic_projector = np.eye(2) - np.outer(momentum[0:2], momentum[0:2]) / momentum.dot(momentum)
 
     return np.einsum("...ab,ab", structure_factor, kinetic_projector)
+
+
+def apply_kinetic_projectors(structure_factors, momenta):
+    projected_str_fac = np.zeros(structure_factors.shape[:-2], dtype=np.float64)
+    for n, (str_fac, k) in enumerate(zip(structure_factors, momenta)):
+        projected_str_fac[n] = apply_kinetic_projector(str_fac, k)
+    
+    return projected_str_fac
