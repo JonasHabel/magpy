@@ -7,6 +7,11 @@ from .util import *
 from ..util import PAULI_MATRICES
 
 
+
+def _internal_one_magnon_propagator(pos_energies_Gamma):
+    return 1.0 / (-pos_energies_Gamma)
+
+
 def compute_full_one_magnon_self_energy(
     frequencies,
     energies_Gamma,
@@ -19,6 +24,7 @@ def compute_full_one_magnon_self_energy(
     T, 
     ph_labels_intermediate_state,
     reg,
+    internal_one_magnon_propagator=_internal_one_magnon_propagator,
 ):
     # 1 for particle, 0 for hole
     ph_idxs_intermediate_state = np.array(convert_ph_labels_to_indices(
@@ -63,7 +69,7 @@ def compute_full_one_magnon_self_energy(
         gauge_phase_in,
         cubic_vert, 
         gauge_phase_internal,
-        1.0/(-pos_energies_Gamma),
+        internal_one_magnon_propagator(pos_energies_Gamma),
         linear_comm_term,
         gauge_phase_out)[np.newaxis]
     
@@ -101,7 +107,8 @@ def compute_one_magnon_self_energy(
     num_ks_BZ,
     T, 
     ph_labels,
-    reg
+    reg,
+    internal_one_magnon_propagator=_internal_one_magnon_propagator,
 ):
     
     # SETUP
@@ -136,7 +143,7 @@ def compute_one_magnon_self_energy(
         gauge_phase_in,
         cubic_vert, 
         gauge_phase_internal,
-        1.0/(-pos_energies_Gamma),
+        internal_one_magnon_propagator(pos_energies_Gamma),
         linear_comm_term,
         gauge_phase_out)[np.newaxis]
     
