@@ -2,6 +2,7 @@ import numpy as np
 from operator import itemgetter
 from functools import reduce
 from . import util
+from typing import List
 
 class BravaisLattice:
 
@@ -491,7 +492,7 @@ class ReciprocalLattice:
 
 
 def stack(latt: BravaisLattice, num_layers: int,
-          interlayer_edges: list[BravaisLattice.Edge],
+          interlayer_edges: List[BravaisLattice.Edge],
           additional_high_symmetry_points=dict(),
           distance_between_layers=1.0,
           sublattice_shifts=None,
