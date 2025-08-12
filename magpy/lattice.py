@@ -556,7 +556,7 @@ def stack(latt: BravaisLattice, num_layers: int,
         pad_subl = \
             lambda subl: subl if old_dim < old_embedding_dim else np.r_[subl, 0]
         normlzd_add_bravais_vec = \
-            new_bravais_vecs[-1] / np.linalg.norm(new_bravais_vecs)
+            new_bravais_vecs[-1] / np.linalg.norm(new_bravais_vecs[-1])
         compute_subl_offset = \
             lambda layer: normlzd_add_bravais_vec*layer*distance_between_layers
         new_sublattices = np.array([
