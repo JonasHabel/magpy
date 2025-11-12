@@ -40,7 +40,6 @@ def compute_structure_factor(magnon_greens_functions, momentum, eigvs, model: Mo
     S = model.get_onsite_spin_quantum_numbers()
     sublattice_offsets = model.lattice.sublattices
     u = np.sqrt(S) * np.exp(1j*sublattice_offsets.dot(momentum)) # the sublattice structure factor
-    u_matrix = np.kron(np.outer(u.conj(), u), np.eye(3))
 
     # S_{αβ}(ω)   (α,β = x,y,z)
     structure_factor = np.zeros((num_freqs, 3, 3), dtype=np.complex128)
@@ -53,7 +52,7 @@ def compute_structure_factor(magnon_greens_functions, momentum, eigvs, model: Mo
         # reshaped axes: (sublattice_i, spin-dir_i, sublattice_j, spin-dir_j)
         # where spin-dir_i and spin-dir_j are in the lab frame (x, y, z)
         struct_fact_sublattice = \
-            (u_matrix @ GF_antiherm).reshape((num_bands, 3, num_bands, 3))
+            np.einsum("s,t,satb->ab", u.conj(), u, GF_antiherm.reshape((num_bands, 3, num_bands, 3)))
         structure_factor[n] = np.sum(
             struct_fact_sublattice,
             axis=(0, 2),
