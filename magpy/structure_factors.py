@@ -61,10 +61,12 @@ def compute_structure_factor(magnon_greens_functions, momentum, eigvs, model: Mo
     return structure_factor
 
 
+"""
+structure_factor should be of shape (..., 3, 3)
+with spin indices in the lab frame
+"""
 def apply_kinetic_projector(structure_factor, momentum, model):
-    gs_rot_mat = model.compute_ground_state_rotation_matrices()[0]  
-    structure_factor_lab_frame = np.einsum("...AB,Aa,Bb->ab", structure_factor, )
-    kinetic_projector = np.eye(2) - np.outer(momentum[0:2], momentum[0:2]) / momentum.dot(momentum)
+    kinetic_projector = np.eye(2) - np.outer(momentum, momentum) / momentum.dot(momentum)
 
     return np.einsum("...ab,ab", structure_factor, kinetic_projector)
 
