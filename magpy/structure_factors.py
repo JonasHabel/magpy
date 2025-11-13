@@ -51,12 +51,12 @@ def compute_structure_factor(magnon_greens_functions, momentum, eigvs, model: Mo
 
         # reshaped axes: (sublattice_i, spin-dir_i, sublattice_j, spin-dir_j)
         # where spin-dir_i and spin-dir_j are in the lab frame (x, y, z)
-        struct_fact_sublattice = \
+        structure_factor[n] = \
             np.einsum("s,t,satb->ab", u.conj(), u, GF_antiherm.reshape((num_bands, 3, num_bands, 3)))
-        structure_factor[n] = np.sum(
-            struct_fact_sublattice,
-            axis=(0, 2),
-        )   # sum over sublattices
+        #structure_factor[n] = np.sum(
+        #    struct_fact_sublattice,
+        #    axis=(0, 2),
+        #)   # sum over sublattices
 
     return structure_factor
 
