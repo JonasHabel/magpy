@@ -66,7 +66,7 @@ structure_factor should be of shape (..., 3, 3)
 with spin indices in the lab frame
 """
 def apply_kinetic_projector(structure_factor, momentum, model):
-    kinetic_projector = np.eye(2) - np.outer(momentum, momentum) / momentum.dot(momentum)
+    kinetic_projector = np.eye(3) - np.outer(momentum, momentum) / momentum.dot(momentum)
 
     return np.einsum("...ab,ab", structure_factor, kinetic_projector)
 
