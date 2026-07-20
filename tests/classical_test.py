@@ -1,6 +1,7 @@
 import numpy as np
 from magpy import lattice, interactions, models
 from magpy.classical import classical
+from . import test_models
 
 
 def test_FM_Heisenberg_square_lattice_total_energy():
@@ -169,3 +170,20 @@ def test_square_lattice_skyrmion_density():
         ] for x in range(dimensions[0])
     ])
     assert np.allclose(expected_skyrmion_density_helix, skyrmion_density_helix)
+
+
+
+def test_biquadratic_Heisenberg_energy():
+    mod = test_models.biquadratic_Heisenberg_twosite()
+
+    spin_config = np.array([[0, 0, 1], [0, 0, 1]])
+    energy = classical.compute_total_energy(mod, spin_config)
+    assert energy == 1
+
+    spin_config = np.array([[0, 0, 1], [0, 1, 0]])
+    energy = classical.compute_total_energy(mod, spin_config)
+    assert energy == 0
+
+    spin_config = np.array([[0, 0, 1], [0, 0, -1]])
+    energy = classical.compute_total_energy(mod, spin_config)
+    assert energy == 1
