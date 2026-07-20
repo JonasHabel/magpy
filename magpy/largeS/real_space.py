@@ -2,7 +2,7 @@ import numpy as np
 from magpy.util import LARGE_S_EXPANSION_COEFF, ENERGY_EPS
 from magpy.models import Model
 from magpy.interactions import Interaction, compress, compute_rotated_interactions
-
+from itertools import combinations
 
 
 def __hc(multi_idx):
@@ -14,8 +14,8 @@ Returns all terms within the large-S expansion of order O(S^(2-{order}/2)).
 These terms all contain {order} magnon operators.
 """
 def compute_magnon_Hamiltonian(model: Model, order: int, output_compression=None):
-    if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
-        raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
+    # if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
+    #     raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
     
     ANNIHILATOR, CREATOR = 0, 1
     C = LARGE_S_EXPANSION_COEFF # rename for brevity
@@ -154,7 +154,47 @@ def compute_magnon_Hamiltonian(model: Model, order: int, output_compression=None
                     spin_int_tensor[2, 2]
                 Hamiltonians += [
                     Interaction([site_i]*2 + [site_j]*2, magnon_BdG_tensor_iijj),
+                ]
+
+        elif len(inter.sites) == 4:
+            site_i, site_j, site_k, site_l = inter.sites
+            Ss = [S[site.subl_idx] for site in inter.sites]
+            prod_S = np.prod(Ss)
+
+            if order == 0:
+                magnon_BdG_tensor = prod_S * np.array(spin_int_tensor[2, 2, 2, 2])
+                Hamiltonians += [
+                    Interaction([], magnon_BdG_tensor),
                 ] 
+            elif order == 1:
+                for nsite, (site, S) in enumerate(zip(inter.sites, S)):
+                    tensor_idx = tuple((slice(0, 2) if n == nsite else 2) for n in range(len(inter.sites)))
+                    magnon_BdG_tensor = prod_S / np.sqrt(S) * C[0] * spin_int_tensor[tensor_idx]
+                    Hamiltonians += [
+                        Interaction([site], magnon_BdG_tensor),
+                    ]
+            elif order == 2:
+                site_combis = combinations(inter.sites, 2)
+                S_combis = combinations(Ss, 2)
+                idx_combis = combinations(range(len(inter.sites)), 2)
+                for (idx_combi, site_combi, S_combi) in zip(idx_combis, site_combis, S_combis):
+                    tensor_idx = tuple((slice(0, 2) if n in idx_combi else 2) for n in range(len(inter.sites)))
+                    magnon_BdG_tensor = prod_S / np.sqrt(np.prod(S_combi)) * C[0]**2 * spin_int_tensor[tensor_idx]
+                    Hamiltonians += [
+                        Interaction(site_combi, magnon_BdG_tensor),
+                    ]
+
+                for nsite, (site, Ssite) in enumerate(zip(inter.sites, Ss)):
+                    magnon_BdG_tensor = np.zeros((2, 2))
+                    magnon_BdG_tensor[CREATOR, ANNIHILATOR] = -prod_S / Ssite * spin_int_tensor[2, 2, 2, 2]
+                    Hamiltonians += [
+                        Interaction([site]*2, magnon_BdG_tensor),
+                    ]
+            else:
+                raise ValueError(f"Unsupported order ({order}) for {len(inter.sites)}-site interaction.")
+                    
+        else:
+            raise ValueError(f"Unsupported number of sites ({len(inter.sites)}) for interaction.")
     
     Hamiltonians = list(filter(
         lambda H: np.any(np.abs(H.interaction_tensor) > ENERGY_EPS), # np.zeros(H.interaction_tensor.shape)),
