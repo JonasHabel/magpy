@@ -709,3 +709,75 @@ def test_real_space_Hamiltonian_honeycomb_DMI():
         expected_magnon_H_3_compressed_perm_transl, 
         expected_magnon_H_4_compressed_perm_transl,
     ])
+
+
+def test_real_space_Hamiltonian_biquadratic_Heisenberg():
+    model = test_models.biquadratic_Heisenberg_twosite()
+    site1 = BravaisLattice.Site(np.array([]), 0)
+    site2 = BravaisLattice.Site(np.array([]), 1)
+
+    assert len(np.where(model.interactions[0].interaction_tensor != 0)[0]) == 9
+
+    magnon_H_0 = real_space.compute_magnon_Hamiltonian(model, order=0)
+    expected_magnon_H_0 = [
+        Interaction([], np.array(0.5 ** 4))
+    ]
+    expected_magnon_H_0_compressed = expected_magnon_H_0
+    expected_magnon_H_0_compressed_perm = expected_magnon_H_0
+    expected_magnon_H_0_compressed_transl = expected_magnon_H_0
+    expected_magnon_H_0_compressed_perm_transl = expected_magnon_H_0
+
+    magnon_H_1 = real_space.compute_magnon_Hamiltonian(model, order=1)
+    expected_magnon_H_1 = []
+    expected_magnon_H_1_compressed = expected_magnon_H_1
+    expected_magnon_H_1_compressed_perm = expected_magnon_H_1
+    expected_magnon_H_1_compressed_transl = expected_magnon_H_1
+    expected_magnon_H_1_compressed_perm_transl = expected_magnon_H_1
+
+    magnon_H_2 = real_space.compute_magnon_Hamiltonian(model, order=2)
+    expected_magnon_H_2 = [
+        Interaction([site1, site1], 0.5**3 * np.array([[0, 0], [-1, 0]])),
+        Interaction([site1, site1], 0.5**3 * np.array([[0, 0], [-1, 0]])),
+        Interaction([site2, site2], 0.5**3 * np.array([[0, 0], [-1, 0]])),
+        Interaction([site2, site2], 0.5**3 * np.array([[0, 0], [-1, 0]])),
+        Interaction([site1, site2], 0.5**3 * np.array([[0, 1], [1, 0]])),
+        Interaction([site1, site2], 0.5**3 * np.array([[0, 1], [1, 0]])),
+    ]
+    expected_magnon_H_2_compressed = [
+        Interaction([site1, site1], 2 * 0.5**3 * np.array([[0, 0], [-1, 0]])),
+        Interaction([site2, site2], 2 * 0.5**3 * np.array([[0, 0], [-1, 0]])),
+        Interaction([site1, site2], 2 * 0.5**3 * np.array([[0, 1], [1, 0]])),
+    ]
+    expected_magnon_H_2_compressed_perm = expected_magnon_H_2_compressed
+    expected_magnon_H_2_compressed_transl = expected_magnon_H_2_compressed
+    expected_magnon_H_2_compressed_perm_transl = expected_magnon_H_2_compressed
+
+    assert_all_real_space_Hamiltonians_equal(model, 
+        [
+            expected_magnon_H_0,
+            expected_magnon_H_1,
+            expected_magnon_H_2,
+        ],
+        [
+            expected_magnon_H_0_compressed,
+            expected_magnon_H_1_compressed,
+            expected_magnon_H_2_compressed,
+        ],
+        [
+            expected_magnon_H_0_compressed_perm,
+            expected_magnon_H_1_compressed_perm,
+            expected_magnon_H_2_compressed_perm,
+        ],
+        [
+            expected_magnon_H_0_compressed_transl,
+            expected_magnon_H_1_compressed_perm,
+            expected_magnon_H_2_compressed_transl,
+        ],
+        [
+            expected_magnon_H_0_compressed_perm_transl,
+            expected_magnon_H_1_compressed_perm_transl,
+            expected_magnon_H_2_compressed_perm_transl,
+        ],
+    )
+
+
