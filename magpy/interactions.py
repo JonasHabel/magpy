@@ -329,3 +329,12 @@ class GammaInteraction(CompositeInteraction):
 
         int_tensor += int_tensor.T
         return Gamma * int_tensor
+
+
+class BiquadraticHeisenbergInteraction(Interaction):
+    def __init__(self, edge: BravaisLattice.Edge, J):
+        interaction_tensor = np.outer(np.eye(3).reshape(9), np.eye(3).reshape(9)).reshape((3, 3, 3, 3))
+        super().__init__(
+            sites=list(edge.get_sites()) * 2,
+            interaction_tensor=J * interaction_tensor,
+        )
