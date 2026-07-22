@@ -74,8 +74,8 @@ def compute_magnon_Hamiltonian_1site_interaction(inter: Interaction, S, order: i
         t = (order-1) // 2
         idx1    = (*((CREATOR, ANNIHILATOR)*t), ANNIHILATOR)
         idx1_hc = __hc(idx1)
-        magnon_BdG_tensor[idx1]    = C[t] * spin_int_tensor[0]
-        magnon_BdG_tensor[idx1_hc] = C[t] * spin_int_tensor[1]
+        magnon_BdG_tensor[idx1]    = np.sqrt(S_i) * C[t] * spin_int_tensor[0]
+        magnon_BdG_tensor[idx1_hc] = np.sqrt(S_i) * C[t] * spin_int_tensor[1]
     else:
         pass # no even-order terms if order >= 4
 
