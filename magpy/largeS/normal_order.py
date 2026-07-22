@@ -207,7 +207,7 @@ def compute_commutator_term_with_permutations_Hartree_Fock(
     
     from datetime import datetime
     for ninter, interaction in enumerate(magnon_Hs_real_space):
-        print(f"{ninter} / {len(magnon_hs_real_space)} -- {datetime.now()}")
+        print(f"{ninter} / {len(magnon_Hs_real_space)} -- {datetime.now()}")
 
         bravais_coords_for_inter = np.array([
             site.bravais_coords for site in interaction.sites
