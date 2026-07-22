@@ -1,6 +1,8 @@
 import numpy as np
 from magpy import models, lattice, interactions
 from magpy.classical import LLG
+from magpy import models
+from magpy.classical.monte_carlo import sphere_samplers
 
 
 def test_quantum_dot():
@@ -214,3 +216,19 @@ def test_YFeO_CAFM_ground_state_3d():
 
 
 
+def test_biquadratic_Heisenberg_chain():
+    latt = lattice.ChainLattice()
+    inter = [
+        interactions.BiquadraticHeisenbergInteraction(lattice.BravaisLattice.Edge(np.array([1.0]), [0, 0]), J=1.0)
+    ]
+    mod = models.Model(latt, inter, np.array([[0, 0, 0.5]]))
+    N = 64
+
+    np.random.seed(1)
+    times, S = LLG.simulate_LLG(mod, sizes=(N,), time_span=(0, 100), num_times=100,
+        init_spin_config=np.array([sphere_samplers.uniform() for _ in range(N)]).reshape(N, 1, 3),
+        damping=2.0, use_jit=False, solver_options=dict(atol=1e-6, rtol=1e-6))
+
+    # all neighboring spins should be orthogonal
+    dot_products_btw_nearest_neighbors = np.einsum("in,in->i", S[:-1, 0, :, -1], S[1:, 0, :, -1])
+    assert np.all(np.abs(dot_products_btw_nearest_neighbors) < 1e-5)
