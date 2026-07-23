@@ -1,7 +1,7 @@
 import numpy as np
 from .lattice import BravaisLattice, HoneycombLatticeA, HoneycombLatticeB
 from . import util
-from .util import LEVI_CIVITA
+from .util import LEVI_CIVITA, ENERGY_EPS
 from collections import Counter
 
 class Interaction:
@@ -21,25 +21,26 @@ class Interaction:
             ],
             self.interaction_tensor.copy()
         )
+
+    def _tensor_key(self):
+        TENSOR_DECIMALS = 10
+        return tuple(np.round(self.interaction_tensor, decimals=TENSOR_DECIMALS).flatten())
     
     def __eq__(self, other):
-        assert len(self.sites) == len(other.sites)
+        if not isinstance(other, Interaction):
+            return NotImplemented
 
-        for site, other_site in zip(self.sites, other.sites):
-            if site != other_site:
-                return False
-        
-        return np.allclose(self.interaction_tensor, other.interaction_tensor)
+        return (
+            self.sites == other.sites
+            and self._tensor_key() == other._tensor_key()
+        )
 
     def __hash__(self):
-        return hash(tuple([
-            *self.sites, 
-            tuple([
-                len(self.interaction_tensor.shape),
-                *self.interaction_tensor.shape,
-                *self.interaction_tensor.flatten(),
-            ]),
-        ]))
+        return hash((
+            tuple(self.sites),
+            self.interaction_tensor.shape,
+            self._tensor_key(),
+        ))
 
     """
     See doc of Model.compute_rotated_interactions
