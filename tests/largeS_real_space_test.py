@@ -1,14 +1,13 @@
 import numpy as np
 from magpy.largeS import real_space
 from magpy.lattice import BravaisLattice
-from magpy.interactions import Interaction
+from magpy.interactions import Interaction, compress
 from . import test_models
+from collections import Counter
 
 
 def assert_real_space_Hamiltonian_equal(magnon_H, expected_magnon_H):
-    assert len(magnon_H) == len(expected_magnon_H)
-    for inter in magnon_H:
-        assert inter in expected_magnon_H
+    assert Counter(magnon_H) == Counter(expected_magnon_H)
 
 
 def assert_all_real_space_Hamiltonians_equal(
@@ -781,3 +780,62 @@ def test_real_space_Hamiltonian_biquadratic_Heisenberg():
     )
 
 
+
+
+
+def test_equivalence():
+    def Hamiltonians_equal(H1, H2):
+        compression = {"permute": True}
+        return Counter(compress(H1, **compression)) == Counter(compress(H2, **compression))
+
+    np.random.seed(1)
+
+    S = np.array([0.5, 1.0])
+    sites = [
+        BravaisLattice.Site(np.random.randint((-2, -2), (3, 3)), np.random.randint(4)) \
+        for _ in range(4)
+    ]
+    inter_1site = Interaction(sites[0:1], np.random.rand(3))
+
+    H0_method1 = real_space.compute_magnon_Hamiltonian_1site_interaction(inter_1site, S, order=0)
+    H0_method2 = real_space.compute_magnon_Hamiltonian_0th_order(inter_1site, S)
+    assert Counter(H0_method1) == Counter(H0_method2)
+
+    H1_method1 = real_space.compute_magnon_Hamiltonian_1site_interaction(inter_1site, S, order=1)
+    H1_method2 = real_space.compute_magnon_Hamiltonian_1st_order(inter_1site, S)
+    assert Counter(H1_method1) == Counter(H1_method2)
+
+    H2_method1 = real_space.compute_magnon_Hamiltonian_1site_interaction(inter_1site, S, order=2)
+    H2_method2 = real_space.compute_magnon_Hamiltonian_2nd_order(inter_1site, S)
+    assert Counter(H2_method1) == Counter(H2_method2)
+
+    H3_method1 = real_space.compute_magnon_Hamiltonian_1site_interaction(inter_1site, S, order=3)
+    H3_method2 = real_space.compute_magnon_Hamiltonian_3rd_order(inter_1site, S)
+    assert Counter(H3_method1) == Counter(H3_method2)
+
+    H4_method1 = real_space.compute_magnon_Hamiltonian_1site_interaction(inter_1site, S, order=4)
+    H4_method2 = real_space.compute_magnon_Hamiltonian_4th_order(inter_1site, S)
+    assert Counter(H4_method1) == Counter(H4_method2)
+
+
+    inter_2site = Interaction(sites[0:2], np.random.rand(3, 3))
+
+    H0_method1 = real_space.compute_magnon_Hamiltonian_2site_interaction(inter_2site, S, order=0)
+    H0_method2 = real_space.compute_magnon_Hamiltonian_0th_order(inter_2site, S)
+    assert Hamiltonians_equal(H0_method1, H0_method2)
+    
+    H1_method1 = real_space.compute_magnon_Hamiltonian_2site_interaction(inter_2site, S, order=1)
+    H1_method2 = real_space.compute_magnon_Hamiltonian_1st_order(inter_2site, S)
+    assert Hamiltonians_equal(H1_method1, H1_method2)
+
+    H2_method1 = real_space.compute_magnon_Hamiltonian_2site_interaction(inter_2site, S, order=2)
+    H2_method2 = real_space.compute_magnon_Hamiltonian_2nd_order(inter_2site, S)
+    assert Hamiltonians_equal(H2_method1, H2_method2)
+
+    H3_method1 = real_space.compute_magnon_Hamiltonian_2site_interaction(inter_2site, S, order=3)
+    H3_method2 = real_space.compute_magnon_Hamiltonian_3rd_order(inter_2site, S)
+    assert Hamiltonians_equal(H3_method1, H3_method2)
+
+    H4_method1 = real_space.compute_magnon_Hamiltonian_2site_interaction(inter_2site, S, order=4)
+    H4_method2 = real_space.compute_magnon_Hamiltonian_4th_order(inter_2site, S)
+    assert Hamiltonians_equal(H4_method1, H4_method2)
