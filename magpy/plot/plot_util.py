@@ -40,6 +40,9 @@ def map_spin_component_to_color(spin_config, S_max, cmap):
 
 def quiver(ax, lattice_sites_pos, spin_config, S_max, cmap, params):
     has_cmap = cmap is not None
+    if lattice_sites_pos.shape[-1] == 1:    # embedding dimension is 1
+        lattice_sites_pos = np.hstack((lattice_sites_pos, np.zeros((lattice_sites_pos.shape[0], 1), dtype=lattice_sites_pos.dtype)))
+
     if has_cmap:
         cmap = plt.get_cmap(cmap)
         colors = map_spin_component_to_color(
