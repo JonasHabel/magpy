@@ -854,6 +854,34 @@ def rearrange_sublattices(latt: BravaisLattice, permutation):
 
 
 
+def remove_sublattices(latt: BravaisLattice, subl_idxs):
+    remaining_subl_idxs = np.array([
+        n for n in range(latt.num_sites_unit_cell) if n not in subl_idxs
+    ])
+    new_sublattices = latt.sublattices[remaining_subl_idxs]
+
+    new_edges = [
+        BravaisLattice.Edge(
+            bravais_coords=edge.bravais_coords,
+            sublattice_indices=edge.subl_idxs,
+        ) for edge in latt.edges \
+        if all(s not in subl_idxs for s in edge.subl_idxs)
+    ]
+
+    new_high_symmetry_points = {
+        k: v.copy() \
+        for k, v in latt.reciprocal_lattice.high_symmetry_points.items()
+    }
+
+    new_lattice = BravaisLattice(
+        latt.bravais_vecs.copy(), new_sublattices,
+        new_edges, new_high_symmetry_points,
+    )
+
+    return new_lattice
+
+
+
 
 class SimpleCubicLattice(BravaisLattice):
     def __init__(self):
