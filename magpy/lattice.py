@@ -853,17 +853,41 @@ def rearrange_sublattices(latt: BravaisLattice, permutation):
 
 
 
+"""
+This class is only for internal use to avoid code duplication in
+models.remove_sublattices
+"""
+class __RemoveSublatticesUtils:
+    def __init__(self, latt: BravaisLattice, subl_idxs):
+        self.remaining_subl_idxs = np.array([
+            n for n in range(latt.num_sites_unit_cell) if n not in subl_idxs
+        ])
+        self.subl_idx_old_to_new_map = {
+            remaining: n for n, remaining in enumerate(self.remaining_subl_idxs)
+        }
 
-def remove_sublattices(latt: BravaisLattice, subl_idxs):
-    remaining_subl_idxs = np.array([
-        n for n in range(latt.num_sites_unit_cell) if n not in subl_idxs
-    ])
-    new_sublattices = latt.sublattices[remaining_subl_idxs]
+    def map_subl_idx(self, subl_idx):
+        return self.subl_idx_old_to_new_map[subl_idx]
+
+    def map_subl_idxs(self, subl_idxs):
+        return np.array([
+            self.map_subl_idx(subl_idx) for subl_idx in subl_idxs
+        ])
+
+
+"""
+The last parameter __return_with_utils is only for internal use,
+to avoid recalculating some quantities in models.remove_sublattices method
+"""
+def remove_sublattices(latt: BravaisLattice, subl_idxs, 
+                       __return_with_utils=False):
+    utils = __RemoveSublatticesUtils(latt, subl_idxs)
+    new_sublattices = latt.sublattices[utils.remaining_subl_idxs]
 
     new_edges = [
         BravaisLattice.Edge(
             bravais_coords=edge.bravais_coords,
-            sublattice_indices=edge.subl_idxs,
+            sublattice_indices=utils.map_subl_idxs(edge.subl_idxs),
         ) for edge in latt.edges \
         if all(s not in subl_idxs for s in edge.subl_idxs)
     ]
@@ -877,6 +901,9 @@ def remove_sublattices(latt: BravaisLattice, subl_idxs):
         latt.bravais_vecs.copy(), new_sublattices,
         new_edges, new_high_symmetry_points,
     )
+
+    if __return_with_utils:
+        return new_lattice, utils
 
     return new_lattice
 

@@ -476,17 +476,16 @@ def rearrange_sublattices(model: Model, permutation):
 
 
 def remove_sublattices(model: Model, subl_idxs):
-    remaining_subl_idxs = np.array([
-        n for n in range(model.lattice.num_sites_unit_cell) if n not in subl_idxs
-    ])
-    new_lattice = lattice.remove_sublattices(model.lattice, subl_idxs)
+    new_lattice, utils = lattice.remove_sublattices(
+        model.lattice, subl_idxs, __return_with_utils=True,
+    )
 
     new_interactions = [
         Interaction(
             sites=[
                 BravaisLattice.Site(
                     bravais_coords=site.bravais_coords,
-                    sublattice_index=site.subl_idx,
+                    sublattice_index=utils.map_subl_idx(site.subl_idx),
                 ) for site in inter.sites
             ],
             interaction_tensor=inter.interaction_tensor,
@@ -494,7 +493,7 @@ def remove_sublattices(model: Model, subl_idxs):
         if all(site.subl_idx not in subl_idxs for site in inter.sites)
     ]
 
-    new_classical_ground_state = model.classical_gs[remaining_subl_idxs]
+    new_classical_ground_state = model.classical_gs[utils.remaining_subl_idxs]
 
     new_model = Model(new_lattice, new_interactions, new_classical_ground_state)
 
