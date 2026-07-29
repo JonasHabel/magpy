@@ -672,3 +672,41 @@ def test_compression_DMI():
     assert len(compressed_interactions) == 1
     assert compressed_interactions[0].sites == J.sites
     assert np.all(compressed_interactions[0].interaction_tensor == expected_interaction_tensor)
+
+
+
+def test_remove_sublattices():
+    latt = lattice.ChainLattice(5)
+    inter = [
+        interactions.NthNearestNeighborHeisenbergInteraction(latt, 1, J=1.0),
+        interactions.NthNearestNeighborHeisenbergInteraction(latt, 2, J=2.0),
+    ]
+    mod = models.Model(latt, inter, np.array([[0, 0, 1]]*latt.num_sites_unit_cell))
+    mod2 = models.remove_sublattices(mod, [1, 3])
+
+    assert mod2.lattice.num_sites_unit_cell == 3
+    assert np.all(mod2.lattice.sublattices == np.array([
+        [0.0], [0.4], [0.8]
+    ]))
+    assert len(mod2.interactions) == 3
+    assert interactions.Interaction(
+        sites=[
+            lattice.BravaisLattice.Site(np.array([0]), sublattice_index=0),
+            lattice.BravaisLattice.Site(np.array([-1]), sublattice_index=2),
+        ],
+        interaction_tensor=1.0*np.eye(3),
+    ) in mod2.interactions
+    assert interactions.Interaction(
+        sites=[
+            lattice.BravaisLattice.Site(np.array([0]), sublattice_index=0),
+            lattice.BravaisLattice.Site(np.array([0]), sublattice_index=1),
+        ],
+        interaction_tensor=2.0*np.eye(3),
+    ) in mod2.interactions
+    assert interactions.Interaction(
+        sites=[
+            lattice.BravaisLattice.Site(np.array([0]), sublattice_index=1),
+            lattice.BravaisLattice.Site(np.array([0]), sublattice_index=2),
+        ],
+        interaction_tensor=2.0*np.eye(3),
+    ) in mod2.interactions
