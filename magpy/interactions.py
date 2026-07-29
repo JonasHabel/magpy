@@ -234,13 +234,17 @@ class DMInteraction(TwoSpinInteraction):
         super().__init__(edge, TWO_SPIN_INT_TENSORS["DM"](D))
 
 
-class AnisotropyInteraction(TwoSpinInteraction):
-    def __init__(self, sublattice_index: int, dir, A):
+class SingleIonAnisotropy(TwoSpinInteraction):
+    def __init__(self, lattice: BravaisLattice, sublattice_index: int, dir, A):
         if type(dir) == str:
             dir = map_dir_to_index(dir)
         super().__init__(
-            BravaisLattice.Edge(np.array([0, 0]), np.array([sublattice_index]*2)),
-            TWO_SPIN_INT_TENSORS["Ising"](dir, A))
+            BravaisLattice.Edge(
+                np.zeros(lattice.dim), 
+                np.array([sublattice_index]*2)
+            ),
+            TWO_SPIN_INT_TENSORS["Ising"](dir, A),
+        )
 
 
 class CompositeInteraction():
@@ -262,6 +266,14 @@ class UniformMagneticField(CompositeInteraction):
     def __init__(self, lattice: BravaisLattice, B):
         super().__init__([
             MagneticField(lattice, subl_idx, B) \
+            for subl_idx in range(lattice.num_sites_unit_cell)
+        ])
+
+        
+class UniformSingleIonAnisotropy(CompositeInteraction):
+    def __init__(self, lattice: BravaisLattice, dir, A):
+        super().__init__([
+            SingleIonAnisotropy(lattice, subl_idx, dir, A) \
             for subl_idx in range(lattice.num_sites_unit_cell)
         ])
 
