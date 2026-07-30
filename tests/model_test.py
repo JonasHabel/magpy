@@ -320,7 +320,7 @@ def test_FM_Heisenberg_transform():
             lattice.SquareLattice(),
             lattice.SquareLattice(),
         ],
-        "transf": np.array([
+        "transf": [
             np.identity(1),
             2*np.identity(1),
             np.identity(1),
@@ -336,8 +336,8 @@ def test_FM_Heisenberg_transform():
             np.array([[0, -1], [1, 0]]),
             np.array([[-2, 2], [3, 2]]),
             np.array([[2, 0], [2, 2]]),
-        ]),
-        "expected_sublattices": np.array([
+        ],
+        "expected_sublattices": [
             [[0]],
             [[0], [1]],
             [[0], [0.5]],
@@ -354,7 +354,7 @@ def test_FM_Heisenberg_transform():
             [[0, 0], [-1, 1], [0, 1], [1, 1], [-1, 2],
              [0, 2], [1, 2], [2, 2], [0, 3], [1, 3]],
             [[0, 0], [1, 0], [1, 1], [2, 1]],
-        ]),
+        ],
         "expected_edges": [
             [
                 lattice.BravaisLattice.Edge(np.array([1]), np.array([0, 0])),

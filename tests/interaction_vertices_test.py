@@ -162,10 +162,10 @@ def test_field_orthogonal_to_quantization_direction():
     for n, p in enumerate(GET_CUBIC_PERMUTATIONS()):
         assert np.allclose(verts_eigenspace_for_loop_momentum[n], np.einsum(
             "xyim,xyjn,xykr,xyijk->xymnr",
-            *permute(np.array([
+            *permute([
                 eigvs_minus_k_minus_BZ, eigvs_BZ, 
                 eigvs_at_k[np.newaxis, np.newaxis]
-            ]), p),
+            ], p),
             verts_for_loop_momentum[n]
         ))
     
