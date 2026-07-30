@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from magpy.interactions import Interaction
 from magpy.momenta_utils import CollapseMomenta, RestoreMomenta, Target
 from ..models import Model
@@ -70,8 +71,8 @@ def normal_order_and_symmetrize_magnon_Hamiltonian(magnon_H_eigenspace):
         counts = dict(zip(*np.unique(ph_idx, return_counts=True)))
         num_annihilators = counts.get(ANNIHILATOR, 0)
         num_creators = counts.get(CREATOR, 0)
-        normalization_factor = np.math.factorial(num_annihilators) * \
-                               np.math.factorial(num_creators)
+        normalization_factor = math.factorial(num_annihilators) * \
+                               math.factorial(num_creators)
         magnon_H_eigenspace_nosym[ph_idx_bits] /= \
             normalization_factor
         
@@ -138,7 +139,7 @@ def compute_commutator_term_with_permutations(
     permutations_woco = get_permutations(num_elements=order)
 
     H_dim = 2*model.lattice.num_sites_unit_cell
-    commutator_term_shape = (np.math.factorial(order), *((H_dim,) * order))
+    commutator_term_shape = (math.factorial(order), *((H_dim,) * order))
     commutator_term = np.zeros(commutator_term_shape, dtype=np.complex128)
     
     sigma_x_ph = np.kron(np.eye(H_dim // 2), np.array([[0, 1], [1, 0]]))
@@ -277,7 +278,7 @@ def compute_commutator_term_with_permutations_Hartree_Fock(
     commutator_terms_eigenspace *= num_ks_BZ
 
     H_dim = 2*model.lattice.num_sites_unit_cell
-    commutator_term_shape = (np.math.factorial(order), *((H_dim,) * order))
+    commutator_term_shape = (math.factorial(order), *((H_dim,) * order))
     assert commutator_terms_eigenspace.shape == commutator_term_shape
     
     return commutator_terms_eigenspace
@@ -318,7 +319,7 @@ def compute_commutator_terms_with_permutations(
                       .flatten()
     H_dim = 2*model.lattice.num_sites_unit_cell
     commutator_terms_shape = \
-        (np.math.factorial(order), *momenta_shape, *((H_dim,) * order))
+        (math.factorial(order), *momenta_shape, *((H_dim,) * order))
     commutator_terms = \
         np.zeros(commutator_terms_shape, dtype=np.complex128)
     

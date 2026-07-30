@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from numba import njit
 from ..util import PAULI_MATRICES
 
@@ -86,7 +87,7 @@ def compute_num_Wick_contractions(ph_idxs_verts, ph_idxs_loops):
         num_particle_idxs = np.count_nonzero(ph_idxs_vert == PARTICLE)
         num_hole_idxs = np.count_nonzero(ph_idxs_vert == HOLE)
         num_Wick_contractions *= \
-            np.math.factorial(num_particle_idxs) * np.math.factorial(num_hole_idxs)
+            math.factorial(num_particle_idxs) * math.factorial(num_hole_idxs)
         
     # account for overcounting due to loops
     for ph_idxs_loop_state in ph_idxs_loops:
@@ -94,7 +95,7 @@ def compute_num_Wick_contractions(ph_idxs_verts, ph_idxs_loops):
         num_particle_idxs = np.count_nonzero(ph_idxs_loop_state == PARTICLE)
         num_hole_idxs = np.count_nonzero(ph_idxs_loop_state == HOLE)
         num_Wick_contractions /= \
-            np.math.factorial(num_particle_idxs) * np.math.factorial(num_hole_idxs)
+            math.factorial(num_particle_idxs) * math.factorial(num_hole_idxs)
         
     assert np.allclose(num_Wick_contractions, int(num_Wick_contractions))
     return int(num_Wick_contractions)

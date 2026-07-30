@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from magpy.largeS.util import get_inverse_permutations, get_permutations, permute
 from magpy.models import Model
 from magpy.largeS import real_space
@@ -95,7 +96,7 @@ def compute_magnon_Hamiltonians_with_momentum_conservation_and_permutations(
     
     num_ks = np.array([len(k_array) for k_array in k_arrays], dtype=np.int64)
     H_dim = 2*model.lattice.num_sites_unit_cell
-    magnon_Hs_shape = (np.math.factorial(order), *num_ks, *((H_dim,) * order))
+    magnon_Hs_shape = (math.factorial(order), *num_ks, *((H_dim,) * order))
     magnon_Hs = np.zeros(magnon_Hs_shape, dtype=np.complex128)
 
     def compute_magnon_H(k_multiidx, k_flat_idx, ks):
