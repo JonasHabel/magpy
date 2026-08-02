@@ -1,7 +1,7 @@
 import numpy as np
 from magpy.models import Model
 from magpy.lattice import BravaisLattice, ChainLattice, HoneycombLatticeA, DotLattice
-from magpy.interactions import GammaInteraction, HeisenbergInteraction, KitaevInteraction, UniformMagneticField, NthNearestNeighborHeisenbergInteraction, DMInteraction, BiquadraticHeisenbergInteraction
+from magpy.interactions import GammaInteraction, HeisenbergInteraction, KitaevInteraction, ScalarSpinChirality, UniformMagneticField, NthNearestNeighborHeisenbergInteraction, DMInteraction, BiquadraticHeisenbergInteraction
 
 
 def FM_Heisenberg_chain():
@@ -96,6 +96,22 @@ def KH_model_2d():
     KH_model_2D = Model(lattice, interactions, np.array([classical_gs]*2))
 
     return KH_model_2D, (S, J, K, Gamma, Gamma_prime, J_3, B)
+
+
+def scalar_spin_chirality_threesite():
+    latt = DotLattice(3)
+    inter = [
+        ScalarSpinChirality(
+            BravaisLattice.Site(np.array([]), 0),
+            BravaisLattice.Site(np.array([]), 1),
+            BravaisLattice.Site(np.array([]), 2),
+            J=-1.0,
+        )
+    ]
+    mod = Model(latt, inter, np.array([[0, 0, 0.5], [0, 0, 0.5], [0, 0, 0.5]]))
+
+    return mod
+
 
 
 def biquadratic_Heisenberg_twosite():

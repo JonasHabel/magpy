@@ -172,6 +172,23 @@ def test_square_lattice_skyrmion_density():
     assert np.allclose(expected_skyrmion_density_helix, skyrmion_density_helix)
 
 
+def test_scalar_spin_chirality_energy():
+    mod = test_models.scalar_spin_chirality_threesite()
+    eps = 1e-12
+
+    np.random.seed(2)
+    spin_config = np.array([[0, 0, 1], [0, 0, 1], np.random.rand(3)])
+    energy = classical.compute_total_energy(mod, spin_config)
+    assert abs(energy) < eps
+
+    spin_config = np.random.rand(3, 3)
+    energy = classical.compute_total_energy(mod, spin_config)
+    assert abs(energy + np.dot(spin_config[0], np.cross(spin_config[1], spin_config[2]))) < eps
+
+    spin_config = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    energy = classical.compute_total_energy(mod, spin_config)
+    assert abs(energy + 1.0) < eps
+
 
 def test_biquadratic_Heisenberg_energy():
     mod = test_models.biquadratic_Heisenberg_twosite()
