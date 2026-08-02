@@ -343,6 +343,14 @@ class GammaInteraction(CompositeInteraction):
         int_tensor += int_tensor.T
         return Gamma * int_tensor
 
+    
+class ScalarSpinChirality(Interaction):
+    def __init__(self, site1: BravaisLattice.Site, site2: BravaisLattice.Site, site3: BravaisLattice.Site, J):
+        super().__init__(
+            sites=[site1, site2, site3],
+            interaction_tensor=J * LEVI_CIVITA,
+        )
+
 
 class BiquadraticHeisenbergInteraction(Interaction):
     def __init__(self, edge: BravaisLattice.Edge, J):
