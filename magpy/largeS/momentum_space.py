@@ -11,8 +11,8 @@ from magpy.momenta_utils import CollapseMomenta, Momenta, RestoreMomenta, Target
 
 def compute_magnon_Hamiltonian(model: Model, ks,
         interaction_Hamiltonian_real_space=None):
-    if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
-        raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
+    # if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
+    #     raise NotImplementedError("so far, only implemented for one- or two-spin interactions.")
     
     if model.lattice.embedding_dim >= 1 and model.lattice.embedding_dim != ks.shape[-1]:
         raise Exception(f"dimension of each momentum vector " \

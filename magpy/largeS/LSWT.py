@@ -12,8 +12,8 @@ from magpy.largeS.util import get_real_space_magnon_Hamiltonian
 
 def compute_LSWT_Hamiltonian_momentum_space_BdG(
         model: Model, k, LSWT_Hamiltonian_real_space=None):
-    if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
-        raise NotImplementedError("so far, only implemented for LSWT of one- or two-spin interactions.")
+    # if any(map(lambda inter: len(inter.sites) not in [1, 2], model.interactions)):
+    #     raise NotImplementedError("so far, only implemented for LSWT of one- or two-spin interactions.")
     
     if model.lattice.embedding_dim >= 1 and \
         model.lattice.embedding_dim != len(k):
