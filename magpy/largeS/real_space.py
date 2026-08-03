@@ -32,7 +32,7 @@ def compute_magnon_Hamiltonian(model: Model, order: int, output_compression=None
             Hamiltonians += compute_magnon_Hamiltonian_1site_interaction(inter, S, order)
         elif len(inter.sites) == 2:
             Hamiltonians += compute_magnon_Hamiltonian_2site_interaction(inter, S, order)
-        elif len(inter.sites) == 4:
+        elif len(inter.sites) >= 3:
             if order == 0:
                 Hamiltonians += compute_magnon_Hamiltonian_0th_order(inter, S)
             elif order == 1:
@@ -206,7 +206,7 @@ def compute_magnon_Hamiltonian_0th_order(inter: Interaction, S):
     prod_S = np.prod(Ss)
 
     tensor_idx = tuple(2 for n in range(len(inter.sites)))
-    magnon_BdG_tensor = prod_S * np.array(spin_int_tensor[tensor_idx])
+    magnon_BdG_tensor = prod_S * np.array(spin_int_tensor[tensor_idx], dtype=np.complex128)
 
     return [Interaction([], magnon_BdG_tensor)] 
 
@@ -249,7 +249,7 @@ def compute_magnon_Hamiltonian_2nd_order(inter: Interaction, S):
     # S^z S^z terms (= S a^† a)
     for nsite, (site, Ssite) in enumerate(zip(inter.sites, Ss)):
         tensor_idx = tuple(2 for n in range(len(inter.sites)))
-        magnon_BdG_tensor = np.zeros((2, 2))
+        magnon_BdG_tensor = np.zeros((2, 2), dtype=np.complex128)
         magnon_BdG_tensor[CREATOR, ANNIHILATOR] = -prod_S / Ssite * spin_int_tensor[tensor_idx]
         Hamiltonians += [
             Interaction([site]*2, magnon_BdG_tensor),
@@ -283,8 +283,8 @@ def compute_magnon_Hamiltonian_3rd_order(inter: Interaction, S):
     for (idx_combi, site_combi, S_combi) in zip(idx_combis, site_combis, S_combis):
         tensor_idx1 = tuple((slice(0, 2) if n == idx_combi[0] else 2) for n in range(len(inter.sites)))
         tensor_idx2 = tuple((slice(0, 2) if n == idx_combi[1] else 2) for n in range(len(inter.sites)))
-        magnon_BdG_tensor1 = np.zeros((2, 2, 2))
-        magnon_BdG_tensor2 = np.zeros((2, 2, 2))
+        magnon_BdG_tensor1 = np.zeros((2, 2, 2), dtype=np.complex128)
+        magnon_BdG_tensor2 = np.zeros((2, 2, 2), dtype=np.complex128)
         magnon_BdG_tensor1[:, CREATOR, ANNIHILATOR] = -prod_S / S_combi[1] / np.sqrt(S_combi[0]) * C[0] * spin_int_tensor[tensor_idx1]
         magnon_BdG_tensor2[CREATOR, ANNIHILATOR, :] = -prod_S / S_combi[0] / np.sqrt(S_combi[1]) * C[0] * spin_int_tensor[tensor_idx2]
         Hamiltonians += [
@@ -296,7 +296,7 @@ def compute_magnon_Hamiltonian_3rd_order(inter: Interaction, S):
     for nsite, (site, S) in enumerate(zip(inter.sites, S)):
         tensor_idx_annihil = tuple((ANNIHILATOR if n == nsite else 2) for n in range(len(inter.sites)))
         tensor_idx_creator = tuple((CREATOR if n == nsite else 2) for n in range(len(inter.sites)))
-        magnon_BdG_tensor = np.zeros((2, 2, 2))
+        magnon_BdG_tensor = np.zeros((2, 2, 2), dtype=np.complex128)
         magnon_BdG_tensor[CREATOR, CREATOR, ANNIHILATOR] = prod_S / np.sqrt(S**3) * C[1] * spin_int_tensor[tensor_idx_creator]
         magnon_BdG_tensor[CREATOR, ANNIHILATOR, ANNIHILATOR] = prod_S / np.sqrt(S**3) * C[1] * spin_int_tensor[tensor_idx_annihil]
         Hamiltonians += [
@@ -333,11 +333,12 @@ def compute_magnon_Hamiltonian_4th_order(inter: Interaction, S):
             idx_combi_Spm = [idx_combi[l] for l in range(3) if l != m]
             S_combi_Spm = [S_combi[l] for l in range(3) if l != m]
             tensor_idx = tuple((slice(0, 2) if n in idx_combi_Spm else 2) for n in range(len(inter.sites)))
-            magnon_BdG_tensor = np.zeros((2, 2, 2, 2))
+            magnon_BdG_tensor = np.zeros((2, 2, 2, 2), dtype=np.complex128)
             BdG_idx = tuple([slice(None) for l in range(m)] + [CREATOR, ANNIHILATOR] + [slice(None) for l in range(m+1, 3)])
             magnon_BdG_tensor[BdG_idx] = -prod_S / np.prod(np.sqrt(S_combi_Spm) * S_combi[m]) * C[0]**2 * spin_int_tensor[tensor_idx]
+            sites = site_combi[:m] + (site_combi[m],)*2 + site_combi[m+1:]
             Hamiltonians += [
-                Interaction(list(site_combi), magnon_BdG_tensor),
+                Interaction(list(sites), magnon_BdG_tensor),
             ]
 
     # S^\pm S^\pm S^z S^z terms (= S^\pm S^\pm S S with higher-order expansion of the square root)
@@ -349,8 +350,8 @@ def compute_magnon_Hamiltonian_4th_order(inter: Interaction, S):
         tensor_idx1_annihil = tuple((ANNIHILATOR if n == idx_combi[0] else slice(0, 2) if n == idx_combi[1] else 2) for n in range(len(inter.sites)))
         tensor_idx2_creator = tuple((CREATOR if n == idx_combi[1] else slice(0, 2) if n == idx_combi[0] else 2) for n in range(len(inter.sites)))
         tensor_idx2_annihil = tuple((ANNIHILATOR if n == idx_combi[1] else slice(0, 2) if n == idx_combi[0] else 2) for n in range(len(inter.sites)))
-        magnon_BdG_tensor1 = np.zeros((2, 2, 2, 2))
-        magnon_BdG_tensor2 = np.zeros((2, 2, 2, 2))
+        magnon_BdG_tensor1 = np.zeros((2, 2, 2, 2), dtype=np.complex128)
+        magnon_BdG_tensor2 = np.zeros((2, 2, 2, 2), dtype=np.complex128)
         magnon_BdG_tensor1[CREATOR, CREATOR, ANNIHILATOR, :] = prod_S / np.sqrt(S_combi[0]**3 * S_combi[1]) * C[0] * C[1] * spin_int_tensor[tensor_idx1_creator]
         magnon_BdG_tensor1[CREATOR, ANNIHILATOR, ANNIHILATOR, :] = prod_S / np.sqrt(S_combi[0]**3 * S_combi[1]) * C[0] * C[1] * spin_int_tensor[tensor_idx1_annihil]
         magnon_BdG_tensor2[:, CREATOR, CREATOR, ANNIHILATOR] = prod_S / np.sqrt(S_combi[0] * S_combi[1]**3) * C[0] * C[1] * spin_int_tensor[tensor_idx2_creator]
@@ -366,7 +367,7 @@ def compute_magnon_Hamiltonian_4th_order(inter: Interaction, S):
     idx_combis = combinations(range(len(inter.sites)), 2)
     for (idx_combi, site_combi, S_combi) in zip(idx_combis, site_combis, S_combis):
         tensor_idx = tuple(2 for n in range(len(inter.sites)))
-        magnon_BdG_tensor = np.zeros((2, 2, 2, 2))
+        magnon_BdG_tensor = np.zeros((2, 2, 2, 2), dtype=np.complex128)
         magnon_BdG_tensor[CREATOR, ANNIHILATOR, CREATOR, ANNIHILATOR] = prod_S / np.prod(S_combi) * spin_int_tensor[tensor_idx]
         Hamiltonians += [
             Interaction([site_combi[0], site_combi[0], site_combi[1], site_combi[1]], magnon_BdG_tensor),
